@@ -9,11 +9,10 @@ export type SourceColumn = {
 export type ReportField = {
   id: string
   label: string
-  columnId: string
+  sourceKey: keyof ReportRow
 }
 
 export type ReportData = {
-  version: 2
+  version: 3
   fields: ReportField[]
-  columnLabels: Record<string, string>
 }

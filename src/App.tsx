@@ -13,7 +13,8 @@ import {
 import type { ReportData, SourceColumn } from './services/reportDefinition/types'
 import './App.css'
 
-const CURRENCY_FIELD_IDS = new Set(['rate', 'total'])
+const MAX_REPORT_COLUMNS = 15
+const MIN_REPORT_COLUMNS = 1
 
 function formatCellValue(value: unknown): string {
   if (typeof value === 'number') {
@@ -25,6 +26,24 @@ function formatCellValue(value: unknown): string {
   }
 
   return String(value)
+}
+
+function getNextFieldId(existingIds: string[]): string {
+  let maxSequence = 0
+
+  for (const id of existingIds) {
+    const match = /^field-(\d+)$/.exec(id)
+    if (!match) {
+      continue
+    }
+
+    const sequence = Number(match[1])
+    if (Number.isFinite(sequence) && sequence > maxSequence) {
+      maxSequence = sequence
+    }
+  }
+
+  return `field-${maxSequence + 1}`
 }
 
 function App() {
@@ -58,24 +77,21 @@ function App() {
   useEffect(() => {
     setReportData((previous) => {
       const defaults = generateDefaultReportData(sourceColumns)
-      const safeColumns = new Set(sourceColumns.map((column) => column.id))
+      const safeSourceKeys = new Set(sourceColumns.map((column) => column.key))
       const fields = previous.fields.map((field, index) => {
-        if (safeColumns.has(field.columnId)) {
+        if (safeSourceKeys.has(field.sourceKey)) {
           return field
         }
 
         return {
           ...field,
-          columnId: defaults.fields[index]?.columnId ?? defaults.fields[0].columnId,
+          sourceKey: defaults.fields[index]?.sourceKey ?? defaults.fields[0].sourceKey,
         }
       })
 
-      const columnLabels = { ...defaults.columnLabels, ...previous.columnLabels }
-
       return {
-        version: 2,
+        version: 3,
         fields,
-        columnLabels,
       }
     })
   }, [sourceColumns])
@@ -84,14 +100,14 @@ function App() {
     saveReportData(reportData)
   }, [reportData])
 
-  const sourceColumnById = useMemo(() => {
-    return new Map(sourceColumns.map((column) => [column.id, column]))
+  const sourceColumnByKey = useMemo(() => {
+    return new Map(sourceColumns.map((column) => [column.key, column]))
   }, [sourceColumns])
 
   const sampleRow = rows[0]
 
-  function getMappedValue(row: ReportRow, columnId: string): string {
-    const mappedColumn = sourceColumnById.get(columnId)
+  function getMappedValue(row: ReportRow, sourceKey: keyof ReportRow): string {
+    const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (!mappedColumn) {
       return ''
     }
@@ -113,26 +129,78 @@ function App() {
       <section className="mapping-panel">
         <h2>Column Mapping</h2>
         <p>
-          Assign each semantic field to the customer&apos;s source columns and rename
-          headers without touching code.
+          Assign each report column to a source attribute and rename headers
+          without touching code.
         </p>
 
+        <div className="mapping-actions">
+          <button
+            type="button"
+            onClick={() => {
+              setReportData((previous) => {
+                if (previous.fields.length >= MAX_REPORT_COLUMNS) {
+                  return previous
+                }
+
+                return {
+                  ...previous,
+                  fields: [
+                    ...previous.fields,
+                    {
+                      id: getNextFieldId(previous.fields.map((field) => field.id)),
+                      label: String(sourceColumns[0]?.key ?? 'workDate'),
+                      sourceKey: sourceColumns[0]?.key ?? 'workDate',
+                    },
+                  ],
+                }
+              })
+            }}
+            disabled={reportData.fields.length >= MAX_REPORT_COLUMNS}
+          >
+            Add column
+          </button>
+          <small>
+            {reportData.fields.length}/{MAX_REPORT_COLUMNS} columns
+          </small>
+        </div>
+
         <div className="mapping-grid">
-          {reportData.fields.map((field) => {
-            const selectedColumnId = field.columnId
-            const selectedColumn = sourceColumnById.get(selectedColumnId)
+          {reportData.fields.map((field, index) => {
+            const selectedSourceKey = field.sourceKey
+            const selectedColumn = sourceColumnByKey.get(selectedSourceKey)
             const sampleValue = sampleRow && selectedColumn
               ? formatCellValue(sampleRow[selectedColumn.key])
               : ''
 
             return (
               <article key={field.id}>
-                <label htmlFor={`mapping-${field.id}`}>{field.label}</label>
+                <div className="column-card-header">
+                  <strong>{`column${index + 1}`}</strong>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReportData((previous) => {
+                        if (previous.fields.length <= MIN_REPORT_COLUMNS) {
+                          return previous
+                        }
+
+                        return {
+                          ...previous,
+                          fields: previous.fields.filter((current) => current.id !== field.id),
+                        }
+                      })
+                    }}
+                    disabled={reportData.fields.length <= MIN_REPORT_COLUMNS}
+                  >
+                    Remove
+                  </button>
+                </div>
+                <label htmlFor={`mapping-${field.id}`}>{`column${index + 1}`}</label>
                 <select
                   id={`mapping-${field.id}`}
-                  value={selectedColumnId}
+                  value={selectedSourceKey}
                   onChange={(event) => {
-                    const nextColumn = event.target.value
+                    const nextSourceKey = event.target.value as keyof ReportRow
                     setReportData((previous) => ({
                       ...previous,
                       fields: previous.fields.map((currentField) => {
@@ -140,16 +208,19 @@ function App() {
                           return currentField
                         }
 
+                        const keepCustomLabel = currentField.label !== currentField.sourceKey
+
                         return {
                           ...currentField,
-                          columnId: nextColumn,
+                          sourceKey: nextSourceKey,
+                          label: keepCustomLabel ? currentField.label : String(nextSourceKey),
                         }
                       }),
                     }))
                   }}
                 >
                   {sourceColumns.map((column) => (
-                    <option key={column.id} value={column.id}>
+                    <option key={column.id} value={column.key}>
                       {column.id} ({column.key})
                     </option>
                   ))}
@@ -159,15 +230,21 @@ function App() {
                 <input
                   id={`label-${field.id}`}
                   type="text"
-                  value={reportData.columnLabels[selectedColumnId] ?? ''}
+                  value={field.label}
                   onChange={(event) => {
                     const nextLabel = event.target.value
                     setReportData((previous) => ({
                       ...previous,
-                      columnLabels: {
-                        ...previous.columnLabels,
-                        [selectedColumnId]: nextLabel,
-                      },
+                      fields: previous.fields.map((currentField) => {
+                        if (currentField.id !== field.id) {
+                          return currentField
+                        }
+
+                        return {
+                          ...currentField,
+                          label: nextLabel,
+                        }
+                      }),
                     }))
                   }}
                 />
@@ -228,10 +305,7 @@ function App() {
           <thead>
             <tr>
               {reportData.fields.map((field) => {
-                const columnId = field.columnId
-                return (
-                  <th key={field.id}>{reportData.columnLabels[columnId] ?? field.label}</th>
-                )
+                return <th key={field.id}>{field.label}</th>
               })}
             </tr>
           </thead>
@@ -239,8 +313,9 @@ function App() {
             {rows.slice(0, 10).map((row) => (
               <tr key={row.id}>
                 {reportData.fields.map((field) => {
-                  const mappedValue = getMappedValue(row, field.columnId)
-                  const isCurrency = CURRENCY_FIELD_IDS.has(field.id)
+                  const mappedValue = getMappedValue(row, field.sourceKey)
+                  const mappedColumn = sourceColumnByKey.get(field.sourceKey)
+                  const isCurrency = mappedColumn?.key === 'rate' || mappedColumn?.key === 'total'
                   return (
                     <td key={`${row.id}-${field.id}`}>
                       {isCurrency && mappedValue ? `$${mappedValue}` : mappedValue}

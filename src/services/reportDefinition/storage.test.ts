@@ -55,9 +55,10 @@ describe('reportDefinition storage', () => {
   it('creates a default reportData shape', () => {
     const defaults = generateDefaultReportData(sourceColumns)
 
-    expect(defaults.version).toBe(2)
+    expect(defaults.version).toBe(3)
     expect(defaults.fields.length).toBe(7)
-    expect(defaults.columnLabels.column1).toBe('column1')
+    expect(defaults.fields[0]?.sourceKey).toBe('workDate')
+    expect(defaults.fields[0]?.label).toBe('workDate')
   })
 
   it('persists and reloads reportData', () => {
@@ -71,20 +72,16 @@ describe('reportDefinition storage', () => {
 
         return {
           ...field,
-          columnId: 'column3',
+          sourceKey: 'clientName',
         }
       }),
-      columnLabels: {
-        ...defaults.columnLabels,
-        column3: 'People Display',
-      },
     }
 
     saveReportData(updated)
     const loaded = loadReportData(sourceColumns)
 
-    expect(loaded.fields.find((field) => field.id === 'people')?.columnId).toBe('column3')
-    expect(loaded.columnLabels.column3).toBe('People Display')
+    expect(loaded.fields.find((field) => field.id === 'people')?.sourceKey).toBe('clientName')
+    expect(loaded.fields.find((field) => field.id === 'people')?.label).toBe('personName')
   })
 
   it('falls back when stored version is invalid', () => {
@@ -94,7 +91,7 @@ describe('reportDefinition storage', () => {
     )
 
     const loaded = loadReportData(sourceColumns)
-    expect(loaded.version).toBe(2)
+    expect(loaded.version).toBe(3)
     expect(loaded.fields.length).toBe(7)
   })
 })

@@ -1,38 +1,37 @@
 import type { ReportData, ReportField, SourceColumn } from './types'
 
-export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v2'
-const REPORT_DATA_VERSION = 2
+export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v3'
+const REPORT_DATA_VERSION = 3
 
 const defaultFields: ReportField[] = [
-  { id: 'date', label: 'column1', columnId: 'column1' },
-  { id: 'people', label: 'column2', columnId: 'column2' },
-  { id: 'clients', label: 'column3', columnId: 'column3' },
-  { id: 'task', label: 'column4', columnId: 'column4' },
-  { id: 'hours', label: 'column5', columnId: 'column5' },
-  { id: 'rate', label: 'column6', columnId: 'column6' },
-  { id: 'total', label: 'column7', columnId: 'column7' },
+  { id: 'date', label: 'workDate', sourceKey: 'workDate' },
+  { id: 'people', label: 'personName', sourceKey: 'personName' },
+  { id: 'clients', label: 'clientName', sourceKey: 'clientName' },
+  { id: 'task', label: 'task', sourceKey: 'task' },
+  { id: 'hours', label: 'hours', sourceKey: 'hours' },
+  { id: 'rate', label: 'rate', sourceKey: 'rate' },
+  { id: 'total', label: 'total', sourceKey: 'total' },
 ]
 
 export function generateDefaultReportData(sourceColumns: SourceColumn[]): ReportData {
-  const columnLabels = sourceColumns.reduce<Record<string, string>>((memo, column) => {
-    memo[column.id] = column.defaultLabel
-    return memo
-  }, {})
+  const fallbackSourceKey = sourceColumns[0]?.key ?? 'workDate'
 
   const fields = defaultFields.map((field, index) => {
     const fallback = sourceColumns[index]
+    const sourceKey = sourceColumns.some((column) => column.key === field.sourceKey)
+      ? field.sourceKey
+      : (fallback?.key ?? fallbackSourceKey)
+
     return {
       ...field,
-      columnId: sourceColumns.some((column) => column.id === field.columnId)
-        ? field.columnId
-        : (fallback?.id ?? sourceColumns[0]?.id ?? field.columnId),
+      sourceKey,
+      label: sourceKey,
     }
   })
 
   return {
     version: REPORT_DATA_VERSION,
     fields,
-    columnLabels,
   }
 }
 
@@ -54,7 +53,7 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       return fallback
     }
 
-    const safeFieldIds = new Set(sourceColumns.map((column) => column.id))
+    const safeSourceKeys = new Set(sourceColumns.map((column) => column.key))
 
     const fields = parsed.fields
       .filter((field): field is ReportField => {
@@ -62,19 +61,19 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
           field
           && typeof field.id === 'string'
           && typeof field.label === 'string'
-          && typeof field.columnId === 'string',
+          && typeof field.sourceKey === 'string',
         )
       })
       .map((field, index) => {
         const defaultField = fallback.fields[index] ?? fallback.fields[0]
-        const columnId = safeFieldIds.has(field.columnId)
-          ? field.columnId
-          : defaultField.columnId
+        const sourceKey = safeSourceKeys.has(field.sourceKey)
+          ? field.sourceKey
+          : defaultField.sourceKey
 
         return {
           id: field.id,
-          label: field.label,
-          columnId,
+          label: field.label.trim().length > 0 ? field.label : sourceKey,
+          sourceKey,
         }
       })
 
@@ -82,19 +81,9 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       return fallback
     }
 
-    const parsedLabels = parsed.columnLabels ?? {}
-    const columnLabels = { ...fallback.columnLabels }
-    for (const column of sourceColumns) {
-      const label = parsedLabels[column.id]
-      if (typeof label === 'string' && label.trim().length > 0) {
-        columnLabels[column.id] = label
-      }
-    }
-
     return {
       version: REPORT_DATA_VERSION,
       fields,
-      columnLabels,
     }
   } catch {
     return fallback
