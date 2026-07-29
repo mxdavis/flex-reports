@@ -10,19 +10,67 @@ import {
   loadReportData,
   saveReportData,
 } from './services/reportDefinition/storage'
-import type { ReportData, SourceColumn } from './services/reportDefinition/types'
+import { getDefaultDisplayType } from './services/reportDefinition/displayType'
+import type {
+  DisplayType,
+  ReportData,
+  SourceColumn,
+} from './services/reportDefinition/types'
 import './App.css'
 
 const MAX_REPORT_COLUMNS = 15
 const MIN_REPORT_COLUMNS = 1
+const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
+  { value: 'currency', label: 'Currency' },
+  { value: 'decimal', label: 'Decimal number' },
+  { value: 'percent', label: 'Percent' },
+  { value: 'date', label: 'Date' },
+  { value: 'string', label: 'String' },
+]
 
-function formatCellValue(value: unknown): string {
-  if (typeof value === 'number') {
+function formatCellValue(value: unknown, displayType: DisplayType): string {
+  if (value === null || value === undefined) {
+    return ''
+  }
+
+  if (displayType === 'currency') {
+    if (typeof value !== 'number') {
+      return String(value)
+    }
+
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(value)
+  }
+
+  if (displayType === 'decimal') {
+    if (typeof value !== 'number') {
+      return String(value)
+    }
+
     return value.toFixed(2)
   }
 
-  if (value === null || value === undefined) {
-    return ''
+  if (displayType === 'percent') {
+    if (typeof value !== 'number') {
+      return String(value)
+    }
+
+    return `${(value * 100).toFixed(2)}%`
+  }
+
+  if (displayType === 'date') {
+    const parsedDate = value instanceof Date ? value : new Date(String(value))
+    if (Number.isNaN(parsedDate.getTime())) {
+      return String(value)
+    }
+
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(parsedDate)
   }
 
   return String(value)
@@ -94,7 +142,7 @@ function App() {
       })
 
       return {
-        version: 3,
+        version: 4,
         fields,
       }
     })
@@ -139,13 +187,17 @@ function App() {
 
   const sampleRow = rows[0]
 
-  function getMappedValue(row: ReportRow, sourceKey: keyof ReportRow): string {
+  function getMappedValue(
+    row: ReportRow,
+    sourceKey: keyof ReportRow,
+    displayType: DisplayType,
+  ): string {
     const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (!mappedColumn) {
       return ''
     }
 
-    return formatCellValue(row[mappedColumn.key])
+    return formatCellValue(row[mappedColumn.key], displayType)
   }
 
   function moveField(sourceId: string, targetId: string): void {
@@ -198,7 +250,7 @@ function App() {
             const selectedSourceKey = field.sourceKey
             const selectedColumn = sourceColumnByKey.get(selectedSourceKey)
             const sampleValue = sampleRow && selectedColumn
-              ? formatCellValue(sampleRow[selectedColumn.key])
+              ? formatCellValue(sampleRow[selectedColumn.key], field.displayType)
               : ''
 
             return (
@@ -281,11 +333,19 @@ function App() {
                           }
 
                           const keepCustomLabel = currentField.label !== currentField.sourceKey
+                          const currentDefaultDisplayType = getDefaultDisplayType(
+                            currentField.sourceKey,
+                          )
+                          const shouldSyncDisplayType =
+                            currentField.displayType === currentDefaultDisplayType
 
                           return {
                             ...currentField,
                             sourceKey: nextSourceKey,
                             label: keepCustomLabel ? currentField.label : String(nextSourceKey),
+                            displayType: shouldSyncDisplayType
+                              ? getDefaultDisplayType(nextSourceKey)
+                              : currentField.displayType,
                           }
                         }),
                       }))
@@ -321,6 +381,35 @@ function App() {
                       }))
                     }}
                   />
+
+                  <label htmlFor={`display-type-${field.id}`}>Display type</label>
+                  <select
+                    id={`display-type-${field.id}`}
+                    value={field.displayType}
+                    title="Choose how values in this column are formatted."
+                    onChange={(event) => {
+                      const nextDisplayType = event.target.value as DisplayType
+                      setReportData((previous) => ({
+                        ...previous,
+                        fields: previous.fields.map((currentField) => {
+                          if (currentField.id !== field.id) {
+                            return currentField
+                          }
+
+                          return {
+                            ...currentField,
+                            displayType: nextDisplayType,
+                          }
+                        }),
+                      }))
+                    }}
+                  >
+                    {DISPLAY_TYPE_OPTIONS.map((displayTypeOption) => (
+                      <option key={displayTypeOption.value} value={displayTypeOption.value}>
+                        {displayTypeOption.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <small>
@@ -347,6 +436,7 @@ function App() {
                         id: getNextFieldId(previous.fields.map((field) => field.id)),
                         label: String(sourceColumns[0]?.key ?? 'workDate'),
                         sourceKey: sourceColumns[0]?.key ?? 'workDate',
+                        displayType: getDefaultDisplayType(sourceColumns[0]?.key ?? 'workDate'),
                       },
                     ],
                   }
@@ -434,13 +524,13 @@ function App() {
               {rows.slice(0, 10).map((row) => (
                 <tr key={row.id}>
                   {reportData.fields.map((field) => {
-                    const mappedValue = getMappedValue(row, field.sourceKey)
-                    const mappedColumn = sourceColumnByKey.get(field.sourceKey)
-                    const isCurrency = mappedColumn?.key === 'rate' || mappedColumn?.key === 'total'
+                    const mappedValue = getMappedValue(
+                      row,
+                      field.sourceKey,
+                      field.displayType,
+                    )
                     return (
-                      <td key={`${row.id}-${field.id}`}>
-                        {isCurrency && mappedValue ? `$${mappedValue}` : mappedValue}
-                      </td>
+                      <td key={`${row.id}-${field.id}`}>{mappedValue}</td>
                     )
                   })}
                 </tr>
