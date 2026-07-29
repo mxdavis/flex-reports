@@ -61,6 +61,11 @@
   (`src/services/adapters/`), selected by a factory + `VITE_DATA_SOURCE` env toggle.
 - Seed data is just mock data that mimics a host app plugging in rows, so we can
   build and test the flow. It must never leak hardcoded customer values into code.
+- Seed/test mode must always stay runnable for debugging and repro workflows,
+  independent of host-app integrations, so local development can validate report behavior quickly.
+- Local browser storage (`localStorage`) is prototype-only for report definition drafts;
+  production persistence must be host-app backed (for example DB/service API),
+  shared across users, and auditable.
 
 ## Toolchain
 

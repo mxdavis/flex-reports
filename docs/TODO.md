@@ -38,6 +38,7 @@ Status tags used in each item:
 - [ ] (todo) Follow-up (PR #3 review): move formula application out of the seed data source into the report/formula layer (adapter returns raw rows only)
 - [ ] (todo) Follow-up (PR #3 review): replace bespoke `getTotalRevenue` with the pivot/aggregation engine
 - [ ] (todo) Build report definition store (localStorage)
+- [ ] (todo) Replace prototype localStorage report-definition persistence with host-app backed persistence (DB/service API) for shared, durable report configs
 - [ ] (todo) Define persisted `reportData` contract (column names, source attrs, mappings, formulas, permissions)
 - [ ] (todo) Add reportData generator flow for host apps (initial target: Rails helper/service)
 - [ ] (todo) Build Edit view (Excel-like)
