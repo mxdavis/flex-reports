@@ -1,0 +1,41 @@
+{
+  "personBilling": [
+    { "id": "p1", "name": "Alex Rivera" },
+    { "id": "p2", "name": "Sam Patel" },
+    { "id": "p3", "name": "Jordan Lee" },
+    { "id": "p4", "name": "Morgan Chen" }
+  ],
+  "client": [
+    { "id": "c1", "name": "Northwind Manufacturing", "originatingPerson": "p1" },
+    { "id": "c2", "name": "Delta Freight", "originatingPerson": "p2" },
+    { "id": "c3", "name": "ACME Legal", "originatingPerson": "p3" },
+    { "id": "c4", "name": "Summit Health", "originatingPerson": "p4" }
+  ],
+  "personClientTime": [
+    { "id": "t1", "workDate": "2026-07-01", "personId": "p1", "clientId": "c1", "task": "Drafting", "timeWorked": 2.5, "rate": 240, "total": 600 },
+    { "id": "t2", "workDate": "2026-07-01", "personId": "p2", "clientId": "c1", "task": "Review", "timeWorked": 1.75, "rate": 260, "total": 455 },
+    { "id": "t3", "workDate": "2026-07-02", "personId": "p1", "clientId": "c2", "task": "Research", "timeWorked": 3.25, "rate": 240, "total": 780 },
+    { "id": "t4", "workDate": "2026-07-02", "personId": "p3", "clientId": "c2", "task": "Filing", "timeWorked": 1.5, "rate": 210, "total": 315 },
+    { "id": "t5", "workDate": "2026-07-03", "personId": "p2", "clientId": "c3", "task": "Conference", "timeWorked": 2, "rate": 260, "total": 520 },
+    { "id": "t6", "workDate": "2026-07-03", "personId": "p4", "clientId": "c3", "task": "Drafting", "timeWorked": 4, "rate": 235, "total": 940 },
+    { "id": "t7", "workDate": "2026-07-04", "personId": "p1", "clientId": "c4", "task": "Review", "timeWorked": 2.25, "rate": 240, "total": 540 },
+    { "id": "t8", "workDate": "2026-07-04", "personId": "p2", "clientId": "c2", "task": "Drafting", "timeWorked": 3.5, "rate": 260, "total": 910 },
+    { "id": "t9", "workDate": "2026-07-05", "personId": "p3", "clientId": "c1", "task": "Research", "timeWorked": 2.25, "rate": 210, "total": 472.5 },
+    { "id": "t10", "workDate": "2026-07-05", "personId": "p4", "clientId": "c4", "task": "Review", "timeWorked": 1.75, "rate": 235, "total": 411.25 },
+    { "id": "t11", "workDate": "2026-07-06", "personId": "p1", "clientId": "c3", "task": "Drafting", "timeWorked": 4.5, "rate": 240, "total": 1080 },
+    { "id": "t12", "workDate": "2026-07-06", "personId": "p2", "clientId": "c4", "task": "Conference", "timeWorked": 2.25, "rate": 260, "total": 585 },
+    { "id": "t13", "workDate": "2026-07-07", "personId": "p3", "clientId": "c4", "task": "Drafting", "timeWorked": 3, "rate": 210, "total": 630 },
+    { "id": "t14", "workDate": "2026-07-07", "personId": "p4", "clientId": "c3", "task": "Filing", "timeWorked": 2.5, "rate": 235, "total": 587.5 },
+    { "id": "t15", "workDate": "2026-07-08", "personId": "p1", "clientId": "c1", "task": "Conference", "timeWorked": 1.5, "rate": 240, "total": 360 },
+    { "id": "t16", "workDate": "2026-07-08", "personId": "p2", "clientId": "c2", "task": "Research", "timeWorked": 3.75, "rate": 260, "total": 975 },
+    { "id": "t17", "workDate": "2026-07-09", "personId": "p3", "clientId": "c3", "task": "Review", "timeWorked": 2, "rate": 210, "total": 420 },
+    { "id": "t18", "workDate": "2026-07-09", "personId": "p4", "clientId": "c4", "task": "Drafting", "timeWorked": 3.25, "rate": 235, "total": 763.75 },
+    { "id": "t19", "workDate": "2026-07-10", "personId": "p1", "clientId": "c2", "task": "Review", "timeWorked": 2.25, "rate": 240, "total": 540 },
+    { "id": "t20", "workDate": "2026-07-10", "personId": "p2", "clientId": "c1", "task": "Drafting", "timeWorked": 2.75, "rate": 260, "total": 715 }
+  ],
+  "formulas": [
+    { "columnId": "grossFees", "label": "Gross", "expression": "{{hours}} * {{rate}}" },
+    { "columnId": "writeDown", "label": "Write Down", "expression": "{{grossFees}} * 10%" },
+    { "columnId": "netFees", "label": "Net", "expression": "{{grossFees}} - {{writeDown}}" }
+  ]
+}

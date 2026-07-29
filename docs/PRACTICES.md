@@ -19,6 +19,16 @@
 - Only comment when it adds real value (the "why", not the "what").
 - No convoluted or redundant comments.
 
+## Error handling
+
+- **Silence is bad.** Never swallow errors or failures without a trace.
+- Always log a clear, actionable error when something goes wrong (what failed,
+  where, and why), even when we recover with a fallback value.
+- Prefer surfacing errors to the user where they can act on them (e.g. invalid
+  formula in the authoring UI) over silently returning a default.
+- Crash-safe is not the same as silent: stay non-throwing at runtime, but make
+  the failure visible.
+
 ## Tests
 
 - Write tests for engine/logic (formulas, pivot, services).
@@ -34,6 +44,27 @@
 - Work on branches; open PRs; never push to `main` without review.
 - Stop and ask when unsure rather than guessing.
 - Use latest Node / React / Vite (and keep deps permissively licensed).
+- When PR feedback reveals coding-style preferences, record them in this file
+    before continuing so future work follows the updated style.
+- `docs/TODO.md` is the source of truth for status/progress.
+    Keep it current as tasks move through `todo` -> `wip` -> `in-pr` -> `in-main`.
+- Every PR that includes frontend/UI changes must include localhost preview
+    instructions in the PR description:
+    - run command (for example `npm run dev`)
+    - local URL (for example `http://localhost:5173`)
+- Merge rule: lint + test + build CI checks must be green before merging.
+
+## Data sources
+
+- Flex Reports never owns data. Access it through a `DataSource` seam
+  (`src/services/adapters/`), selected by a factory + `VITE_DATA_SOURCE` env toggle.
+- Seed data is just mock data that mimics a host app plugging in rows, so we can
+  build and test the flow. It must never leak hardcoded customer values into code.
+
+## Toolchain
+
+- Node >=22 required (declared in `engines.node`). Run `nvm use` (reads
+  `.nvmrc`) before `npm run test` / `lint` / `build`.
 
 ## Add your own rules below
 
