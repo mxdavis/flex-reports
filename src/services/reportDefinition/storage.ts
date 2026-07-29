@@ -1,15 +1,16 @@
 import type { ReportData, ReportField, SourceColumn } from './types'
 
-export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v1'
+export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v2'
+const REPORT_DATA_VERSION = 2
 
 const defaultFields: ReportField[] = [
-  { id: 'date', label: 'Date', columnId: 'column1' },
-  { id: 'people', label: 'People', columnId: 'column2' },
-  { id: 'clients', label: 'Clients', columnId: 'column3' },
-  { id: 'task', label: 'Task', columnId: 'column4' },
-  { id: 'hours', label: 'Hours', columnId: 'column5' },
-  { id: 'rate', label: 'Rate', columnId: 'column6' },
-  { id: 'total', label: 'Total', columnId: 'column7' },
+  { id: 'date', label: 'column1', columnId: 'column1' },
+  { id: 'people', label: 'column2', columnId: 'column2' },
+  { id: 'clients', label: 'column3', columnId: 'column3' },
+  { id: 'task', label: 'column4', columnId: 'column4' },
+  { id: 'hours', label: 'column5', columnId: 'column5' },
+  { id: 'rate', label: 'column6', columnId: 'column6' },
+  { id: 'total', label: 'column7', columnId: 'column7' },
 ]
 
 export function generateDefaultReportData(sourceColumns: SourceColumn[]): ReportData {
@@ -29,7 +30,7 @@ export function generateDefaultReportData(sourceColumns: SourceColumn[]): Report
   })
 
   return {
-    version: 1,
+    version: REPORT_DATA_VERSION,
     fields,
     columnLabels,
   }
@@ -49,7 +50,7 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
     }
 
     const parsed = JSON.parse(raw) as Partial<ReportData>
-    if (parsed.version !== 1 || !Array.isArray(parsed.fields)) {
+    if (parsed.version !== REPORT_DATA_VERSION || !Array.isArray(parsed.fields)) {
       return fallback
     }
 
@@ -91,7 +92,7 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
     }
 
     return {
-      version: 1,
+      version: REPORT_DATA_VERSION,
       fields,
       columnLabels,
     }

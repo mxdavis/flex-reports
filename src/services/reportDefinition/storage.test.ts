@@ -8,13 +8,13 @@ import {
 import type { SourceColumn } from './types'
 
 const sourceColumns: SourceColumn[] = [
-  { id: 'column1', key: 'workDate', defaultLabel: 'Date' },
-  { id: 'column2', key: 'personName', defaultLabel: 'People' },
-  { id: 'column3', key: 'clientName', defaultLabel: 'Clients' },
-  { id: 'column4', key: 'task', defaultLabel: 'Task' },
-  { id: 'column5', key: 'hours', defaultLabel: 'Hours' },
-  { id: 'column6', key: 'rate', defaultLabel: 'Rate' },
-  { id: 'column7', key: 'total', defaultLabel: 'Total' },
+  { id: 'column1', key: 'workDate', defaultLabel: 'column1' },
+  { id: 'column2', key: 'personName', defaultLabel: 'column2' },
+  { id: 'column3', key: 'clientName', defaultLabel: 'column3' },
+  { id: 'column4', key: 'task', defaultLabel: 'column4' },
+  { id: 'column5', key: 'hours', defaultLabel: 'column5' },
+  { id: 'column6', key: 'rate', defaultLabel: 'column6' },
+  { id: 'column7', key: 'total', defaultLabel: 'column7' },
 ]
 
 function createMemoryStorage(): Storage {
@@ -55,9 +55,9 @@ describe('reportDefinition storage', () => {
   it('creates a default reportData shape', () => {
     const defaults = generateDefaultReportData(sourceColumns)
 
-    expect(defaults.version).toBe(1)
+    expect(defaults.version).toBe(2)
     expect(defaults.fields.length).toBe(7)
-    expect(defaults.columnLabels.column1).toBe('Date')
+    expect(defaults.columnLabels.column1).toBe('column1')
   })
 
   it('persists and reloads reportData', () => {
@@ -94,7 +94,7 @@ describe('reportDefinition storage', () => {
     )
 
     const loaded = loadReportData(sourceColumns)
-    expect(loaded.version).toBe(1)
+    expect(loaded.version).toBe(2)
     expect(loaded.fields.length).toBe(7)
   })
 })

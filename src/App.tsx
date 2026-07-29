@@ -14,7 +14,6 @@ import type { ReportData, SourceColumn } from './services/reportDefinition/types
 import './App.css'
 
 const CURRENCY_FIELD_IDS = new Set(['rate', 'total'])
-const sourceDefaultLabels = ['Date', 'People', 'Clients', 'Task', 'Hours', 'Rate', 'Total']
 
 function formatCellValue(value: unknown): string {
   if (typeof value === 'number') {
@@ -48,7 +47,7 @@ function App() {
     return configuredColumns.map((key, index) => ({
       id: `column${index + 1}`,
       key,
-      defaultLabel: sourceDefaultLabels[index] ?? String(key),
+      defaultLabel: `column${index + 1}`,
     }))
   }, [])
 
@@ -74,7 +73,7 @@ function App() {
       const columnLabels = { ...defaults.columnLabels, ...previous.columnLabels }
 
       return {
-        version: 1,
+        version: 2,
         fields,
         columnLabels,
       }

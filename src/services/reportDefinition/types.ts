@@ -13,7 +13,7 @@ export type ReportField = {
 }
 
 export type ReportData = {
-  version: 1
+  version: 2
   fields: ReportField[]
   columnLabels: Record<string, string>
 }
