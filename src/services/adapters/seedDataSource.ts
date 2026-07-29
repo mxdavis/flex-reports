@@ -1,5 +1,6 @@
 import defaultSeed from '../../seeds/billing.seed.json'
 import { evaluateFormula } from '../formula/evaluateFormula'
+import type { FormulaContext } from '../formula/evaluateFormula'
 import type { BillingSeed, DataSource, ReportRow } from './types'
 
 // A DataSource backed by static seed JSON. It stands in for a real host adapter
@@ -25,15 +26,31 @@ export function createSeedDataSource(
 
   const clientsById = new Map(seed.client.map((client) => [client.id, client]))
 
+  const reportedColumns = new Set<string>()
+  function evaluateColumn(columnId: string, context: FormulaContext): number {
+    const result = evaluateFormula(formulas[columnId], context)
+    if (result.ok) {
+      return result.value
+    }
+
+    if (!reportedColumns.has(columnId)) {
+      reportedColumns.add(columnId)
+      console.error(
+        `[seedDataSource] Column "${columnId}" formula error: ${result.message}`,
+      )
+    }
+    return 0
+  }
+
   function getReportRows(): ReportRow[] {
     return seed.personClientTime.map((entry) => {
       const client = clientsById.get(entry.clientId)
-      const grossFees = evaluateFormula(formulas.grossFees, {
+      const grossFees = evaluateColumn('grossFees', {
         hours: entry.timeWorked,
         rate: entry.rate,
       })
-      const writeDown = evaluateFormula(formulas.writeDown, { grossFees })
-      const netFees = evaluateFormula(formulas.netFees, { grossFees, writeDown })
+      const writeDown = evaluateColumn('writeDown', { grossFees })
+      const netFees = evaluateColumn('netFees', { grossFees, writeDown })
 
       return {
         id: entry.id,

@@ -1,5 +1,14 @@
 export type FormulaContext = Record<string, number>
 
+export type FormulaErrorCode =
+  | 'empty-expression'
+  | 'unsupported-syntax'
+  | 'malformed-expression'
+
+export type FormulaResult =
+  | { ok: true; value: number }
+  | { ok: false; code: FormulaErrorCode; message: string }
+
 const TOKEN_REGEX = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g
 const SAFE_EXPRESSION_REGEX = /^[0-9+\-*/().\s]+$/
 
@@ -134,23 +143,43 @@ function evaluateTokens(tokens: Token[]): number {
 export function evaluateFormula(
   expression: string | undefined,
   context: FormulaContext,
-): number {
+): FormulaResult {
   if (!expression) {
-    return 0
+    return {
+      ok: false,
+      code: 'empty-expression',
+      message: 'Formula is empty.',
+    }
   }
 
   const prepared = injectTokens(normalizePercent(expression), context)
 
   if (!SAFE_EXPRESSION_REGEX.test(prepared)) {
-    return 0
+    return {
+      ok: false,
+      code: 'unsupported-syntax',
+      message: `Formula "${expression}" contains unsupported characters.`,
+    }
   }
 
   try {
-    const result = evaluateTokens(tokenize(prepared))
-    return Number.isFinite(result) ? result : 0
-  } catch {
-    // A malformed-but-allowed expression (e.g. `1..2`) parses to NaN or throws;
-    // treat it like a non-finite result so callers never crash.
-    return 0
+    const value = evaluateTokens(tokenize(prepared))
+    if (!Number.isFinite(value)) {
+      return {
+        ok: false,
+        code: 'malformed-expression',
+        message: `Formula "${expression}" did not evaluate to a finite number.`,
+      }
+    }
+    return { ok: true, value }
+  } catch (error) {
+    // Non-throwing at runtime: a malformed-but-allowed expression (e.g. `1..2`)
+    // is reported as an error result rather than crashing the caller.
+    const detail = error instanceof Error ? error.message : String(error)
+    return {
+      ok: false,
+      code: 'malformed-expression',
+      message: `Formula "${expression}" is invalid: ${detail}`,
+    }
   }
 }
