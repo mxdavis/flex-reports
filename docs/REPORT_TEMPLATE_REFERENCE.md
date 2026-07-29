@@ -60,6 +60,21 @@ A report column definition can be one of these:
 - Customer onboarding includes mapping source columns to semantics.
 - Saved mappings and report definitions are stored in app data, not code.
 
+## Persisted reportData
+
+The host app must persist report configuration so users do not re-enter mappings
+every time.
+
+- Store reportData with at least: column labels, semantic-to-source mappings,
+  formula definitions, and view/edit permission metadata.
+- A host-side generator can create starter reportData for first run
+  (for example a Rails service/helper).
+
+## Edit mode permissions
+
+- Not every user can edit report definitions.
+- UI must show edit controls only for users with edit permission.
+
 ## Notes
 
 When a concrete sample file is provided, add it here or in a sibling file under `docs/` as a canonical reference example.

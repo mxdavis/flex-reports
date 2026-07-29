@@ -42,6 +42,7 @@
     instructions in the PR description:
     - run command (for example `npm run dev`)
     - local URL (for example `http://localhost:5173`)
+- Merge rule: lint + test + build CI checks must be green before merging.
 
 ## Data sources
 
@@ -52,8 +53,8 @@
 
 ## Toolchain
 
-- Node >=22 required (declared in `engines.node`). Run `nvm use 26` before
-  `npm run test` / `lint` / `build`.
+- Node >=22 required (declared in `engines.node`). Run `nvm use` (reads
+  `.nvmrc`) before `npm run test` / `lint` / `build`.
 
 ## Add your own rules below
 
