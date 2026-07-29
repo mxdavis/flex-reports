@@ -38,12 +38,16 @@ Status tags used in each item:
 - [ ] (todo) Follow-up (PR #3 review): move formula application out of the seed data source into the report/formula layer (adapter returns raw rows only)
 - [ ] (todo) Follow-up (PR #3 review): replace bespoke `getTotalRevenue` with the pivot/aggregation engine
 - [ ] (todo) Build report definition store (localStorage)
+- [ ] (todo) Replace prototype localStorage report-definition persistence with host-app backed persistence (DB/service API) for shared, durable report configs
 - [ ] (todo) Define persisted `reportData` contract (column names, source attrs, mappings, formulas, permissions)
 - [ ] (todo) Add reportData generator flow for host apps (initial target: Rails helper/service)
 - [ ] (todo) Build Edit view (Excel-like)
 - [ ] (todo) Add edit-mode permission gating (only allowed users see edit controls/button)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)
+- [ ] (todo) Add orientation toggle for report display: horizontal (rows) vs vertical (pivoted columns), including people-as-columns use case.
 - [ ] (todo) Add customer UI column mapping (semantic field -> source column key)
+- [x] (in-pr) Add/remove report columns in edit mode (capped at 15)
+- [ ] (todo) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)
 - [ ] (todo) Add value-template columns with `{{value_name}}` placeholders
 - [ ] (todo) Improve table readability (header styling, alternating row colors)
 - [ ] (todo) Design seeded formula authoring UX (how formulas are created/edited/validated)

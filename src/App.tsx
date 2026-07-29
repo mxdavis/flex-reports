@@ -1,39 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   getBillingSeed,
   getReportRows,
   getTotalRevenue,
 } from './services/adapters'
 import type { ReportRow } from './services/adapters'
+import {
+  generateDefaultReportData,
+  loadReportData,
+  saveReportData,
+} from './services/reportDefinition/storage'
+import type { ReportData, SourceColumn } from './services/reportDefinition/types'
 import './App.css'
 
-type SemanticField = 'date' | 'people' | 'clients' | 'task' | 'hours' | 'rate' | 'total'
-
-type SourceColumn = {
-  id: string
-  key: keyof ReportRow
-  defaultLabel: string
-}
-
-const semanticFields: Array<{ id: SemanticField; label: string }> = [
-  { id: 'date', label: 'Date' },
-  { id: 'people', label: 'People' },
-  { id: 'clients', label: 'Clients' },
-  { id: 'task', label: 'Task' },
-  { id: 'hours', label: 'Hours' },
-  { id: 'rate', label: 'Rate' },
-  { id: 'total', label: 'Total' },
-]
-
-const defaultSemanticColumn: Record<SemanticField, string> = {
-  date: 'column1',
-  people: 'column2',
-  clients: 'column3',
-  task: 'column4',
-  hours: 'column5',
-  rate: 'column6',
-  total: 'column7',
-}
+const MAX_REPORT_COLUMNS = 15
+const MIN_REPORT_COLUMNS = 1
 
 function formatCellValue(value: unknown): string {
   if (typeof value === 'number') {
@@ -47,14 +28,29 @@ function formatCellValue(value: unknown): string {
   return String(value)
 }
 
+function getNextFieldId(existingIds: string[]): string {
+  let maxSequence = 0
+
+  for (const id of existingIds) {
+    const match = /^field-(\d+)$/.exec(id)
+    if (!match) {
+      continue
+    }
+
+    const sequence = Number(match[1])
+    if (Number.isFinite(sequence) && sequence > maxSequence) {
+      maxSequence = sequence
+    }
+  }
+
+  return `field-${maxSequence + 1}`
+}
+
 function App() {
   const seed = useMemo(() => getBillingSeed(), [])
   const rows = useMemo(() => getReportRows(), [])
   const totalRevenue = useMemo(() => getTotalRevenue(rows), [rows])
-  const [semanticMapping, setSemanticMapping] = useState<Record<SemanticField, string>>(
-    defaultSemanticColumn,
-  )
-  const [columnLabels, setColumnLabels] = useState<Record<string, string>>({})
+  const canEditReport = import.meta.env.VITE_CAN_EDIT_REPORT !== 'false'
 
   const sourceColumns = useMemo<SourceColumn[]>(() => {
     const configuredColumns: Array<keyof ReportRow> = [
@@ -70,49 +66,109 @@ function App() {
     return configuredColumns.map((key, index) => ({
       id: `column${index + 1}`,
       key,
-      defaultLabel: semanticFields[index]?.label ?? String(key),
+      defaultLabel: `column${index + 1}`,
     }))
   }, [])
 
+  const [reportData, setReportData] = useState<ReportData>(() => {
+    return loadReportData(sourceColumns)
+  })
+  const [draggedFieldId, setDraggedFieldId] = useState<string | null>(null)
+  const [dragOverFieldId, setDragOverFieldId] = useState<string | null>(null)
+  const [isTableFullscreen, setIsTableFullscreen] = useState(false)
+  const tableScrollRef = useRef<HTMLDivElement | null>(null)
+
   useEffect(() => {
-    if (sourceColumns.length === 0) {
-      return
-    }
-
-    setColumnLabels((previous) => {
-      const next = { ...previous }
-      for (const column of sourceColumns) {
-        if (!next[column.id]) {
-          next[column.id] = column.defaultLabel
+    setReportData((previous) => {
+      const defaults = generateDefaultReportData(sourceColumns)
+      const safeSourceKeys = new Set(sourceColumns.map((column) => column.key))
+      const fields = previous.fields.map((field, index) => {
+        if (safeSourceKeys.has(field.sourceKey)) {
+          return field
         }
-      }
-      return next
-    })
 
-    setSemanticMapping((previous) => {
-      const next = { ...previous }
-      for (const field of semanticFields) {
-        if (!next[field.id]) {
-          next[field.id] = defaultSemanticColumn[field.id]
+        return {
+          ...field,
+          sourceKey: defaults.fields[index]?.sourceKey ?? defaults.fields[0].sourceKey,
         }
+      })
+
+      return {
+        version: 3,
+        fields,
       }
-      return next
     })
   }, [sourceColumns])
 
-  const sourceColumnById = useMemo(() => {
-    return new Map(sourceColumns.map((column) => [column.id, column]))
+  useEffect(() => {
+    saveReportData(reportData)
+  }, [reportData])
+
+  useEffect(() => {
+    const tableScrollElement = tableScrollRef.current
+    if (!tableScrollElement) {
+      return
+    }
+
+    tableScrollElement.scrollTo({
+      left: tableScrollElement.scrollWidth,
+      behavior: 'smooth',
+    })
+  }, [reportData.fields.length])
+
+  useEffect(() => {
+    if (!isTableFullscreen) {
+      return
+    }
+
+    function handleEscape(event: KeyboardEvent): void {
+      if (event.key === 'Escape') {
+        setIsTableFullscreen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => {
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [isTableFullscreen])
+
+  const sourceColumnByKey = useMemo(() => {
+    return new Map(sourceColumns.map((column) => [column.key, column]))
   }, [sourceColumns])
 
   const sampleRow = rows[0]
 
-  function getMappedValue(row: ReportRow, field: SemanticField): string {
-    const mappedColumn = sourceColumnById.get(semanticMapping[field])
+  function getMappedValue(row: ReportRow, sourceKey: keyof ReportRow): string {
+    const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (!mappedColumn) {
       return ''
     }
 
     return formatCellValue(row[mappedColumn.key])
+  }
+
+  function moveField(sourceId: string, targetId: string): void {
+    if (sourceId === targetId) {
+      return
+    }
+
+    setReportData((previous) => {
+      const fromIndex = previous.fields.findIndex((field) => field.id === sourceId)
+      const toIndex = previous.fields.findIndex((field) => field.id === targetId)
+      if (fromIndex < 0 || toIndex < 0) {
+        return previous
+      }
+
+      const nextFields = [...previous.fields]
+      const [moved] = nextFields.splice(fromIndex, 1)
+      nextFields.splice(toIndex, 0, moved)
+
+      return {
+        ...previous,
+        fields: nextFields,
+      }
+    })
   }
 
   return (
@@ -125,55 +181,147 @@ function App() {
         </p>
       </header>
 
+      {canEditReport && (
       <section className="mapping-panel">
         <h2>Column Mapping</h2>
         <p>
-          Assign each semantic field to the customer&apos;s source columns and rename
-          headers without touching code.
+          Build your report layout here. Choose what each column pulls from,
+          rename the header users see, and drag cards to reorder the final output.
+        </p>
+        <p className="mapping-help">
+          Tip: column positions are fixed by order (column1, column2, ...). Reordering
+          cards updates the position labels automatically.
         </p>
 
         <div className="mapping-grid">
-          {semanticFields.map((field) => {
-            const selectedColumnId = semanticMapping[field.id]
-            const selectedColumn = sourceColumnById.get(selectedColumnId)
+          {reportData.fields.map((field, index) => {
+            const selectedSourceKey = field.sourceKey
+            const selectedColumn = sourceColumnByKey.get(selectedSourceKey)
             const sampleValue = sampleRow && selectedColumn
               ? formatCellValue(sampleRow[selectedColumn.key])
               : ''
 
             return (
-              <article key={field.id}>
-                <label htmlFor={`mapping-${field.id}`}>{field.label}</label>
-                <select
-                  id={`mapping-${field.id}`}
-                  value={selectedColumnId}
-                  onChange={(event) => {
-                    const nextColumn = event.target.value
-                    setSemanticMapping((previous) => ({
-                      ...previous,
-                      [field.id]: nextColumn,
-                    }))
-                  }}
-                >
-                  {sourceColumns.map((column) => (
-                    <option key={column.id} value={column.id}>
-                      {column.id} ({column.key})
-                    </option>
-                  ))}
-                </select>
+              <article
+                key={field.id}
+                draggable
+                onDragStart={(event) => {
+                  const target = event.target as HTMLElement
+                  if (target.closest('.drag-block') || target.closest('button')) {
+                    event.preventDefault()
+                    return
+                  }
 
-                <label htmlFor={`label-${field.id}`}>Display label</label>
-                <input
-                  id={`label-${field.id}`}
-                  type="text"
-                  value={columnLabels[selectedColumnId] ?? ''}
-                  onChange={(event) => {
-                    const nextLabel = event.target.value
-                    setColumnLabels((previous) => ({
-                      ...previous,
-                      [selectedColumnId]: nextLabel,
-                    }))
-                  }}
-                />
+                  setDraggedFieldId(field.id)
+                }}
+                onDragEnter={(event) => {
+                  event.preventDefault()
+                  if (draggedFieldId && draggedFieldId !== field.id) {
+                    setDragOverFieldId(field.id)
+                  }
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  if (draggedFieldId && draggedFieldId !== field.id) {
+                    setDragOverFieldId(field.id)
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  if (draggedFieldId) {
+                    moveField(draggedFieldId, field.id)
+                  }
+                  setDraggedFieldId(null)
+                  setDragOverFieldId(null)
+                }}
+                onDragEnd={() => {
+                  setDraggedFieldId(null)
+                  setDragOverFieldId(null)
+                }}
+                className={[
+                  draggedFieldId === field.id ? 'dragging' : '',
+                  dragOverFieldId === field.id ? 'drag-over' : '',
+                ].filter(Boolean).join(' ')}
+              >
+                <div className="column-card-header">
+                  <strong>{`column${index + 1}`}</strong>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReportData((previous) => {
+                        if (previous.fields.length <= MIN_REPORT_COLUMNS) {
+                          return previous
+                        }
+
+                        return {
+                          ...previous,
+                          fields: previous.fields.filter((current) => current.id !== field.id),
+                        }
+                      })
+                    }}
+                    disabled={reportData.fields.length <= MIN_REPORT_COLUMNS}
+                    title="Remove this column from the report layout."
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="drag-block">
+                  <label htmlFor={`mapping-${field.id}`}>{`column${index + 1}`}</label>
+                  <select
+                    id={`mapping-${field.id}`}
+                    value={selectedSourceKey}
+                    title="Choose which source data field fills this report column."
+                    onChange={(event) => {
+                      const nextSourceKey = event.target.value as keyof ReportRow
+                      setReportData((previous) => ({
+                        ...previous,
+                        fields: previous.fields.map((currentField) => {
+                          if (currentField.id !== field.id) {
+                            return currentField
+                          }
+
+                          const keepCustomLabel = currentField.label !== currentField.sourceKey
+
+                          return {
+                            ...currentField,
+                            sourceKey: nextSourceKey,
+                            label: keepCustomLabel ? currentField.label : String(nextSourceKey),
+                          }
+                        }),
+                      }))
+                    }}
+                  >
+                    {sourceColumns.map((column) => (
+                      <option key={column.id} value={column.key}>
+                        {column.id} ({column.key})
+                      </option>
+                    ))}
+                  </select>
+
+                  <label htmlFor={`label-${field.id}`}>Display label</label>
+                  <input
+                    id={`label-${field.id}`}
+                    type="text"
+                    value={field.label}
+                    title="Header text shown in the report output. You can override it."
+                    onChange={(event) => {
+                      const nextLabel = event.target.value
+                      setReportData((previous) => ({
+                        ...previous,
+                        fields: previous.fields.map((currentField) => {
+                          if (currentField.id !== field.id) {
+                            return currentField
+                          }
+
+                          return {
+                            ...currentField,
+                            label: nextLabel,
+                          }
+                        }),
+                      }))
+                    }}
+                  />
+                </div>
 
                 <small>
                   Sample value: <strong>{sampleValue || 'n/a'}</strong>
@@ -181,8 +329,48 @@ function App() {
               </article>
             )
           })}
+
+          <article className="add-column-card">
+            <button
+              type="button"
+              onClick={() => {
+                setReportData((previous) => {
+                  if (previous.fields.length >= MAX_REPORT_COLUMNS) {
+                    return previous
+                  }
+
+                  return {
+                    ...previous,
+                    fields: [
+                      ...previous.fields,
+                      {
+                        id: getNextFieldId(previous.fields.map((field) => field.id)),
+                        label: String(sourceColumns[0]?.key ?? 'workDate'),
+                        sourceKey: sourceColumns[0]?.key ?? 'workDate',
+                      },
+                    ],
+                  }
+                })
+              }}
+              disabled={reportData.fields.length >= MAX_REPORT_COLUMNS}
+              title="Add a new column to the end of the report layout."
+            >
+              Add column
+            </button>
+            <small>{reportData.fields.length}/{MAX_REPORT_COLUMNS} columns</small>
+          </article>
         </div>
       </section>
+      )}
+
+      {!canEditReport && (
+        <section className="mapping-panel">
+          <h2>Report View</h2>
+          <p>
+            You are viewing this report without edit permissions.
+          </p>
+        </section>
+      )}
 
       <section className="seed-stats">
         <article>
@@ -215,33 +403,51 @@ function App() {
         </ul>
       </section>
 
-      <section className="seed-table">
-        <h2>Sample rows</h2>
-        <table>
-          <thead>
-            <tr>
-              {semanticFields.map((field) => {
-                const columnId = semanticMapping[field.id]
-                return <th key={field.id}>{columnLabels[columnId] ?? columnId}</th>
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.slice(0, 10).map((row) => (
-              <tr key={row.id}>
-                {semanticFields.map((field) => {
-                  const mappedValue = getMappedValue(row, field.id)
-                  const isCurrency = field.id === 'rate' || field.id === 'total'
-                  return (
-                    <td key={`${row.id}-${field.id}`}>
-                      {isCurrency && mappedValue ? `$${mappedValue}` : mappedValue}
-                    </td>
-                  )
+      <section className={`seed-table ${isTableFullscreen ? 'fullscreen' : ''}`}>
+        <div className="seed-table-header">
+          <h2>Sample rows</h2>
+          <button
+            type="button"
+            onClick={() => {
+              setIsTableFullscreen((previous) => !previous)
+            }}
+            title={isTableFullscreen ? 'Exit expanded view' : 'Expand table to full screen'}
+          >
+            {isTableFullscreen ? 'Exit full screen' : 'Full screen'}
+          </button>
+        </div>
+        <div
+          className="seed-table-scroll"
+          role="region"
+          aria-label="Sample report rows"
+          ref={tableScrollRef}
+        >
+          <table>
+            <thead>
+              <tr>
+                {reportData.fields.map((field) => {
+                  return <th key={field.id}>{field.label}</th>
                 })}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.slice(0, 10).map((row) => (
+                <tr key={row.id}>
+                  {reportData.fields.map((field) => {
+                    const mappedValue = getMappedValue(row, field.sourceKey)
+                    const mappedColumn = sourceColumnByKey.get(field.sourceKey)
+                    const isCurrency = mappedColumn?.key === 'rate' || mappedColumn?.key === 'total'
+                    return (
+                      <td key={`${row.id}-${field.id}`}>
+                        {isCurrency && mappedValue ? `$${mappedValue}` : mappedValue}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   )
