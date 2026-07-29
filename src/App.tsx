@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   getBillingSeed,
   getReportRows,
@@ -74,6 +74,9 @@ function App() {
     return loadReportData(sourceColumns)
   })
   const [draggedFieldId, setDraggedFieldId] = useState<string | null>(null)
+  const [dragOverFieldId, setDragOverFieldId] = useState<string | null>(null)
+  const [isTableFullscreen, setIsTableFullscreen] = useState(false)
+  const tableScrollRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setReportData((previous) => {
@@ -100,6 +103,35 @@ function App() {
   useEffect(() => {
     saveReportData(reportData)
   }, [reportData])
+
+  useEffect(() => {
+    const tableScrollElement = tableScrollRef.current
+    if (!tableScrollElement) {
+      return
+    }
+
+    tableScrollElement.scrollTo({
+      left: tableScrollElement.scrollWidth,
+      behavior: 'smooth',
+    })
+  }, [reportData.fields.length])
+
+  useEffect(() => {
+    if (!isTableFullscreen) {
+      return
+    }
+
+    function handleEscape(event: KeyboardEvent): void {
+      if (event.key === 'Escape') {
+        setIsTableFullscreen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => {
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [isTableFullscreen])
 
   const sourceColumnByKey = useMemo(() => {
     return new Map(sourceColumns.map((column) => [column.key, column]))
@@ -153,8 +185,12 @@ function App() {
       <section className="mapping-panel">
         <h2>Column Mapping</h2>
         <p>
-          Assign each report column to a source attribute and rename headers
-          without touching code.
+          Build your report layout here. Choose what each column pulls from,
+          rename the header users see, and drag cards to reorder the final output.
+        </p>
+        <p className="mapping-help">
+          Tip: column positions are fixed by order (column1, column2, ...). Reordering
+          cards updates the position labels automatically.
         </p>
 
         <div className="mapping-grid">
@@ -169,11 +205,26 @@ function App() {
               <article
                 key={field.id}
                 draggable
-                onDragStart={() => {
+                onDragStart={(event) => {
+                  const target = event.target as HTMLElement
+                  if (target.closest('.drag-block') || target.closest('button')) {
+                    event.preventDefault()
+                    return
+                  }
+
                   setDraggedFieldId(field.id)
+                }}
+                onDragEnter={(event) => {
+                  event.preventDefault()
+                  if (draggedFieldId && draggedFieldId !== field.id) {
+                    setDragOverFieldId(field.id)
+                  }
                 }}
                 onDragOver={(event) => {
                   event.preventDefault()
+                  if (draggedFieldId && draggedFieldId !== field.id) {
+                    setDragOverFieldId(field.id)
+                  }
                 }}
                 onDrop={(event) => {
                   event.preventDefault()
@@ -181,11 +232,16 @@ function App() {
                     moveField(draggedFieldId, field.id)
                   }
                   setDraggedFieldId(null)
+                  setDragOverFieldId(null)
                 }}
                 onDragEnd={() => {
                   setDraggedFieldId(null)
+                  setDragOverFieldId(null)
                 }}
-                className={draggedFieldId === field.id ? 'dragging' : ''}
+                className={[
+                  draggedFieldId === field.id ? 'dragging' : '',
+                  dragOverFieldId === field.id ? 'drag-over' : '',
+                ].filter(Boolean).join(' ')}
               >
                 <div className="column-card-header">
                   <strong>{`column${index + 1}`}</strong>
@@ -204,63 +260,68 @@ function App() {
                       })
                     }}
                     disabled={reportData.fields.length <= MIN_REPORT_COLUMNS}
+                    title="Remove this column from the report layout."
                   >
                     Remove
                   </button>
                 </div>
-                <label htmlFor={`mapping-${field.id}`}>{`column${index + 1}`}</label>
-                <select
-                  id={`mapping-${field.id}`}
-                  value={selectedSourceKey}
-                  onChange={(event) => {
-                    const nextSourceKey = event.target.value as keyof ReportRow
-                    setReportData((previous) => ({
-                      ...previous,
-                      fields: previous.fields.map((currentField) => {
-                        if (currentField.id !== field.id) {
-                          return currentField
-                        }
+                <div className="drag-block">
+                  <label htmlFor={`mapping-${field.id}`}>{`column${index + 1}`}</label>
+                  <select
+                    id={`mapping-${field.id}`}
+                    value={selectedSourceKey}
+                    title="Choose which source data field fills this report column."
+                    onChange={(event) => {
+                      const nextSourceKey = event.target.value as keyof ReportRow
+                      setReportData((previous) => ({
+                        ...previous,
+                        fields: previous.fields.map((currentField) => {
+                          if (currentField.id !== field.id) {
+                            return currentField
+                          }
 
-                        const keepCustomLabel = currentField.label !== currentField.sourceKey
+                          const keepCustomLabel = currentField.label !== currentField.sourceKey
 
-                        return {
-                          ...currentField,
-                          sourceKey: nextSourceKey,
-                          label: keepCustomLabel ? currentField.label : String(nextSourceKey),
-                        }
-                      }),
-                    }))
-                  }}
-                >
-                  {sourceColumns.map((column) => (
-                    <option key={column.id} value={column.key}>
-                      {column.id} ({column.key})
-                    </option>
-                  ))}
-                </select>
+                          return {
+                            ...currentField,
+                            sourceKey: nextSourceKey,
+                            label: keepCustomLabel ? currentField.label : String(nextSourceKey),
+                          }
+                        }),
+                      }))
+                    }}
+                  >
+                    {sourceColumns.map((column) => (
+                      <option key={column.id} value={column.key}>
+                        {column.id} ({column.key})
+                      </option>
+                    ))}
+                  </select>
 
-                <label htmlFor={`label-${field.id}`}>Display label</label>
-                <input
-                  id={`label-${field.id}`}
-                  type="text"
-                  value={field.label}
-                  onChange={(event) => {
-                    const nextLabel = event.target.value
-                    setReportData((previous) => ({
-                      ...previous,
-                      fields: previous.fields.map((currentField) => {
-                        if (currentField.id !== field.id) {
-                          return currentField
-                        }
+                  <label htmlFor={`label-${field.id}`}>Display label</label>
+                  <input
+                    id={`label-${field.id}`}
+                    type="text"
+                    value={field.label}
+                    title="Header text shown in the report output. You can override it."
+                    onChange={(event) => {
+                      const nextLabel = event.target.value
+                      setReportData((previous) => ({
+                        ...previous,
+                        fields: previous.fields.map((currentField) => {
+                          if (currentField.id !== field.id) {
+                            return currentField
+                          }
 
-                        return {
-                          ...currentField,
-                          label: nextLabel,
-                        }
-                      }),
-                    }))
-                  }}
-                />
+                          return {
+                            ...currentField,
+                            label: nextLabel,
+                          }
+                        }),
+                      }))
+                    }}
+                  />
+                </div>
 
                 <small>
                   Sample value: <strong>{sampleValue || 'n/a'}</strong>
@@ -292,6 +353,7 @@ function App() {
                 })
               }}
               disabled={reportData.fields.length >= MAX_REPORT_COLUMNS}
+              title="Add a new column to the end of the report layout."
             >
               Add column
             </button>
@@ -341,33 +403,51 @@ function App() {
         </ul>
       </section>
 
-      <section className="seed-table">
-        <h2>Sample rows</h2>
-        <table>
-          <thead>
-            <tr>
-              {reportData.fields.map((field) => {
-                return <th key={field.id}>{field.label}</th>
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.slice(0, 10).map((row) => (
-              <tr key={row.id}>
+      <section className={`seed-table ${isTableFullscreen ? 'fullscreen' : ''}`}>
+        <div className="seed-table-header">
+          <h2>Sample rows</h2>
+          <button
+            type="button"
+            onClick={() => {
+              setIsTableFullscreen((previous) => !previous)
+            }}
+            title={isTableFullscreen ? 'Exit expanded view' : 'Expand table to full screen'}
+          >
+            {isTableFullscreen ? 'Exit full screen' : 'Full screen'}
+          </button>
+        </div>
+        <div
+          className="seed-table-scroll"
+          role="region"
+          aria-label="Sample report rows"
+          ref={tableScrollRef}
+        >
+          <table>
+            <thead>
+              <tr>
                 {reportData.fields.map((field) => {
-                  const mappedValue = getMappedValue(row, field.sourceKey)
-                  const mappedColumn = sourceColumnByKey.get(field.sourceKey)
-                  const isCurrency = mappedColumn?.key === 'rate' || mappedColumn?.key === 'total'
-                  return (
-                    <td key={`${row.id}-${field.id}`}>
-                      {isCurrency && mappedValue ? `$${mappedValue}` : mappedValue}
-                    </td>
-                  )
+                  return <th key={field.id}>{field.label}</th>
                 })}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.slice(0, 10).map((row) => (
+                <tr key={row.id}>
+                  {reportData.fields.map((field) => {
+                    const mappedValue = getMappedValue(row, field.sourceKey)
+                    const mappedColumn = sourceColumnByKey.get(field.sourceKey)
+                    const isCurrency = mappedColumn?.key === 'rate' || mappedColumn?.key === 'total'
+                    return (
+                      <td key={`${row.id}-${field.id}`}>
+                        {isCurrency && mappedValue ? `$${mappedValue}` : mappedValue}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   )

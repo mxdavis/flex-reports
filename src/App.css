@@ -3,6 +3,7 @@
   margin: 24px auto;
   display: grid;
   gap: 16px;
+  overflow-x: clip;
 }
 
 .seed-header,
@@ -43,6 +44,16 @@
   color: #475467;
 }
 
+.mapping-help {
+  margin-top: -2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d8e3f8;
+  background: #f5f8ff;
+  color: #344054;
+  font-size: 13px;
+}
+
 .mapping-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(230px, 1fr));
@@ -56,16 +67,31 @@
   background: #f8fafc;
   display: grid;
   gap: 6px;
+  position: relative;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 
 .mapping-grid article.dragging {
-  opacity: 0.6;
+  opacity: 0.62;
+  transform: scale(0.98) rotate(0.2deg);
+  box-shadow: 0 10px 22px rgba(16, 24, 40, 0.12);
+}
+
+.mapping-grid article.drag-over {
+  border-color: #7f56d9;
+  box-shadow: 0 0 0 2px rgba(127, 86, 217, 0.16);
+  transform: translateY(-1px);
 }
 
 .column-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.drag-block {
+  display: grid;
+  gap: 6px;
 }
 
 .column-card-header strong {
@@ -107,6 +133,10 @@
 
 .mapping-grid small {
   color: #475467;
+}
+
+.field-hint {
+  font-size: 12px;
 }
 
 .add-column-card {
@@ -180,10 +210,44 @@
 
 .seed-table {
   padding: 16px;
+  overflow-x: hidden;
+}
+
+.seed-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.seed-table-header h2 {
+  margin: 0;
+}
+
+.seed-table-header button {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 6px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.seed-table-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  border: 1px solid #eaecf0;
+  border-radius: 10px;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 .seed-table table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
 }
 
@@ -191,13 +255,33 @@
 .seed-table td {
   text-align: left;
   border-bottom: 1px solid #eaecf0;
-  padding: 8px 6px;
+  padding: 8px 10px;
+  min-width: 140px;
+  white-space: nowrap;
 }
 
 .seed-table th {
   color: #475467;
   font-size: 12px;
   text-transform: uppercase;
+  background: #fcfcfd;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.seed-table.fullscreen {
+  position: fixed;
+  inset: 16px;
+  z-index: 30;
+  margin: 0;
+  box-shadow: 0 20px 40px rgba(16, 24, 40, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.seed-table.fullscreen .seed-table-scroll {
+  flex: 1;
 }
 
 @media (max-width: 900px) {
@@ -212,5 +296,14 @@
   .seed-formulas li {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .seed-table.fullscreen {
+    inset: 8px;
+  }
+
+  .seed-table th,
+  .seed-table td {
+    min-width: 130px;
   }
 }
