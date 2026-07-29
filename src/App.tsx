@@ -73,6 +73,7 @@ function App() {
   const [reportData, setReportData] = useState<ReportData>(() => {
     return loadReportData(sourceColumns)
   })
+  const [draggedFieldId, setDraggedFieldId] = useState<string | null>(null)
 
   useEffect(() => {
     setReportData((previous) => {
@@ -115,6 +116,29 @@ function App() {
     return formatCellValue(row[mappedColumn.key])
   }
 
+  function moveField(sourceId: string, targetId: string): void {
+    if (sourceId === targetId) {
+      return
+    }
+
+    setReportData((previous) => {
+      const fromIndex = previous.fields.findIndex((field) => field.id === sourceId)
+      const toIndex = previous.fields.findIndex((field) => field.id === targetId)
+      if (fromIndex < 0 || toIndex < 0) {
+        return previous
+      }
+
+      const nextFields = [...previous.fields]
+      const [moved] = nextFields.splice(fromIndex, 1)
+      nextFields.splice(toIndex, 0, moved)
+
+      return {
+        ...previous,
+        fields: nextFields,
+      }
+    })
+  }
+
   return (
     <div className="seed-page">
       <header className="seed-header">
@@ -133,37 +157,6 @@ function App() {
           without touching code.
         </p>
 
-        <div className="mapping-actions">
-          <button
-            type="button"
-            onClick={() => {
-              setReportData((previous) => {
-                if (previous.fields.length >= MAX_REPORT_COLUMNS) {
-                  return previous
-                }
-
-                return {
-                  ...previous,
-                  fields: [
-                    ...previous.fields,
-                    {
-                      id: getNextFieldId(previous.fields.map((field) => field.id)),
-                      label: String(sourceColumns[0]?.key ?? 'workDate'),
-                      sourceKey: sourceColumns[0]?.key ?? 'workDate',
-                    },
-                  ],
-                }
-              })
-            }}
-            disabled={reportData.fields.length >= MAX_REPORT_COLUMNS}
-          >
-            Add column
-          </button>
-          <small>
-            {reportData.fields.length}/{MAX_REPORT_COLUMNS} columns
-          </small>
-        </div>
-
         <div className="mapping-grid">
           {reportData.fields.map((field, index) => {
             const selectedSourceKey = field.sourceKey
@@ -173,7 +166,27 @@ function App() {
               : ''
 
             return (
-              <article key={field.id}>
+              <article
+                key={field.id}
+                draggable
+                onDragStart={() => {
+                  setDraggedFieldId(field.id)
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault()
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  if (draggedFieldId) {
+                    moveField(draggedFieldId, field.id)
+                  }
+                  setDraggedFieldId(null)
+                }}
+                onDragEnd={() => {
+                  setDraggedFieldId(null)
+                }}
+                className={draggedFieldId === field.id ? 'dragging' : ''}
+              >
                 <div className="column-card-header">
                   <strong>{`column${index + 1}`}</strong>
                   <button
@@ -255,6 +268,35 @@ function App() {
               </article>
             )
           })}
+
+          <article className="add-column-card">
+            <button
+              type="button"
+              onClick={() => {
+                setReportData((previous) => {
+                  if (previous.fields.length >= MAX_REPORT_COLUMNS) {
+                    return previous
+                  }
+
+                  return {
+                    ...previous,
+                    fields: [
+                      ...previous.fields,
+                      {
+                        id: getNextFieldId(previous.fields.map((field) => field.id)),
+                        label: String(sourceColumns[0]?.key ?? 'workDate'),
+                        sourceKey: sourceColumns[0]?.key ?? 'workDate',
+                      },
+                    ],
+                  }
+                })
+              }}
+              disabled={reportData.fields.length >= MAX_REPORT_COLUMNS}
+            >
+              Add column
+            </button>
+            <small>{reportData.fields.length}/{MAX_REPORT_COLUMNS} columns</small>
+          </article>
         </div>
       </section>
       )}
