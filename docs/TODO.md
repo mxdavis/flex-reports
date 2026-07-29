@@ -1,30 +1,44 @@
 # TODO — live tracker
 
-Temporary working tracker. Legend:
-- `[ ]` not started · `[~]` in progress · `[x]` done
-- **Status** column: `todo` · `wip` · `in-pr` · `in-main`
+Update this file as work moves from idea -> branch -> PR -> main.
 
-Keep this current: what's being worked on, what's in a PR, what's merged to `main`.
+Legend:
+- `[ ]` not started
+- `[~]` in progress
+- `[x]` done
 
-## Now / in flight
+Status tags used in each item:
+- `(todo)`
+- `(wip)`
+- `(in-pr)`
+- `(in-main)`
 
-| Task | Branch | Status |
-| --- | --- | --- |
-| Foundational docs (README, SPEC, DECISIONS, PRACTICES, TODO) | `docs/project-foundations` | wip |
+## Current status
 
-## Backlog (POC)
+- [x] (in-pr) Foundational docs created on `docs/project-foundations`
+	- Files: `README.md`, `docs/SPEC.md`, `docs/DECISIONS.md`, `docs/PRACTICES.md`, `docs/TODO.md`, `.gitignore`
+- [~] (wip) Docs PR creation from terminal automation
+	- Branch is pushed.
+	- Compare URL: https://github.com/mxdavis/flex-reports/compare/main...docs/project-foundations?expand=1
 
-- [ ] **Scaffold** — Vite + React + TS + Vitest, folder structure, ESLint/Prettier
-- [ ] **Formula engine** — tokenize, `{{ref}}` resolve, `%` handling, dependency graph, evaluate (+ tests)
-- [ ] **Pivot engine** — group + aggregate (sum/avg/count/min/max) (+ tests)
-- [ ] **Data adapter** — `dataSource` interface + `mockRestAdapter` (Timeslips-shaped sample data)
-- [ ] **Persistence** — `reportStore` (localStorage)
-- [ ] **Edit view** — Excel-like column builder + formula bar + live preview
-- [ ] **Report view** — filters + pivot table + Nivo chart
-- [ ] **CSV export**
-- [ ] **License seam** — non-enforcing `licenseKey` config
-- [ ] **Demo seed** — a ready-made sample report on first load
+## POC task list
 
-## Done / merged to main
+- [ ] (todo) Scaffold app: latest Vite + React + TypeScript + Vitest
+- [ ] (todo) Add lint/format baseline and scripts
+- [ ] (todo) Create MVC-style folder layout (`models`, `services`, `controllers`, `views`)
+- [ ] (todo) Build formula engine (`+ - / * % ( )`, `{{data.attr}}`, `{{colId}}`, cycle detection)
+- [ ] (todo) Add formula engine unit tests
+- [ ] (todo) Build pivot engine (group + aggregate: sum/avg/count/min/max)
+- [ ] (todo) Add pivot engine unit tests
+- [ ] (todo) Build data adapter interface + mock Timeslips-shaped adapter
+- [ ] (todo) Build report definition store (localStorage)
+- [ ] (todo) Build Edit view (Excel-like)
+- [ ] (todo) Build Report view (clean web page with filters + table + chart)
+- [ ] (todo) Add per-component stylesheets
+- [ ] (todo) Add CSV export
+- [ ] (todo) Add non-enforcing `licenseKey` seam
+- [ ] (todo) Seed demo report for first-load wow factor
 
-_(nothing yet)_
+## Main branch history
+
+- [ ] (in-main) Nothing merged yet
