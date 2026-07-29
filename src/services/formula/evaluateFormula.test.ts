@@ -33,4 +33,14 @@ describe('evaluateFormula', () => {
   it('returns 0 for malformed-but-allowed expressions', () => {
     expect(evaluateFormula('1..2', {})).toBe(0)
   })
+
+  it('respects operator precedence and parentheses', () => {
+    expect(evaluateFormula('2 + 3 * 4', {})).toBe(14)
+    expect(evaluateFormula('(2 + 3) * 4', {})).toBe(20)
+    expect(evaluateFormula('-{{rate}} + 10', { rate: 4 })).toBe(6)
+  })
+
+  it('returns 0 for unbalanced parentheses', () => {
+    expect(evaluateFormula('(2 + 3', {})).toBe(0)
+  })
 })
