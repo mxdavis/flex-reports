@@ -23,8 +23,9 @@ Status tags used in each item:
   - PR: docs/project foundations
 - [x] (in-main) Plain scaffold merged to main
   - PR: #1 chore: plain scaffold
-- [~] (in-pr) Billing seed data + seed-backed tests ready for PR
-  - Branch: feat/billing-seed-data
+- [~] (in-pr) Seed DataSource + UI column mapping + formula preview (combined)
+  - PR: #3 (base `main`). Former PR #2 closed and folded in.
+  - Includes: DataSource factory + `VITE_DATA_SOURCE` toggle, no-eval formula parser, `engines.node` >=22
 
 ## POC task list
 
@@ -32,12 +33,20 @@ Status tags used in each item:
 - [x] (in-pr) Add Vitest setup and seed-backed tests
 - [x] (in-pr) Build data adapter + mock billing seed dataset
 - [x] (in-pr) Build seed preview page in app (stats, formulas, sample rows)
-- [~] (wip) Address PR #2 review: DataSource factory + `VITE_DATA_SOURCE` env toggle, safer formula evaluator, `engines.node` >=22
+- [x] (in-pr) Address PR #2 review: DataSource factory + `VITE_DATA_SOURCE` env toggle, no-eval formula parser, `engines.node` >=22
+- [ ] (todo) Follow-up (PR #3 review): replace hardcoded `semanticFields`/default mapping in `App.tsx` with a schema-driven, saved report definition (JSON) sourced from `getSchema()`
+- [ ] (todo) Follow-up (PR #3 review): move formula application out of the seed data source into the report/formula layer (adapter returns raw rows only)
+- [ ] (todo) Follow-up (PR #3 review): replace bespoke `getTotalRevenue` with the pivot/aggregation engine
 - [ ] (todo) Build report definition store (localStorage)
+- [ ] (todo) Define persisted `reportData` contract (column names, source attrs, mappings, formulas, permissions)
+- [ ] (todo) Add reportData generator flow for host apps (initial target: Rails helper/service)
 - [ ] (todo) Build Edit view (Excel-like)
+- [ ] (todo) Add edit-mode permission gating (only allowed users see edit controls/button)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)
 - [ ] (todo) Add customer UI column mapping (semantic field -> source column key)
 - [ ] (todo) Add value-template columns with `{{value_name}}` placeholders
+- [ ] (todo) Improve table readability (header styling, alternating row colors)
+- [ ] (todo) Design seeded formula authoring UX (how formulas are created/edited/validated)
 - [ ] (todo) Add per-component stylesheets (final split by component)
 - [ ] (todo) Add CSV export
 - [ ] (todo) Add non-enforcing licenseKey seam
