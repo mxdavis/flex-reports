@@ -19,6 +19,16 @@
 - Only comment when it adds real value (the "why", not the "what").
 - No convoluted or redundant comments.
 
+## Error handling
+
+- **Silence is bad.** Never swallow errors or failures without a trace.
+- Always log a clear, actionable error when something goes wrong (what failed,
+  where, and why), even when we recover with a fallback value.
+- Prefer surfacing errors to the user where they can act on them (e.g. invalid
+  formula in the authoring UI) over silently returning a default.
+- Crash-safe is not the same as silent: stay non-throwing at runtime, but make
+  the failure visible.
+
 ## Tests
 
 - Write tests for engine/logic (formulas, pivot, services).
