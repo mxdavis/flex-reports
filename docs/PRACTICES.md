@@ -38,6 +38,7 @@
 
 - One stylesheet per component. Clean, uncluttered look.
 - Edit view resembles a spreadsheet (Excel-like). Saved view resembles a polished web page.
+- Prefer small, shareable/reusable UI components whenever possible.
 
 ## Process
 
