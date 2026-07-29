@@ -44,3 +44,12 @@ npm test
 - **Is not:** a data store, a spreadsheet host, or a billing system.
 
 See [docs/SPEC.md](docs/SPEC.md) for the details.
+
+## Parking Lot
+
+Use this section for ideas that should be tracked but not implemented yet.
+
+- Add a dedicated edit-mode grid that feels closer to Excel.
+- Add saved report view with filters and chart renderer.
+- Add CSV/PDF export options.
+- Add non-enforcing `licenseKey` seam and follow-up key validation design.

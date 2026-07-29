@@ -34,6 +34,14 @@
 - Work on branches; open PRs; never push to `main` without review.
 - Stop and ask when unsure rather than guessing.
 - Use latest Node / React / Vite (and keep deps permissively licensed).
+- When PR feedback reveals coding-style preferences, record them in this file
+    before continuing so future work follows the updated style.
+- `docs/TODO.md` is the source of truth for status/progress.
+    Keep it current as tasks move through `todo` -> `wip` -> `in-pr` -> `in-main`.
+- Every PR that includes frontend/UI changes must include localhost preview
+    instructions in the PR description:
+    - run command (for example `npm run dev`)
+    - local URL (for example `http://localhost:5173`)
 
 ## Add your own rules below
 

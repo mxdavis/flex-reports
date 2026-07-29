@@ -15,30 +15,28 @@ Status tags used in each item:
 
 ## Current status
 
-- [x] (in-pr) Foundational docs created on `docs/project-foundations`
-	- Files: `README.md`, `docs/SPEC.md`, `docs/DECISIONS.md`, `docs/PRACTICES.md`, `docs/TODO.md`, `.gitignore`
-- [~] (wip) Docs PR creation from terminal automation
-	- Branch is pushed.
-	- Compare URL: https://github.com/mxdavis/flex-reports/compare/main...docs/project-foundations?expand=1
+- [x] (in-main) Foundational docs merged to main
+  - PR: docs/project foundations
+- [x] (in-main) Plain scaffold merged to main
+  - PR: #1 chore: plain scaffold
+- [~] (in-pr) Billing seed data + seed-backed tests ready for PR
+  - Branch: feat/billing-seed-data
 
 ## POC task list
 
-- [ ] (todo) Scaffold app: latest Vite + React + TypeScript + Vitest
-- [ ] (todo) Add lint/format baseline and scripts
-- [ ] (todo) Create MVC-style folder layout (`models`, `services`, `controllers`, `views`)
-- [ ] (todo) Build formula engine (`+ - / * % ( )`, `{{data.attr}}`, `{{colId}}`, cycle detection)
-- [ ] (todo) Add formula engine unit tests
-- [ ] (todo) Build pivot engine (group + aggregate: sum/avg/count/min/max)
-- [ ] (todo) Add pivot engine unit tests
-- [ ] (todo) Build data adapter interface + mock Timeslips-shaped adapter
+- [x] (in-main) Scaffold app: latest Vite + React + TypeScript
+- [x] (in-pr) Add Vitest setup and seed-backed tests
+- [x] (in-pr) Build data adapter + mock billing seed dataset
+- [x] (in-pr) Build seed preview page in app (stats, formulas, sample rows)
 - [ ] (todo) Build report definition store (localStorage)
 - [ ] (todo) Build Edit view (Excel-like)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)
-- [ ] (todo) Add per-component stylesheets
+- [ ] (todo) Add per-component stylesheets (final split by component)
 - [ ] (todo) Add CSV export
-- [ ] (todo) Add non-enforcing `licenseKey` seam
+- [ ] (todo) Add non-enforcing licenseKey seam
 - [ ] (todo) Seed demo report for first-load wow factor
 
 ## Main branch history
 
-- [ ] (in-main) Nothing merged yet
+- [x] (in-main) Foundational docs
+- [x] (in-main) Plain scaffold (PR #1)
