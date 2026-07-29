@@ -13,6 +13,10 @@ Status tags used in each item:
 - `(in-pr)`
 - `(in-main)`
 
+## Success definition
+
+- [ ] (todo) Project success milestone: recreate the exact reference spreadsheet in this app using seed-data attributes and UI mappings/formulas, with no hardcoded customer values in code.
+
 ## Current status
 
 - [x] (in-main) Foundational docs merged to main
@@ -31,6 +35,8 @@ Status tags used in each item:
 - [ ] (todo) Build report definition store (localStorage)
 - [ ] (todo) Build Edit view (Excel-like)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)
+- [ ] (todo) Add customer UI column mapping (semantic field -> source column key)
+- [ ] (todo) Add value-template columns with `{{value_name}}` placeholders
 - [ ] (todo) Add per-component stylesheets (final split by component)
 - [ ] (todo) Add CSV export
 - [ ] (todo) Add non-enforcing licenseKey seam

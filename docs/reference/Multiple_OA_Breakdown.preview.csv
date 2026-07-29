@@ -1,0 +1,18 @@
+OA 2,OA 1,Client,OA 2 %,Total Billed,Billed for OA 2,firm ,,OA 1 Amount to be Removed from Billed,,,,,OA 2 Amount to be Added to Billed,,,
+Kronenberg,Wimpfheimer,KRBK Law Offices,0.1,8685.25,=E2*D2,il,,Sum of Billed for OA 2,Column Labels,,,,Sum of Billed for OA 2,Column Labels,,
+Kronenberg,Schwell,"Cummings Insurance Agency, Inc",0.35,13494.65,=E3*D3,us,,Row Labels,us,Grand Total,,,Row Labels,us,il,Grand Total
+Kronenberg,Schwell,"Dunaway Insurance Agency, Inc.",0.35,23120.45,=E4*D4,us,,Schwell,204733.64800000002,204733.64800000002,,,Aronoff,119111.03,,119111.03
+Kronenberg,Schwell,Eagle Harbor Insurance,0.35,8300.15,=E5*D5,us,,Grand Total,204733.64800000002,204733.64800000002,,,Kronenberg,76313.618,868.5250000000001,77182.143
+Kronenberg,Schwell,Eli Cohen Agency,0.35,1002.5,=E6*D6,us,,,,,,,Bernstein,,3458,3458
+Kronenberg,Schwell,Fidens International LLC,0.35,31028.47,=E7*D7,us,,,,,,,Schwell,9309,,9309
+Kronenberg,Schwell,"Global Risk Partners, LLC",0.35,23072,=E8*D8,us,,,,,,,Grand Total,204733.648,4326.525,209060.173
+Kronenberg,Schwell,"Hayden Insurance Services, Inc",0.35,68771.69,=E9*D9,us,,,,,,,,,,
+Kronenberg,Schwell,Stewart Insurance Agency,0.35,4794,=E10*D10,us,,,,,,,,,,
+Kronenberg,Schwell,Tomlin Insurance Inc.,0.35,27938.97,=E11*D11,us,,,,,,,,,,
+Kronenberg,Schwell,"Waterfield & Associates, Inc.",0.33,17517,=E12*D12,us,,,,,,,,,,
+Aronoff,Schwell,Confie Seguros,0.2,35448,=E13*D13,us,,,,,,,,,,
+Aronoff,Schwell,Ely Tendler Strategic & Legal,0.25,130150,=E14*D14,us,,,,,,,,,,
+Aronoff,Schwell,"Idea and Design Works, LLC",0.75,5502,=E15*D15,us,,,,,,,,,,
+Aronoff,Schwell,"NanoVibronix Inc, Commercial",0.5,11521,=E16*D16,us,,,,,,,,,,
+Aronoff,Schwell,Zenofon,1,69596.93,=E17*D17,us,,,,,,,,,,
+Kronenberg,Schwell,hart ,0.35,14000,=E18*D18,us,,,,,,,,,,
