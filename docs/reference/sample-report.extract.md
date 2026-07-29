@@ -14,3 +14,4 @@
 
 - Formula expressions are captured exactly as stored in workbook cells.
 - Preview CSV files are capped at 200 rows per sheet to keep repo size reasonable.
+- Free-text internal notes are sanitized/redacted in committed reference artifacts.

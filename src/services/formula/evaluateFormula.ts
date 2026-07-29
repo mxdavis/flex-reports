@@ -142,7 +142,7 @@ export function evaluateFormula(
   const prepared = injectTokens(normalizePercent(expression), context)
 
   if (!SAFE_EXPRESSION_REGEX.test(prepared)) {
-    throw new Error('Unsupported formula syntax')
+    return 0
   }
 
   try {

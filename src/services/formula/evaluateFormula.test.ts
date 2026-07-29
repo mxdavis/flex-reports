@@ -43,4 +43,8 @@ describe('evaluateFormula', () => {
   it('returns 0 for unbalanced parentheses', () => {
     expect(evaluateFormula('(2 + 3', {})).toBe(0)
   })
+
+  it('returns 0 for unsupported syntax instead of throwing', () => {
+    expect(evaluateFormula('Math.max(1,2)', {})).toBe(0)
+  })
 })
