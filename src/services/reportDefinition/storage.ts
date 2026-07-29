@@ -4,13 +4,11 @@ import type {
   ReportField,
   SourceColumn,
 } from './types'
+import { getDefaultDisplayType } from './displayType'
 
 export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v4'
+export const LEGACY_REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v3'
 const REPORT_DATA_VERSION = 4
-
-function getDefaultDisplayType(_sourceKey: SourceColumn['key']): DisplayType {
-  return 'string'
-}
 
 function isDisplayType(value: unknown): value is DisplayType {
   return value === 'currency'
@@ -61,7 +59,11 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
   }
 
   try {
-    const raw = window.localStorage.getItem(REPORT_DATA_STORAGE_KEY)
+    const latestRaw = window.localStorage.getItem(REPORT_DATA_STORAGE_KEY)
+    const legacyRaw = latestRaw ? null : window.localStorage.getItem(LEGACY_REPORT_DATA_STORAGE_KEY)
+    const raw = latestRaw ?? legacyRaw
+    const usedLegacyStorageKey = Boolean(legacyRaw)
+
     if (!raw) {
       return fallback
     }
@@ -108,10 +110,21 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       return fallback
     }
 
-    return {
+    const loadedReportData: ReportData = {
       version: REPORT_DATA_VERSION,
       fields,
     }
+
+    if (usedLegacyStorageKey) {
+      saveReportData(loadedReportData)
+      try {
+        window.localStorage.removeItem(LEGACY_REPORT_DATA_STORAGE_KEY)
+      } catch {
+        // Ignore cleanup failures when legacy key cannot be removed.
+      }
+    }
+
+    return loadedReportData
   } catch {
     return fallback
   }

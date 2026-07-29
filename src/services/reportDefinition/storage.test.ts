@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   generateDefaultReportData,
+  LEGACY_REPORT_DATA_STORAGE_KEY,
   loadReportData,
   REPORT_DATA_STORAGE_KEY,
   saveReportData,
@@ -101,7 +102,7 @@ describe('reportDefinition storage', () => {
 
   it('migrates v3 data by applying string default display types', () => {
     window.localStorage.setItem(
-      REPORT_DATA_STORAGE_KEY,
+      LEGACY_REPORT_DATA_STORAGE_KEY,
       JSON.stringify({
         version: 3,
         fields: [
@@ -116,5 +117,7 @@ describe('reportDefinition storage', () => {
     expect(loaded.version).toBe(4)
     expect(loaded.fields.find((field) => field.id === 'date')?.displayType).toBe('string')
     expect(loaded.fields.find((field) => field.id === 'rate')?.displayType).toBe('string')
+    expect(window.localStorage.getItem(REPORT_DATA_STORAGE_KEY)).toBeTruthy()
+    expect(window.localStorage.getItem(LEGACY_REPORT_DATA_STORAGE_KEY)).toBeNull()
   })
 })

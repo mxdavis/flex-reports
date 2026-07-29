@@ -10,6 +10,7 @@ import {
   loadReportData,
   saveReportData,
 } from './services/reportDefinition/storage'
+import { getDefaultDisplayType } from './services/reportDefinition/displayType'
 import type {
   DisplayType,
   ReportData,
@@ -26,10 +27,6 @@ const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'date', label: 'Date' },
   { value: 'string', label: 'String' },
 ]
-
-function getDefaultDisplayType(_sourceKey: keyof ReportRow): DisplayType {
-  return 'string'
-}
 
 function formatCellValue(value: unknown, displayType: DisplayType): string {
   if (value === null || value === undefined) {
