@@ -32,6 +32,7 @@ Status tags used in each item:
 - [x] (in-pr) Add Vitest setup and seed-backed tests
 - [x] (in-pr) Build data adapter + mock billing seed dataset
 - [x] (in-pr) Build seed preview page in app (stats, formulas, sample rows)
+- [~] (wip) Address PR #2 review: DataSource factory + `VITE_DATA_SOURCE` env toggle, safer formula evaluator, `engines.node` >=22
 - [ ] (todo) Build report definition store (localStorage)
 - [ ] (todo) Build Edit view (Excel-like)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)

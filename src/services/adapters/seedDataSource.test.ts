@@ -4,9 +4,9 @@ import {
   getReportRows,
   getRevenueByPerson,
   getTotalRevenue,
-} from './mockDataSource'
+} from './index'
 
-describe('mockDataSource', () => {
+describe('seedDataSource', () => {
   it('loads seed content', () => {
     const seed = getBillingSeed()
 

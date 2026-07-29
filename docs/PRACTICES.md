@@ -43,6 +43,18 @@
     - run command (for example `npm run dev`)
     - local URL (for example `http://localhost:5173`)
 
+## Data sources
+
+- Flex Reports never owns data. Access it through a `DataSource` seam
+  (`src/services/adapters/`), selected by a factory + `VITE_DATA_SOURCE` env toggle.
+- Seed data is just mock data that mimics a host app plugging in rows, so we can
+  build and test the flow. It must never leak hardcoded customer values into code.
+
+## Toolchain
+
+- Node >=22 required (declared in `engines.node`). Run `nvm use 26` before
+  `npm run test` / `lint` / `build`.
+
 ## Add your own rules below
 
 <!-- e.g. "prefer named exports", "no default exports", "max 200 lines per file" -->

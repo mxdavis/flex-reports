@@ -3,8 +3,8 @@ import {
   getBillingSeed,
   getReportRows,
   getTotalRevenue,
-} from './services/adapters/mockDataSource'
-import type { ReportRow } from './models/billingSeed'
+} from './services/adapters'
+import type { ReportRow } from './services/adapters'
 import './App.css'
 
 type SemanticField = 'date' | 'people' | 'clients' | 'task' | 'hours' | 'rate' | 'total'

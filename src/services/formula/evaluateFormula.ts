@@ -15,19 +15,25 @@ function injectTokens(expression: string, context: FormulaContext): string {
 }
 
 export function evaluateFormula(
-  expression: string,
+  expression: string | undefined,
   context: FormulaContext,
 ): number {
+  if (!expression) {
+    return 0
+  }
+
   const prepared = injectTokens(normalizePercent(expression), context)
 
   if (!SAFE_EXPRESSION_REGEX.test(prepared)) {
     throw new Error('Unsupported formula syntax')
   }
 
-  const result = Function(`return (${prepared})`)()
-  if (typeof result !== 'number' || !Number.isFinite(result)) {
+  try {
+    const result = Function(`return (${prepared})`)()
+    return typeof result === 'number' && Number.isFinite(result) ? result : 0
+  } catch {
+    // A malformed-but-allowed expression (e.g. `1..2`) can still throw at eval
+    // time; treat it like a non-finite result so callers never crash.
     return 0
   }
-
-  return result
 }

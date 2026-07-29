@@ -24,4 +24,13 @@ describe('evaluateFormula', () => {
 
     expect(result).toBe(20)
   })
+
+  it('returns 0 for an empty or undefined expression', () => {
+    expect(evaluateFormula('', {})).toBe(0)
+    expect(evaluateFormula(undefined, {})).toBe(0)
+  })
+
+  it('returns 0 for malformed-but-allowed expressions', () => {
+    expect(evaluateFormula('1..2', {})).toBe(0)
+  })
 })
