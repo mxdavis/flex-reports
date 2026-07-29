@@ -5,7 +5,7 @@ import {
   REPORT_DATA_STORAGE_KEY,
   saveReportData,
 } from './storage'
-import type { SourceColumn } from './types'
+import type { ReportData, SourceColumn } from './types'
 
 const sourceColumns: SourceColumn[] = [
   { id: 'column1', key: 'workDate', defaultLabel: 'column1' },
@@ -63,7 +63,7 @@ describe('reportDefinition storage', () => {
 
   it('persists and reloads reportData', () => {
     const defaults = generateDefaultReportData(sourceColumns)
-    const updated = {
+    const updated: ReportData = {
       ...defaults,
       fields: defaults.fields.map((field) => {
         if (field.id !== 'people') {
@@ -72,7 +72,7 @@ describe('reportDefinition storage', () => {
 
         return {
           ...field,
-          sourceKey: 'clientName',
+          sourceKey: 'clientName' as const,
         }
       }),
     }
