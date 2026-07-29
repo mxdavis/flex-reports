@@ -78,7 +78,10 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       return fallback
     }
 
-    const parsed = JSON.parse(raw) as Partial<ReportData> & { version?: number }
+    const parsed = JSON.parse(raw) as {
+      version?: number
+      fields?: Array<Partial<ReportField>>
+    }
     if (
       (parsed.version !== 3 && parsed.version !== REPORT_DATA_VERSION)
       || !Array.isArray(parsed.fields)
