@@ -8,19 +8,7 @@ import type {
 export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v4'
 const REPORT_DATA_VERSION = 4
 
-function getDefaultDisplayType(sourceKey: SourceColumn['key']): DisplayType {
-  if (sourceKey === 'rate' || sourceKey === 'total') {
-    return 'currency'
-  }
-
-  if (sourceKey === 'hours') {
-    return 'decimal'
-  }
-
-  if (sourceKey === 'workDate') {
-    return 'date'
-  }
-
+function getDefaultDisplayType(_sourceKey: SourceColumn['key']): DisplayType {
   return 'string'
 }
 
@@ -33,13 +21,13 @@ function isDisplayType(value: unknown): value is DisplayType {
 }
 
 const defaultFields: ReportField[] = [
-  { id: 'date', label: 'workDate', sourceKey: 'workDate', displayType: 'date' },
+  { id: 'date', label: 'workDate', sourceKey: 'workDate', displayType: 'string' },
   { id: 'people', label: 'personName', sourceKey: 'personName', displayType: 'string' },
   { id: 'clients', label: 'clientName', sourceKey: 'clientName', displayType: 'string' },
   { id: 'task', label: 'task', sourceKey: 'task', displayType: 'string' },
-  { id: 'hours', label: 'hours', sourceKey: 'hours', displayType: 'decimal' },
-  { id: 'rate', label: 'rate', sourceKey: 'rate', displayType: 'currency' },
-  { id: 'total', label: 'total', sourceKey: 'total', displayType: 'currency' },
+  { id: 'hours', label: 'hours', sourceKey: 'hours', displayType: 'string' },
+  { id: 'rate', label: 'rate', sourceKey: 'rate', displayType: 'string' },
+  { id: 'total', label: 'total', sourceKey: 'total', displayType: 'string' },
 ]
 
 export function generateDefaultReportData(sourceColumns: SourceColumn[]): ReportData {

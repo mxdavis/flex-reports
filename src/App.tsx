@@ -27,19 +27,7 @@ const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'string', label: 'String' },
 ]
 
-function getDefaultDisplayType(sourceKey: keyof ReportRow): DisplayType {
-  if (sourceKey === 'rate' || sourceKey === 'total') {
-    return 'currency'
-  }
-
-  if (sourceKey === 'hours') {
-    return 'decimal'
-  }
-
-  if (sourceKey === 'workDate') {
-    return 'date'
-  }
-
+function getDefaultDisplayType(_sourceKey: keyof ReportRow): DisplayType {
   return 'string'
 }
 
