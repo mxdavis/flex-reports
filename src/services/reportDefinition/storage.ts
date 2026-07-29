@@ -95,5 +95,9 @@ export function saveReportData(reportData: ReportData): void {
     return
   }
 
-  window.localStorage.setItem(REPORT_DATA_STORAGE_KEY, JSON.stringify(reportData))
+  try {
+    window.localStorage.setItem(REPORT_DATA_STORAGE_KEY, JSON.stringify(reportData))
+  } catch {
+    // Write failures can happen in private mode or when storage is full.
+  }
 }
