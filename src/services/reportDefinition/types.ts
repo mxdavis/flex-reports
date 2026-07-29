@@ -6,13 +6,16 @@ export type SourceColumn = {
   defaultLabel: string
 }
 
+export type DisplayType = 'currency' | 'decimal' | 'percent' | 'date' | 'string'
+
 export type ReportField = {
   id: string
   label: string
   sourceKey: keyof ReportRow
+  displayType: DisplayType
 }
 
 export type ReportData = {
-  version: 3
+  version: 4
   fields: ReportField[]
 }

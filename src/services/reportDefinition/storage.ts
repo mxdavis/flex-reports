@@ -1,16 +1,45 @@
-import type { ReportData, ReportField, SourceColumn } from './types'
+import type {
+  DisplayType,
+  ReportData,
+  ReportField,
+  SourceColumn,
+} from './types'
 
-export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v3'
-const REPORT_DATA_VERSION = 3
+export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v4'
+const REPORT_DATA_VERSION = 4
+
+function getDefaultDisplayType(sourceKey: SourceColumn['key']): DisplayType {
+  if (sourceKey === 'rate' || sourceKey === 'total') {
+    return 'currency'
+  }
+
+  if (sourceKey === 'hours') {
+    return 'decimal'
+  }
+
+  if (sourceKey === 'workDate') {
+    return 'date'
+  }
+
+  return 'string'
+}
+
+function isDisplayType(value: unknown): value is DisplayType {
+  return value === 'currency'
+    || value === 'decimal'
+    || value === 'percent'
+    || value === 'date'
+    || value === 'string'
+}
 
 const defaultFields: ReportField[] = [
-  { id: 'date', label: 'workDate', sourceKey: 'workDate' },
-  { id: 'people', label: 'personName', sourceKey: 'personName' },
-  { id: 'clients', label: 'clientName', sourceKey: 'clientName' },
-  { id: 'task', label: 'task', sourceKey: 'task' },
-  { id: 'hours', label: 'hours', sourceKey: 'hours' },
-  { id: 'rate', label: 'rate', sourceKey: 'rate' },
-  { id: 'total', label: 'total', sourceKey: 'total' },
+  { id: 'date', label: 'workDate', sourceKey: 'workDate', displayType: 'date' },
+  { id: 'people', label: 'personName', sourceKey: 'personName', displayType: 'string' },
+  { id: 'clients', label: 'clientName', sourceKey: 'clientName', displayType: 'string' },
+  { id: 'task', label: 'task', sourceKey: 'task', displayType: 'string' },
+  { id: 'hours', label: 'hours', sourceKey: 'hours', displayType: 'decimal' },
+  { id: 'rate', label: 'rate', sourceKey: 'rate', displayType: 'currency' },
+  { id: 'total', label: 'total', sourceKey: 'total', displayType: 'currency' },
 ]
 
 export function generateDefaultReportData(sourceColumns: SourceColumn[]): ReportData {
@@ -26,6 +55,7 @@ export function generateDefaultReportData(sourceColumns: SourceColumn[]): Report
       ...field,
       sourceKey,
       label: sourceKey,
+      displayType: getDefaultDisplayType(sourceKey),
     }
   })
 
@@ -48,8 +78,11 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       return fallback
     }
 
-    const parsed = JSON.parse(raw) as Partial<ReportData>
-    if (parsed.version !== REPORT_DATA_VERSION || !Array.isArray(parsed.fields)) {
+    const parsed = JSON.parse(raw) as Partial<ReportData> & { version?: number }
+    if (
+      (parsed.version !== 3 && parsed.version !== REPORT_DATA_VERSION)
+      || !Array.isArray(parsed.fields)
+    ) {
       return fallback
     }
 
@@ -74,6 +107,9 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
           id: field.id,
           label: field.label.trim().length > 0 ? field.label : sourceKey,
           sourceKey,
+          displayType: isDisplayType(field.displayType)
+            ? field.displayType
+            : getDefaultDisplayType(sourceKey),
         }
       })
 

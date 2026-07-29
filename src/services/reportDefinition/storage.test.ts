@@ -55,10 +55,12 @@ describe('reportDefinition storage', () => {
   it('creates a default reportData shape', () => {
     const defaults = generateDefaultReportData(sourceColumns)
 
-    expect(defaults.version).toBe(3)
+    expect(defaults.version).toBe(4)
     expect(defaults.fields.length).toBe(7)
     expect(defaults.fields[0]?.sourceKey).toBe('workDate')
     expect(defaults.fields[0]?.label).toBe('workDate')
+    expect(defaults.fields[0]?.displayType).toBe('date')
+    expect(defaults.fields[5]?.displayType).toBe('currency')
   })
 
   it('persists and reloads reportData', () => {
@@ -73,6 +75,7 @@ describe('reportDefinition storage', () => {
         return {
           ...field,
           sourceKey: 'clientName' as const,
+          displayType: 'string',
         }
       }),
     }
@@ -82,6 +85,7 @@ describe('reportDefinition storage', () => {
 
     expect(loaded.fields.find((field) => field.id === 'people')?.sourceKey).toBe('clientName')
     expect(loaded.fields.find((field) => field.id === 'people')?.label).toBe('personName')
+    expect(loaded.fields.find((field) => field.id === 'people')?.displayType).toBe('string')
   })
 
   it('falls back when stored version is invalid', () => {
@@ -91,7 +95,26 @@ describe('reportDefinition storage', () => {
     )
 
     const loaded = loadReportData(sourceColumns)
-    expect(loaded.version).toBe(3)
+    expect(loaded.version).toBe(4)
     expect(loaded.fields.length).toBe(7)
+  })
+
+  it('migrates v3 data by applying default display types', () => {
+    window.localStorage.setItem(
+      REPORT_DATA_STORAGE_KEY,
+      JSON.stringify({
+        version: 3,
+        fields: [
+          { id: 'date', label: 'workDate', sourceKey: 'workDate' },
+          { id: 'rate', label: 'rate', sourceKey: 'rate' },
+        ],
+      }),
+    )
+
+    const loaded = loadReportData(sourceColumns)
+
+    expect(loaded.version).toBe(4)
+    expect(loaded.fields.find((field) => field.id === 'date')?.displayType).toBe('date')
+    expect(loaded.fields.find((field) => field.id === 'rate')?.displayType).toBe('currency')
   })
 })

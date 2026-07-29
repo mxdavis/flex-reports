@@ -47,7 +47,7 @@ Status tags used in each item:
 - [ ] (todo) Add orientation toggle for report display: horizontal (rows) vs vertical (pivoted columns), including people-as-columns use case.
 - [ ] (todo) Add customer UI column mapping (semantic field -> source column key)
 - [x] (in-pr) Add/remove report columns in edit mode (capped at 15)
-- [ ] (todo) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)
+- [~] (in-pr) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)
 - [ ] (todo) Add value-template columns with `{{value_name}}` placeholders
 - [ ] (todo) Improve table readability (header styling, alternating row colors)
 - [ ] (todo) Design seeded formula authoring UX (how formulas are created/edited/validated)
