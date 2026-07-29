@@ -5,35 +5,16 @@ import {
   getTotalRevenue,
 } from './services/adapters'
 import type { ReportRow } from './services/adapters'
+import {
+  generateDefaultReportData,
+  loadReportData,
+  saveReportData,
+} from './services/reportDefinition/storage'
+import type { ReportData, SourceColumn } from './services/reportDefinition/types'
 import './App.css'
 
-type SemanticField = 'date' | 'people' | 'clients' | 'task' | 'hours' | 'rate' | 'total'
-
-type SourceColumn = {
-  id: string
-  key: keyof ReportRow
-  defaultLabel: string
-}
-
-const semanticFields: Array<{ id: SemanticField; label: string }> = [
-  { id: 'date', label: 'Date' },
-  { id: 'people', label: 'People' },
-  { id: 'clients', label: 'Clients' },
-  { id: 'task', label: 'Task' },
-  { id: 'hours', label: 'Hours' },
-  { id: 'rate', label: 'Rate' },
-  { id: 'total', label: 'Total' },
-]
-
-const defaultSemanticColumn: Record<SemanticField, string> = {
-  date: 'column1',
-  people: 'column2',
-  clients: 'column3',
-  task: 'column4',
-  hours: 'column5',
-  rate: 'column6',
-  total: 'column7',
-}
+const CURRENCY_FIELD_IDS = new Set(['rate', 'total'])
+const sourceDefaultLabels = ['Date', 'People', 'Clients', 'Task', 'Hours', 'Rate', 'Total']
 
 function formatCellValue(value: unknown): string {
   if (typeof value === 'number') {
@@ -51,10 +32,7 @@ function App() {
   const seed = useMemo(() => getBillingSeed(), [])
   const rows = useMemo(() => getReportRows(), [])
   const totalRevenue = useMemo(() => getTotalRevenue(rows), [rows])
-  const [semanticMapping, setSemanticMapping] = useState<Record<SemanticField, string>>(
-    defaultSemanticColumn,
-  )
-  const [columnLabels, setColumnLabels] = useState<Record<string, string>>({})
+  const canEditReport = import.meta.env.VITE_CAN_EDIT_REPORT !== 'false'
 
   const sourceColumns = useMemo<SourceColumn[]>(() => {
     const configuredColumns: Array<keyof ReportRow> = [
@@ -70,35 +48,42 @@ function App() {
     return configuredColumns.map((key, index) => ({
       id: `column${index + 1}`,
       key,
-      defaultLabel: semanticFields[index]?.label ?? String(key),
+      defaultLabel: sourceDefaultLabels[index] ?? String(key),
     }))
   }, [])
 
+  const [reportData, setReportData] = useState<ReportData>(() => {
+    return loadReportData(sourceColumns)
+  })
+
   useEffect(() => {
-    if (sourceColumns.length === 0) {
-      return
-    }
-
-    setColumnLabels((previous) => {
-      const next = { ...previous }
-      for (const column of sourceColumns) {
-        if (!next[column.id]) {
-          next[column.id] = column.defaultLabel
+    setReportData((previous) => {
+      const defaults = generateDefaultReportData(sourceColumns)
+      const safeColumns = new Set(sourceColumns.map((column) => column.id))
+      const fields = previous.fields.map((field, index) => {
+        if (safeColumns.has(field.columnId)) {
+          return field
         }
-      }
-      return next
-    })
 
-    setSemanticMapping((previous) => {
-      const next = { ...previous }
-      for (const field of semanticFields) {
-        if (!next[field.id]) {
-          next[field.id] = defaultSemanticColumn[field.id]
+        return {
+          ...field,
+          columnId: defaults.fields[index]?.columnId ?? defaults.fields[0].columnId,
         }
+      })
+
+      const columnLabels = { ...defaults.columnLabels, ...previous.columnLabels }
+
+      return {
+        version: 1,
+        fields,
+        columnLabels,
       }
-      return next
     })
   }, [sourceColumns])
+
+  useEffect(() => {
+    saveReportData(reportData)
+  }, [reportData])
 
   const sourceColumnById = useMemo(() => {
     return new Map(sourceColumns.map((column) => [column.id, column]))
@@ -106,8 +91,8 @@ function App() {
 
   const sampleRow = rows[0]
 
-  function getMappedValue(row: ReportRow, field: SemanticField): string {
-    const mappedColumn = sourceColumnById.get(semanticMapping[field])
+  function getMappedValue(row: ReportRow, columnId: string): string {
+    const mappedColumn = sourceColumnById.get(columnId)
     if (!mappedColumn) {
       return ''
     }
@@ -125,6 +110,7 @@ function App() {
         </p>
       </header>
 
+      {canEditReport && (
       <section className="mapping-panel">
         <h2>Column Mapping</h2>
         <p>
@@ -133,8 +119,8 @@ function App() {
         </p>
 
         <div className="mapping-grid">
-          {semanticFields.map((field) => {
-            const selectedColumnId = semanticMapping[field.id]
+          {reportData.fields.map((field) => {
+            const selectedColumnId = field.columnId
             const selectedColumn = sourceColumnById.get(selectedColumnId)
             const sampleValue = sampleRow && selectedColumn
               ? formatCellValue(sampleRow[selectedColumn.key])
@@ -148,9 +134,18 @@ function App() {
                   value={selectedColumnId}
                   onChange={(event) => {
                     const nextColumn = event.target.value
-                    setSemanticMapping((previous) => ({
+                    setReportData((previous) => ({
                       ...previous,
-                      [field.id]: nextColumn,
+                      fields: previous.fields.map((currentField) => {
+                        if (currentField.id !== field.id) {
+                          return currentField
+                        }
+
+                        return {
+                          ...currentField,
+                          columnId: nextColumn,
+                        }
+                      }),
                     }))
                   }}
                 >
@@ -165,12 +160,15 @@ function App() {
                 <input
                   id={`label-${field.id}`}
                   type="text"
-                  value={columnLabels[selectedColumnId] ?? ''}
+                  value={reportData.columnLabels[selectedColumnId] ?? ''}
                   onChange={(event) => {
                     const nextLabel = event.target.value
-                    setColumnLabels((previous) => ({
+                    setReportData((previous) => ({
                       ...previous,
-                      [selectedColumnId]: nextLabel,
+                      columnLabels: {
+                        ...previous.columnLabels,
+                        [selectedColumnId]: nextLabel,
+                      },
                     }))
                   }}
                 />
@@ -183,6 +181,16 @@ function App() {
           })}
         </div>
       </section>
+      )}
+
+      {!canEditReport && (
+        <section className="mapping-panel">
+          <h2>Report View</h2>
+          <p>
+            You are viewing this report without edit permissions.
+          </p>
+        </section>
+      )}
 
       <section className="seed-stats">
         <article>
@@ -220,18 +228,20 @@ function App() {
         <table>
           <thead>
             <tr>
-              {semanticFields.map((field) => {
-                const columnId = semanticMapping[field.id]
-                return <th key={field.id}>{columnLabels[columnId] ?? columnId}</th>
+              {reportData.fields.map((field) => {
+                const columnId = field.columnId
+                return (
+                  <th key={field.id}>{reportData.columnLabels[columnId] ?? field.label}</th>
+                )
               })}
             </tr>
           </thead>
           <tbody>
             {rows.slice(0, 10).map((row) => (
               <tr key={row.id}>
-                {semanticFields.map((field) => {
-                  const mappedValue = getMappedValue(row, field.id)
-                  const isCurrency = field.id === 'rate' || field.id === 'total'
+                {reportData.fields.map((field) => {
+                  const mappedValue = getMappedValue(row, field.columnId)
+                  const isCurrency = CURRENCY_FIELD_IDS.has(field.id)
                   return (
                     <td key={`${row.id}-${field.id}`}>
                       {isCurrency && mappedValue ? `$${mappedValue}` : mappedValue}
