@@ -76,6 +76,22 @@ function formatCellValue(value: unknown, displayType: DisplayType): string {
   return String(value)
 }
 
+function renderValueTemplate(template: string, row: ReportRow): string {
+  return template.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_match, token) => {
+    const key = token as keyof ReportRow
+    if (!(key in row)) {
+      return ''
+    }
+
+    const value = row[key]
+    if (value === null || value === undefined) {
+      return ''
+    }
+
+    return String(value)
+  })
+}
+
 function getNextFieldId(existingIds: string[]): string {
   let maxSequence = 0
 
@@ -191,7 +207,12 @@ function App() {
     row: ReportRow,
     sourceKey: keyof ReportRow,
     displayType: DisplayType,
+    valueTemplate?: string,
   ): string {
+    if (valueTemplate && valueTemplate.trim().length > 0) {
+      return renderValueTemplate(valueTemplate, row)
+    }
+
     const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (!mappedColumn) {
       return ''
@@ -250,7 +271,12 @@ function App() {
             const selectedSourceKey = field.sourceKey
             const selectedColumn = sourceColumnByKey.get(selectedSourceKey)
             const sampleValue = sampleRow && selectedColumn
-              ? formatCellValue(sampleRow[selectedColumn.key], field.displayType)
+              ? getMappedValue(
+                sampleRow,
+                selectedColumn.key,
+                field.displayType,
+                field.valueTemplate,
+              )
               : ''
 
             return (
@@ -410,6 +436,31 @@ function App() {
                       </option>
                     ))}
                   </select>
+
+                  <label htmlFor={`template-${field.id}`}>Value template (optional)</label>
+                  <input
+                    id={`template-${field.id}`}
+                    type="text"
+                    value={field.valueTemplate ?? ''}
+                    placeholder="{{personName}} - {{task}}"
+                    title="Optional template with placeholders like {{personName}} or {{workDate}}."
+                    onChange={(event) => {
+                      const nextTemplate = event.target.value
+                      setReportData((previous) => ({
+                        ...previous,
+                        fields: previous.fields.map((currentField) => {
+                          if (currentField.id !== field.id) {
+                            return currentField
+                          }
+
+                          return {
+                            ...currentField,
+                            valueTemplate: nextTemplate,
+                          }
+                        }),
+                      }))
+                    }}
+                  />
                 </div>
 
                 <small>
@@ -437,6 +488,7 @@ function App() {
                         label: String(sourceColumns[0]?.key ?? 'workDate'),
                         sourceKey: sourceColumns[0]?.key ?? 'workDate',
                         displayType: getDefaultDisplayType(sourceColumns[0]?.key ?? 'workDate'),
+                        valueTemplate: '',
                       },
                     ],
                   }
@@ -528,6 +580,7 @@ function App() {
                       row,
                       field.sourceKey,
                       field.displayType,
+                      field.valueTemplate,
                     )
                     return (
                       <td key={`${row.id}-${field.id}`}>{mappedValue}</td>

@@ -61,6 +61,7 @@ describe('reportDefinition storage', () => {
     expect(defaults.fields[0]?.sourceKey).toBe('workDate')
     expect(defaults.fields[0]?.label).toBe('workDate')
     expect(defaults.fields[0]?.displayType).toBe('string')
+    expect(defaults.fields[0]?.valueTemplate).toBe('')
     expect(defaults.fields[5]?.displayType).toBe('string')
   })
 
@@ -77,6 +78,7 @@ describe('reportDefinition storage', () => {
           ...field,
           sourceKey: 'clientName' as const,
           displayType: 'string',
+          valueTemplate: '{{clientName}} (primary)',
         }
       }),
     }
@@ -87,6 +89,8 @@ describe('reportDefinition storage', () => {
     expect(loaded.fields.find((field) => field.id === 'people')?.sourceKey).toBe('clientName')
     expect(loaded.fields.find((field) => field.id === 'people')?.label).toBe('personName')
     expect(loaded.fields.find((field) => field.id === 'people')?.displayType).toBe('string')
+    expect(loaded.fields.find((field) => field.id === 'people')?.valueTemplate)
+      .toBe('{{clientName}} (primary)')
   })
 
   it('falls back when stored version is invalid', () => {
@@ -117,6 +121,7 @@ describe('reportDefinition storage', () => {
     expect(loaded.version).toBe(4)
     expect(loaded.fields.find((field) => field.id === 'date')?.displayType).toBe('string')
     expect(loaded.fields.find((field) => field.id === 'rate')?.displayType).toBe('string')
+    expect(loaded.fields.find((field) => field.id === 'date')?.valueTemplate).toBe('')
     expect(window.localStorage.getItem(REPORT_DATA_STORAGE_KEY)).toBeTruthy()
     expect(window.localStorage.getItem(LEGACY_REPORT_DATA_STORAGE_KEY)).toBeNull()
   })

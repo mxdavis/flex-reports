@@ -19,13 +19,13 @@ function isDisplayType(value: unknown): value is DisplayType {
 }
 
 const defaultFields: ReportField[] = [
-  { id: 'date', label: 'workDate', sourceKey: 'workDate', displayType: 'string' },
-  { id: 'people', label: 'personName', sourceKey: 'personName', displayType: 'string' },
-  { id: 'clients', label: 'clientName', sourceKey: 'clientName', displayType: 'string' },
-  { id: 'task', label: 'task', sourceKey: 'task', displayType: 'string' },
-  { id: 'hours', label: 'hours', sourceKey: 'hours', displayType: 'string' },
-  { id: 'rate', label: 'rate', sourceKey: 'rate', displayType: 'string' },
-  { id: 'total', label: 'total', sourceKey: 'total', displayType: 'string' },
+  { id: 'date', label: 'workDate', sourceKey: 'workDate', displayType: 'string', valueTemplate: '' },
+  { id: 'people', label: 'personName', sourceKey: 'personName', displayType: 'string', valueTemplate: '' },
+  { id: 'clients', label: 'clientName', sourceKey: 'clientName', displayType: 'string', valueTemplate: '' },
+  { id: 'task', label: 'task', sourceKey: 'task', displayType: 'string', valueTemplate: '' },
+  { id: 'hours', label: 'hours', sourceKey: 'hours', displayType: 'string', valueTemplate: '' },
+  { id: 'rate', label: 'rate', sourceKey: 'rate', displayType: 'string', valueTemplate: '' },
+  { id: 'total', label: 'total', sourceKey: 'total', displayType: 'string', valueTemplate: '' },
 ]
 
 export function generateDefaultReportData(sourceColumns: SourceColumn[]): ReportData {
@@ -42,6 +42,7 @@ export function generateDefaultReportData(sourceColumns: SourceColumn[]): Report
       sourceKey,
       label: sourceKey,
       displayType: getDefaultDisplayType(sourceKey),
+      valueTemplate: '',
     }
   })
 
@@ -103,6 +104,9 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
           displayType: isDisplayType(field.displayType)
             ? field.displayType
             : getDefaultDisplayType(sourceKey),
+          valueTemplate: typeof field.valueTemplate === 'string'
+            ? field.valueTemplate
+            : '',
         }
       })
 

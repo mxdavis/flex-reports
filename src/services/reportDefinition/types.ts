@@ -13,6 +13,7 @@ export type ReportField = {
   label: string
   sourceKey: keyof ReportRow
   displayType: DisplayType
+  valueTemplate?: string
 }
 
 export type ReportData = {
