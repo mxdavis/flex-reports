@@ -44,11 +44,12 @@ Status tags used in each item:
 - [ ] (todo) Build Edit view (Excel-like)
 - [ ] (todo) Add edit-mode permission gating (only allowed users see edit controls/button)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)
-- [ ] (todo) Add orientation toggle for report display: horizontal (rows) vs vertical (pivoted columns), including people-as-columns use case.
+- [~] (in-pr) Add orientation toggle for report display: horizontal (rows) vs vertical (pivoted columns), including people-as-columns use case.
 - [ ] (todo) Add customer UI column mapping (semantic field -> source column key)
 - [x] (in-pr) Add/remove report columns in edit mode (capped at 15)
 - [~] (in-pr) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)
 - [ ] (todo) Add value-template columns with `{{value_name}}` placeholders
+- [ ] (todo) Add value-template helper UX: token picker/autocomplete + invalid-token validation messaging
 - [ ] (todo) Improve table readability (header styling, alternating row colors)
 - [ ] (todo) Design seeded formula authoring UX (how formulas are created/edited/validated)
 - [ ] (todo) Add per-component stylesheets (final split by component)

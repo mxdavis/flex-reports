@@ -20,6 +20,8 @@ import './App.css'
 
 const MAX_REPORT_COLUMNS = 15
 const MIN_REPORT_COLUMNS = 1
+type ReportOrientation = 'horizontal' | 'vertical'
+
 const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'currency', label: 'Currency' },
   { value: 'decimal', label: 'Decimal number' },
@@ -140,6 +142,7 @@ function App() {
   const [draggedFieldId, setDraggedFieldId] = useState<string | null>(null)
   const [dragOverFieldId, setDragOverFieldId] = useState<string | null>(null)
   const [isTableFullscreen, setIsTableFullscreen] = useState(false)
+  const [reportOrientation, setReportOrientation] = useState<ReportOrientation>('horizontal')
   const tableScrollRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -201,6 +204,26 @@ function App() {
     return new Map(sourceColumns.map((column) => [column.key, column]))
   }, [sourceColumns])
 
+  const previewRows = useMemo(() => rows.slice(0, 10), [rows])
+
+  const pivotRowsByPerson = useMemo(() => {
+    const groupedRows = new Map<string, ReportRow[]>()
+    for (const row of previewRows) {
+      const personKey = row.personName
+      if (!groupedRows.has(personKey)) {
+        groupedRows.set(personKey, [])
+      }
+
+      groupedRows.get(personKey)?.push(row)
+    }
+
+    return groupedRows
+  }, [previewRows])
+
+  const pivotPeopleColumns = useMemo(() => {
+    return Array.from(pivotRowsByPerson.keys())
+  }, [pivotRowsByPerson])
+
   const sampleRow = rows[0]
 
   function getMappedValue(
@@ -242,6 +265,21 @@ function App() {
         fields: nextFields,
       }
     })
+  }
+
+  function getPivotCellValue(personName: string, field: ReportData['fields'][number]): string {
+    const matchingRows = pivotRowsByPerson.get(personName)
+    const primaryRow = matchingRows?.[0]
+    if (!primaryRow) {
+      return ''
+    }
+
+    return getMappedValue(
+      primaryRow,
+      field.sourceKey,
+      field.displayType,
+      field.valueTemplate,
+    )
   }
 
   return (
@@ -548,47 +586,100 @@ function App() {
       <section className={`seed-table ${isTableFullscreen ? 'fullscreen' : ''}`}>
         <div className="seed-table-header">
           <h2>Sample rows</h2>
-          <button
-            type="button"
-            onClick={() => {
-              setIsTableFullscreen((previous) => !previous)
-            }}
-            title={isTableFullscreen ? 'Exit expanded view' : 'Expand table to full screen'}
-          >
-            {isTableFullscreen ? 'Exit full screen' : 'Full screen'}
-          </button>
+          <div className="seed-table-controls">
+            <div className="table-view-toggle" role="group" aria-label="Report orientation">
+              <button
+                type="button"
+                className={reportOrientation === 'horizontal' ? 'active' : ''}
+                onClick={() => {
+                  setReportOrientation('horizontal')
+                }}
+                title="Show standard row-based table view."
+              >
+                Horizontal
+              </button>
+              <button
+                type="button"
+                className={reportOrientation === 'vertical' ? 'active' : ''}
+                onClick={() => {
+                  setReportOrientation('vertical')
+                }}
+                title="Show people as columns and mapped fields as rows."
+              >
+                Vertical
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsTableFullscreen((previous) => !previous)
+              }}
+              title={isTableFullscreen ? 'Exit expanded view' : 'Expand table to full screen'}
+            >
+              {isTableFullscreen ? 'Exit full screen' : 'Full screen'}
+            </button>
+          </div>
         </div>
         <div
           className="seed-table-scroll"
           role="region"
-          aria-label="Sample report rows"
+          aria-label="Sample report table"
           ref={tableScrollRef}
         >
           <table>
-            <thead>
-              <tr>
-                {reportData.fields.map((field) => {
-                  return <th key={field.id}>{field.label}</th>
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, 10).map((row) => (
-                <tr key={row.id}>
-                  {reportData.fields.map((field) => {
-                    const mappedValue = getMappedValue(
-                      row,
-                      field.sourceKey,
-                      field.displayType,
-                      field.valueTemplate,
-                    )
-                    return (
-                      <td key={`${row.id}-${field.id}`}>{mappedValue}</td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
+            {reportOrientation === 'horizontal' && (
+              <>
+                <thead>
+                  <tr>
+                    {reportData.fields.map((field) => {
+                      return <th key={field.id}>{field.label}</th>
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewRows.map((row) => (
+                    <tr key={row.id}>
+                      {reportData.fields.map((field) => {
+                        const mappedValue = getMappedValue(
+                          row,
+                          field.sourceKey,
+                          field.displayType,
+                          field.valueTemplate,
+                        )
+                        return (
+                          <td key={`${row.id}-${field.id}`}>{mappedValue}</td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </>
+            )}
+
+            {reportOrientation === 'vertical' && (
+              <>
+                <thead>
+                  <tr>
+                    <th>Field</th>
+                    {pivotPeopleColumns.map((personName) => (
+                      <th key={personName}>{personName}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportData.fields.map((field) => (
+                    <tr key={`vertical-${field.id}`}>
+                      <td className="vertical-row-label">{field.label}</td>
+                      {pivotPeopleColumns.map((personName) => (
+                        <td key={`${field.id}-${personName}`}>
+                          {getPivotCellValue(personName, field)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </>
+            )}
           </table>
         </div>
       </section>
