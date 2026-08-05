@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import { useEffect, type RefObject } from 'react'
 import type { ReportRow } from '../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
 import type { AggregateMode } from '../types'
@@ -18,12 +18,14 @@ export type SampleRowsSectionProps = {
   isTableFullscreen: boolean
   isHorizontalTable: boolean
   aggregateMode: AggregateMode
+  isGroupingEnabled: boolean
   showTotals: boolean
   fields: ReportField[]
   previewRows: ReportRow[]
   verticalColumns: VerticalColumn[]
   tableScrollRef: RefObject<HTMLDivElement | null>
   onAggregateModeChange: (mode: AggregateMode) => void
+  onToggleGrouping: () => void
   onToggleOrientation: () => void
   onToggleFullscreen: () => void
   getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, currencySymbol?: string) => string
@@ -36,18 +38,31 @@ function SampleRowsSection({
   isTableFullscreen,
   isHorizontalTable,
   aggregateMode,
+  isGroupingEnabled,
   showTotals,
   fields,
   previewRows,
   verticalColumns,
   tableScrollRef,
   onAggregateModeChange,
+  onToggleGrouping,
   onToggleOrientation,
   onToggleFullscreen,
   getMappedValue,
   getAggregatedFieldValue,
   formatValue,
 }: SampleRowsSectionProps) {
+  useEffect(() => {
+    if (!isTableFullscreen) {
+      return
+    }
+
+    document.body.classList.add('seed-table-fullscreen-lock')
+    return () => {
+      document.body.classList.remove('seed-table-fullscreen-lock')
+    }
+  }, [isTableFullscreen])
+
   return (
     <section
       id="report-chart"
@@ -56,12 +71,9 @@ function SampleRowsSection({
       <div className="seed-table-header">
         <h2>{sheetName}</h2>
         <div className="seed-table-actions">
-          <span className="seed-table-mode">{`Mode: ${isHorizontalTable ? 'Horizontal' : 'Vertical'}`}</span>
-          <label htmlFor="aggregate-mode" className="seed-table-mode">
-            Aggregate
-          </label>
           <select
             id="aggregate-mode"
+            aria-label="Aggregate mode"
             value={aggregateMode}
             title="Choose how totals and grouped values are calculated."
             onChange={(event) => {
@@ -72,6 +84,15 @@ function SampleRowsSection({
             <option value="sum">Sum</option>
             <option value="avg">Average</option>
           </select>
+          <button
+            type="button"
+            className="grouping-toggle-button"
+            aria-pressed={isGroupingEnabled}
+            onClick={onToggleGrouping}
+            title="Toggle embedded grouping by first two columns"
+          >
+            Grouping
+          </button>
           <button
             type="button"
             onClick={onToggleOrientation}
@@ -100,6 +121,7 @@ function SampleRowsSection({
             isHorizontalTable={isHorizontalTable}
             showTotals={showTotals}
             aggregateMode={aggregateMode}
+            isGroupingEnabled={isGroupingEnabled}
             fields={fields}
             previewRows={previewRows}
             verticalColumns={verticalColumns}

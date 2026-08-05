@@ -1,6 +1,7 @@
 import type { ReportRow } from '../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
 import type { AggregateMode } from '../types'
+import { SampleRowsHorizontalTableContent } from '../report/model/SampleRowsHorizontalTableContent'
 import './SampleRowsTableContent.css'
 
 type VerticalColumn = {
@@ -13,6 +14,7 @@ type SampleRowsTableContentProps = {
   isHorizontalTable: boolean
   showTotals: boolean
   aggregateMode: AggregateMode
+  isGroupingEnabled: boolean
   fields: ReportField[]
   previewRows: ReportRow[]
   verticalColumns: VerticalColumn[]
@@ -29,6 +31,7 @@ function SampleRowsTableContent({
   isHorizontalTable,
   showTotals,
   aggregateMode,
+  isGroupingEnabled,
   fields,
   previewRows,
   verticalColumns,
@@ -38,62 +41,17 @@ function SampleRowsTableContent({
 }: SampleRowsTableContentProps) {
   if (isHorizontalTable) {
     return (
-      <>
-        <thead>
-          <tr>
-            {fields.map((field) => {
-              return <th key={field.id}>{field.label}</th>
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {previewRows.map((row) => (
-            <tr key={row.id}>
-              {fields.map((field) => {
-                const mappedValue = getMappedValue(
-                  row,
-                  field.sourceKey,
-                  field.displayType,
-                  field.currencySymbol,
-                )
-                return (
-                  <td
-                    key={`${row.id}-${field.id}`}
-                    className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
-                  >
-                    {mappedValue}
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-        {showTotals && fields.length > 0 && (
-          <tfoot>
-            <tr>
-              {fields.map((field, index) => {
-                if (index === 0) {
-                  return <th key={`total-label-${field.id}`}><strong>Total</strong></th>
-                }
-
-                const aggregatedValue = getAggregatedFieldValue(
-                  previewRows,
-                  field.sourceKey,
-                  aggregateMode,
-                )
-                return (
-                  <td
-                    key={`total-value-${field.id}`}
-                    className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
-                  >
-                    <strong>{formatValue(aggregatedValue, field.displayType, field.currencySymbol)}</strong>
-                  </td>
-                )
-              })}
-            </tr>
-          </tfoot>
-        )}
-      </>
+      <SampleRowsHorizontalTableContent
+        showTotals={showTotals}
+        aggregateMode={aggregateMode}
+        isGroupingEnabled={isGroupingEnabled}
+        fields={fields}
+        previewRows={previewRows}
+        getMappedValue={getMappedValue}
+        getAggregatedFieldValue={getAggregatedFieldValue}
+        formatValue={formatValue}
+        isNumericDisplayType={isNumericDisplayType}
+      />
     )
   }
 

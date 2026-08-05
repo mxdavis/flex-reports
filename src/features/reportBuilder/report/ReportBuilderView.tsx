@@ -17,23 +17,25 @@ function ReportBuilderView({
   seedFormulasProps,
   sampleRowsProps,
 }: ReportBuilderViewProps) {
+  const isTableFullscreen = sampleRowsProps.isTableFullscreen
+
   return (
     <div className="seed-page">
-      <EditModeToolbar {...editModeToolbarProps} />
+      {!isTableFullscreen && <EditModeToolbar {...editModeToolbarProps} />}
 
-      {showAuthoring && (
+      {!isTableFullscreen && showAuthoring && (
         <SeedHeader {...seedHeaderProps} />
       )}
 
-      {showAuthoring && (
+      {!isTableFullscreen && showAuthoring && (
         <MappingPanelSection {...mappingPanelProps} />
       )}
 
-      {showAuthoring && (
+      {!isTableFullscreen && showAuthoring && (
         <SeedFormulasSection {...seedFormulasProps} />
       )}
 
-      {summaryItems.length > 0 && (
+      {!isTableFullscreen && summaryItems.length > 0 && (
         <SeedStats items={summaryItems} />
       )}
 

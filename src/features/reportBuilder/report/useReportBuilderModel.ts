@@ -36,6 +36,7 @@ export function useReportBuilderModel({
     isEditMode,
     tableOrientation,
     aggregateMode,
+    isGroupingEnabled,
     draggedFieldId,
     dragOverFieldId,
     isTableFullscreen,
@@ -65,6 +66,7 @@ export function useReportBuilderModel({
     dispatchUiValue('setTableOrientation', resolveUpdater(updater, state.ui.tableOrientation))
   }
   const setAggregateMode = (value: AggregateMode): void => dispatchUiValue('setAggregateMode', value)
+  const setIsGroupingEnabled = (value: boolean): void => dispatchUiValue('setIsGroupingEnabled', value)
   const setDraggedFieldId = (value: string | null): void => dispatchUiValue('setDraggedFieldId', value)
   const setDragOverFieldId = (value: string | null): void => dispatchUiValue('setDragOverFieldId', value)
   const setIsTableFullscreen = (updater: boolean | ((previous: boolean) => boolean)): void => {
@@ -226,12 +228,16 @@ export function useReportBuilderModel({
     isTableFullscreen,
     isHorizontalTable,
     aggregateMode,
+    isGroupingEnabled,
     showTotals,
     fields: state.reportData.fields,
     previewRows,
     verticalColumns,
     tableScrollRef: state.tableScrollRef,
     onAggregateModeChange: setAggregateMode,
+    onToggleGrouping: () => {
+      setIsGroupingEnabled(!state.ui.isGroupingEnabled)
+    },
     onToggleOrientation: () => {
       setTableOrientation((previous) => (previous === 'horizontal' ? 'vertical' : 'horizontal'))
     },

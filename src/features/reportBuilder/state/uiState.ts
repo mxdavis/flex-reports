@@ -13,6 +13,7 @@ export type UiState = {
   isEditMode: boolean
   tableOrientation: TableOrientation
   aggregateMode: AggregateMode
+  isGroupingEnabled: boolean
   draggedFieldId: string | null
   dragOverFieldId: string | null
   isTableFullscreen: boolean
@@ -41,6 +42,7 @@ export type UiAction =
   | { type: 'setIsAddingColumn', value: boolean }
   | { type: 'setTableOrientation', value: TableOrientation }
   | { type: 'setAggregateMode', value: AggregateMode }
+  | { type: 'setIsGroupingEnabled', value: boolean }
   | { type: 'setDraggedFieldId', value: string | null }
   | { type: 'setDragOverFieldId', value: string | null }
   | { type: 'clearDrag' }
@@ -59,6 +61,7 @@ export function createInitialUiState(args: UiInitArgs): UiState {
     isEditMode: args.canEditReport && args.initialEditMode,
     tableOrientation: args.initialTableOrientation,
     aggregateMode: args.initialAggregateMode,
+    isGroupingEnabled: false,
     draggedFieldId: null,
     dragOverFieldId: null,
     isTableFullscreen: false,
@@ -159,6 +162,11 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
       return {
         ...state,
         aggregateMode: action.value,
+      }
+    case 'setIsGroupingEnabled':
+      return {
+        ...state,
+        isGroupingEnabled: action.value,
       }
     case 'setDraggedFieldId':
       return {

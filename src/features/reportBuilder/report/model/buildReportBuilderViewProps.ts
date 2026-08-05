@@ -26,12 +26,14 @@ type BuildReportBuilderViewPropsArgs = {
   isTableFullscreen: boolean
   isHorizontalTable: boolean
   aggregateMode: AggregateMode
+  isGroupingEnabled: boolean
   showTotals: boolean
   fields: ReportField[]
   previewRows: ReportRow[]
   verticalColumns: Array<{ key: string, headerValue: string, rows: ReportRow[] }>
   tableScrollRef: RefObject<HTMLDivElement | null>
   onAggregateModeChange: (value: AggregateMode) => void
+  onToggleGrouping: () => void
   onToggleOrientation: () => void
   onToggleFullscreen: () => void
   getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, localCurrencySymbol?: string) => string
@@ -55,12 +57,14 @@ export function buildReportBuilderViewProps({
   isTableFullscreen,
   isHorizontalTable,
   aggregateMode,
+  isGroupingEnabled,
   showTotals,
   fields,
   previewRows,
   verticalColumns,
   tableScrollRef,
   onAggregateModeChange,
+  onToggleGrouping,
   onToggleOrientation,
   onToggleFullscreen,
   getMappedValue,
@@ -85,12 +89,14 @@ export function buildReportBuilderViewProps({
     isTableFullscreen,
     isHorizontalTable,
     aggregateMode,
+    isGroupingEnabled,
     showTotals,
     fields,
     previewRows,
     verticalColumns,
     tableScrollRef,
     onAggregateModeChange,
+    onToggleGrouping,
     onToggleOrientation,
     onToggleFullscreen,
     getMappedValue,
