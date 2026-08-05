@@ -16,6 +16,16 @@ describe('evaluateFormula', () => {
     })
   })
 
+  it('handles case-insensitive token references and formula labels with spaces', () => {
+    expect(evaluateFormula('{{%Write Down}} + {{Hours}}', {
+      'write down': 15,
+      hours: 5,
+    })).toEqual({
+      ok: true,
+      value: 20,
+    })
+  })
+
   it('substitutes 0 for missing tokens', () => {
     expect(evaluateFormula('{{missing}} + 20', {})).toEqual({ ok: true, value: 20 })
   })
@@ -50,5 +60,14 @@ describe('evaluateFormula', () => {
       ok: false,
       code: 'malformed-expression',
     })
+  })
+
+  it('returns NaN when the math result is non-finite', () => {
+    const result = evaluateFormula('10 / 0', {})
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(Number.isNaN(result.value)).toBe(true)
+    }
   })
 })

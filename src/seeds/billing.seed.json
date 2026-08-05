@@ -34,8 +34,8 @@
     { "id": "t20", "workDate": "2026-07-10", "personId": "p2", "clientId": "c1", "task": "Drafting", "timeWorked": 2.75, "rate": 260, "total": 715 }
   ],
   "formulas": [
-    { "columnId": "grossFees", "label": "Gross", "expression": "{{hours}} * {{rate}}" },
-    { "columnId": "writeDown", "label": "Write Down", "expression": "{{grossFees}} * 10%" },
-    { "columnId": "netFees", "label": "Net", "expression": "{{grossFees}} - {{writeDown}}" }
+    { "label": "grossFees", "expression": "{{hours}} * {{rate}}" },
+    { "label": "writeDown", "expression": "{{%grossFees}} * 10%" },
+    { "label": "netFees", "expression": "{{%grossFees}} - {{%writeDown}}" }
   ]
 }

@@ -42,7 +42,6 @@ export type SeedPersonClientTime = {
 }
 
 export type SeedFormula = {
-  columnId: string
   label: string
   expression: string
 }

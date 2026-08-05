@@ -35,6 +35,7 @@ Status tags used in each item:
 - [x] (in-pr) Build seed preview page in app (stats, formulas, sample rows)
 - [x] (in-pr) Address PR #2 review: DataSource factory + `VITE_DATA_SOURCE` env toggle, no-eval formula parser, `engines.node` >=22
 - [ ] (todo) Follow-up (PR #3 review): replace hardcoded `semanticFields`/default mapping in `App.tsx` with a schema-driven, saved report definition (JSON) sourced from `getSchema()`
+- [ ] (todo) Follow-up (PR #3 review): replace hardcoded data summary cards/labels with dynamic, schema-driven cards at the top of the report; labels come from configured fields and aggregation is type-based (string/date -> counts, numeric/decimal/percent -> numeric totals, currency -> currency totals).
 - [ ] (todo) Follow-up (PR #3 review): move formula application out of the seed data source into the report/formula layer (adapter returns raw rows only)
 - [ ] (todo) Follow-up (PR #3 review): replace bespoke `getTotalRevenue` with the pivot/aggregation engine
 - [ ] (todo) Build report definition store (localStorage)
@@ -45,6 +46,7 @@ Status tags used in each item:
 - [ ] (todo) Add edit-mode permission gating (only allowed users see edit controls/button)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)
 - [ ] (todo) Add orientation toggle for report display: horizontal (rows) vs vertical (pivoted columns), including people-as-columns use case.
+- [ ] (todo) Next PR: add embedded subcolumn pivot layout (Excel-like): first selected column is always the primary header/group, second selected column nests under it (no duplicated primary values), with aggregates/totals applied at subgroup, group, and grand-total levels.
 - [ ] (todo) Add customer UI column mapping (semantic field -> source column key)
 - [x] (in-pr) Add/remove report columns in edit mode (capped at 15)
 - [~] (in-pr) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)
