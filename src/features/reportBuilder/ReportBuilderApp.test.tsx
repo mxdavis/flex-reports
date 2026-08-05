@@ -140,7 +140,7 @@ describe('ReportBuilderApp', () => {
     await user.click(screen.getByTitle('Show options'))
 
     const suggestions = within(screen.getByRole('listbox', { name: 'Suggestions' }))
-      .getAllByRole('button')
+      .getAllByRole('option')
       .map((button) => button.textContent ?? '')
     const sortedSuggestions = [...suggestions]
       .sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }))

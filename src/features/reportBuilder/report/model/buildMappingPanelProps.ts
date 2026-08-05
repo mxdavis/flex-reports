@@ -33,100 +33,71 @@ type BuildMappingPanelPropsArgs = {
   setReportData: Dispatch<SetStateAction<ReportData>>
 }
 
-export function buildMappingPanelProps({
-  reportFields,
-  isAddingColumn,
-  addColumnPosition,
-  addColumnSourceKey,
-  addColumnLabel,
-  addColumnDisplayType,
-  addColumnChipAggregation,
-  draggedFieldId,
-  dragOverFieldId,
-  editingFieldId,
-  editingFieldDraft,
-  sourceOptions,
-  setAddColumnSourceKey,
-  setAddColumnLabel,
-  setAddColumnDisplayType,
-  setAddColumnChipAggregation,
-  setAddColumnPosition,
-  setIsAddingColumn,
-  setDraggedFieldId,
-  setDragOverFieldId,
-  patchEditingFieldDraft,
-  getPreferredDisplayType,
-  handleAddColumnAtPosition,
-  moveField,
-  handleStartEditField,
-  handleCancelEditField,
-  handleSaveEditField,
-  setReportData,
-}: BuildMappingPanelPropsArgs) {
+export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
   return {
-    fields: reportFields,
-    isAddingColumn,
-    addColumnPosition,
-    addColumnSourceKey,
-    addColumnLabel,
-    addColumnDisplayType,
-    addColumnChipAggregation,
+    fields: args.reportFields,
+    isAddingColumn: args.isAddingColumn,
+    addColumnPosition: args.addColumnPosition,
+    addColumnSourceKey: args.addColumnSourceKey,
+    addColumnLabel: args.addColumnLabel,
+    addColumnDisplayType: args.addColumnDisplayType,
+    addColumnChipAggregation: args.addColumnChipAggregation,
     maxColumns: MAX_REPORT_COLUMNS,
     minColumns: MIN_REPORT_COLUMNS,
-    draggedFieldId,
-    dragOverFieldId,
-    editingFieldId,
-    editingFieldDraft,
-    sourceOptions,
+    draggedFieldId: args.draggedFieldId,
+    dragOverFieldId: args.dragOverFieldId,
+    editingFieldId: args.editingFieldId,
+    editingFieldDraft: args.editingFieldDraft,
+    sourceOptions: args.sourceOptions,
     displayTypeOptions: DISPLAY_TYPE_OPTIONS,
     chipAggregationOptions: CHIP_AGGREGATION_OPTIONS,
     onStartAddColumn: () => {
-      const defaultSourceKey = sourceOptions[0] ?? 'workDate'
-      const defaultDisplayType = getPreferredDisplayType(defaultSourceKey)
-      setAddColumnSourceKey(defaultSourceKey)
-      setAddColumnLabel(defaultSourceKey)
-      setAddColumnDisplayType(defaultDisplayType)
-      setAddColumnChipAggregation(getDefaultChipAggregation(defaultDisplayType))
-      setAddColumnPosition(reportFields.length + 1)
-      setIsAddingColumn(true)
+      const defaultSourceKey = args.sourceOptions[0] ?? 'workDate'
+      const defaultDisplayType = args.getPreferredDisplayType(defaultSourceKey)
+      args.setAddColumnSourceKey(defaultSourceKey)
+      args.setAddColumnLabel(defaultSourceKey)
+      args.setAddColumnDisplayType(defaultDisplayType)
+      args.setAddColumnChipAggregation(getDefaultChipAggregation(defaultDisplayType))
+      args.setAddColumnPosition(args.reportFields.length + 1)
+      args.setIsAddingColumn(true)
     },
-    onCancelAddColumn: () => setIsAddingColumn(false),
-    onAddColumnPositionChange: setAddColumnPosition,
+    onCancelAddColumn: () => args.setIsAddingColumn(false),
+    onAddColumnPositionChange: args.setAddColumnPosition,
     onAddColumnSourceKeyChange: (value: string) => {
-      const nextDisplayType = getPreferredDisplayType(value)
-      setAddColumnSourceKey(value)
-      setAddColumnLabel(value)
-      setAddColumnDisplayType(nextDisplayType)
-      setAddColumnChipAggregation(getDefaultChipAggregation(nextDisplayType))
+      const nextDisplayType = args.getPreferredDisplayType(value)
+      args.setAddColumnSourceKey(value)
+      args.setAddColumnLabel(value)
+      args.setAddColumnDisplayType(nextDisplayType)
+      args.setAddColumnChipAggregation(getDefaultChipAggregation(nextDisplayType))
     },
-    onAddColumnLabelChange: setAddColumnLabel,
+    onAddColumnLabelChange: args.setAddColumnLabel,
     onAddColumnDisplayTypeChange: (value: DisplayType) => {
-      setAddColumnDisplayType(value)
-      setAddColumnChipAggregation(getDefaultChipAggregation(value))
+      args.setAddColumnDisplayType(value)
+      args.setAddColumnChipAggregation(getDefaultChipAggregation(value))
     },
-    onAddColumnChipAggregationChange: setAddColumnChipAggregation,
+    onAddColumnChipAggregationChange: args.setAddColumnChipAggregation,
     onSaveNewColumn: () => {
-      handleAddColumnAtPosition()
-      setIsAddingColumn(false)
+      args.handleAddColumnAtPosition()
+      args.setIsAddingColumn(false)
     },
-    onMoveField: moveField,
-    onStartEditField: handleStartEditField,
-    onCancelEditField: handleCancelEditField,
-    onSaveEditField: handleSaveEditField,
+    onMoveField: args.moveField,
+    onStartEditField: args.handleStartEditField,
+    onCancelEditField: args.handleCancelEditField,
+    onSaveEditField: args.handleSaveEditField,
     onRemoveField: (fieldId: string) => {
-      setReportData((previous) => {
+      args.setReportData((previous) => {
         if (previous.fields.length <= MIN_REPORT_COLUMNS) return previous
         return { ...previous, fields: previous.fields.filter((current) => current.id !== fieldId) }
       })
-      if (editingFieldId === fieldId) {
-        handleCancelEditField()
+      if (args.editingFieldId === fieldId) {
+        args.handleCancelEditField()
       }
     },
-    onSetDraggedFieldId: setDraggedFieldId,
-    onSetDragOverFieldId: setDragOverFieldId,
-    onSetEditingFieldSourceKey: (value: string) => patchEditingFieldDraft({ sourceKey: value }),
-    onSetEditingFieldLabel: (value: string) => patchEditingFieldDraft({ label: value }),
-    onSetEditingFieldDisplayType: (value: DisplayType) => patchEditingFieldDraft({ displayType: value }),
-    onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => patchEditingFieldDraft({ chipAggregation: value }),
+    onSetDraggedFieldId: args.setDraggedFieldId,
+    onSetDragOverFieldId: args.setDragOverFieldId,
+    onSetEditingFieldSourceKey: (value: string) => args.patchEditingFieldDraft({ sourceKey: value }),
+    onSetEditingFieldLabel: (value: string) => args.patchEditingFieldDraft({ label: value }),
+    onSetEditingFieldDisplayType: (value: DisplayType) => args.patchEditingFieldDraft({ displayType: value }),
+    onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => args.patchEditingFieldDraft({ chipAggregation: value }),
   }
 }

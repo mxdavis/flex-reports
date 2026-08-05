@@ -17,12 +17,12 @@ describe('AutocompleteInput', () => {
     fireEvent.click(screen.getByTitle('Show options'))
 
     const suggestions = within(screen.getByRole('listbox', { name: 'Suggestions' }))
-      .getAllByRole('button')
+      .getAllByRole('option')
       .map((button) => button.textContent)
 
     expect(suggestions).toEqual(['alpha', 'bravo', 'zebra'])
 
-    fireEvent.click(screen.getByRole('button', { name: 'bravo' }))
+    fireEvent.click(screen.getByRole('option', { name: 'bravo' }))
     expect(onChange).toHaveBeenCalledWith('bravo')
   })
 

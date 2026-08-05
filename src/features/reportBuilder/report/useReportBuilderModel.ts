@@ -19,36 +19,7 @@ export function useReportBuilderModel({
   initialAggregateMode,
   initialEditMode,
 }: Required<ReportBuilderAppProps>) {
-  const {
-    rows,
-    sourceColumns,
-    reportData,
-    setReportData,
-    formulas,
-    setFormulas,
-    newFormula,
-    setNewFormula,
-    formulaError,
-    setFormulaError,
-    editingFormulaError,
-    setEditingFormulaError,
-    addColumnSourceKey,
-    setAddColumnSourceKey,
-    addColumnLabel,
-    setAddColumnLabel,
-    addColumnDisplayType,
-    setAddColumnDisplayType,
-    addColumnChipAggregation,
-    setAddColumnChipAggregation,
-    sheetName,
-    setSheetName,
-    currencySymbol,
-    setCurrencySymbol,
-    canEditReport,
-    ui,
-    dispatchUi,
-    tableScrollRef,
-  } = useReportBuilderState({
+  const state = useReportBuilderState({
     initialTableOrientation,
     initialAggregateMode,
     initialEditMode,
@@ -68,7 +39,7 @@ export function useReportBuilderModel({
     draggedFieldId,
     dragOverFieldId,
     isTableFullscreen,
-  } = ui
+  } = state.ui
 
   type UiValueAction = Extract<UiAction, { value: unknown }>
   const resolveUpdater = <T,>(updater: T | ((previous: T) => T), previous: T): T => {
@@ -78,12 +49,12 @@ export function useReportBuilderModel({
     type: TType,
     value: Extract<UiValueAction, { type: TType }>['value'],
   ): void => {
-    dispatchUi({ type, value } as UiValueAction)
+    state.dispatchUi({ type, value } as UiValueAction)
   }
-  const clearEditingFormulaError = (): void => setEditingFormulaError('')
+  const clearEditingFormulaError = (): void => state.setEditingFormulaError('')
 
   const setIsEditMode = (updater: boolean | ((previous: boolean) => boolean)): void => {
-    dispatchUiValue('setIsEditMode', resolveUpdater(updater, ui.isEditMode))
+    dispatchUiValue('setIsEditMode', resolveUpdater(updater, state.ui.isEditMode))
   }
   const setIsAddingFormula = (value: boolean): void => dispatchUiValue('setIsAddingFormula', value)
   const setIsAddingColumn = (value: boolean): void => dispatchUiValue('setIsAddingColumn', value)
@@ -91,13 +62,13 @@ export function useReportBuilderModel({
   const setTableOrientation = (
     updater: TableOrientation | ((previous: TableOrientation) => TableOrientation),
   ): void => {
-    dispatchUiValue('setTableOrientation', resolveUpdater(updater, ui.tableOrientation))
+    dispatchUiValue('setTableOrientation', resolveUpdater(updater, state.ui.tableOrientation))
   }
   const setAggregateMode = (value: AggregateMode): void => dispatchUiValue('setAggregateMode', value)
   const setDraggedFieldId = (value: string | null): void => dispatchUiValue('setDraggedFieldId', value)
   const setDragOverFieldId = (value: string | null): void => dispatchUiValue('setDragOverFieldId', value)
   const setIsTableFullscreen = (updater: boolean | ((previous: boolean) => boolean)): void => {
-    dispatchUiValue('setIsTableFullscreen', resolveUpdater(updater, ui.isTableFullscreen))
+    dispatchUiValue('setIsTableFullscreen', resolveUpdater(updater, state.ui.isTableFullscreen))
   }
   const {
     sourceOptions,
@@ -111,20 +82,20 @@ export function useReportBuilderModel({
     getMappedValue,
     getAggregatedFieldValue,
   } = useReportBuilderComputed({
-    rows,
-    sourceColumns,
-    reportFields: reportData.fields,
-    formulas,
-    currencySymbol,
+    rows: state.rows,
+    sourceColumns: state.sourceColumns,
+    reportFields: state.reportData.fields,
+    formulas: state.formulas,
+    currencySymbol: state.currencySymbol,
     tableOrientation,
     aggregateMode,
   })
 
   const setReportFields = useCallback((updater: (previous: ReportField[]) => ReportField[]) => {
-    setReportData((previous) => ({ ...previous, fields: updater(previous.fields) }))
-  }, [setReportData])
+    state.setReportData((previous) => ({ ...previous, fields: updater(previous.fields) }))
+  }, [state])
 
-  const setNewFormulaValue = (value: SeedFormula): void => setNewFormula(value)
+  const setNewFormulaValue = (value: SeedFormula): void => state.setNewFormula(value)
   const {
     patchEditingFieldDraft,
     patchEditingFormulaDraft,
@@ -137,33 +108,33 @@ export function useReportBuilderModel({
     handleCancelEditFormula,
     handleSaveEditFormula,
   } = useReportBuilderHandlers({
-    ui,
-    dispatchUi,
-    reportFields: reportData.fields,
+    ui: state.ui,
+    dispatchUi: state.dispatchUi,
+    reportFields: state.reportData.fields,
     setReportFields,
-    formulas,
-    setFormulas,
-    newFormula,
+    formulas: state.formulas,
+    setFormulas: state.setFormulas,
+    newFormula: state.newFormula,
     setNewFormula: setNewFormulaValue,
     getPreferredDisplayType,
-    setFormulaError,
-    setEditingFormulaError,
+    setFormulaError: state.setFormulaError,
+    setEditingFormulaError: state.setEditingFormulaError,
     clearEditingFormulaError,
   })
 
   function handleAddColumnAtPosition(): void {
-    setReportData((previous) => {
+    state.setReportData((previous) => {
       if (previous.fields.length >= MAX_REPORT_COLUMNS) return previous
-      const insertionIndex = Math.min(Math.max(ui.addColumnPosition - 1, 0), previous.fields.length)
+      const insertionIndex = Math.min(Math.max(state.ui.addColumnPosition - 1, 0), previous.fields.length)
       const defaultSourceKey = sourceOptions[0] ?? 'workDate'
-      const nextSourceKey = addColumnSourceKey.trim() || defaultSourceKey
-      const nextDisplayType = addColumnDisplayType || getPreferredDisplayType(nextSourceKey)
+      const nextSourceKey = state.addColumnSourceKey.trim() || defaultSourceKey
+      const nextDisplayType = state.addColumnDisplayType || getPreferredDisplayType(nextSourceKey)
       const nextField: ReportField = {
         id: getNextFieldId(previous.fields.map((field) => field.id)),
-        label: addColumnLabel.trim() || nextSourceKey,
+        label: state.addColumnLabel.trim() || nextSourceKey,
         sourceKey: nextSourceKey,
         displayType: nextDisplayType,
-        chipAggregation: addColumnChipAggregation,
+        chipAggregation: state.addColumnChipAggregation,
         currencySymbol: nextDisplayType === 'currency' ? '$' : '',
       }
       const fields = [...previous.fields]
@@ -182,24 +153,24 @@ export function useReportBuilderModel({
     window.history.replaceState(null, '', `#${sectionId}`)
   }
 
-  const showAuthoring = canEditReport && isEditMode
+  const showAuthoring = state.canEditReport && isEditMode
   const mappingPanelProps = buildMappingPanelProps({
-    reportFields: reportData.fields,
+    reportFields: state.reportData.fields,
     isAddingColumn,
     addColumnPosition,
-    addColumnSourceKey,
-    addColumnLabel,
-    addColumnDisplayType,
-    addColumnChipAggregation,
+    addColumnSourceKey: state.addColumnSourceKey,
+    addColumnLabel: state.addColumnLabel,
+    addColumnDisplayType: state.addColumnDisplayType,
+    addColumnChipAggregation: state.addColumnChipAggregation,
     draggedFieldId,
     dragOverFieldId,
     editingFieldId,
     editingFieldDraft,
     sourceOptions,
-    setAddColumnSourceKey,
-    setAddColumnLabel,
-    setAddColumnDisplayType,
-    setAddColumnChipAggregation,
+    setAddColumnSourceKey: state.setAddColumnSourceKey,
+    setAddColumnLabel: state.setAddColumnLabel,
+    setAddColumnDisplayType: state.setAddColumnDisplayType,
+    setAddColumnChipAggregation: state.setAddColumnChipAggregation,
     setAddColumnPosition,
     setIsAddingColumn,
     setDraggedFieldId,
@@ -211,22 +182,22 @@ export function useReportBuilderModel({
     handleStartEditField,
     handleCancelEditField,
     handleSaveEditField,
-    setReportData,
+    setReportData: state.setReportData,
   })
 
   const seedFormulasProps = buildSeedFormulasProps({
-    formulas,
+    formulas: state.formulas,
     isAddingFormula,
-    newFormula,
-    formulaError,
+    newFormula: state.newFormula,
+    formulaError: state.formulaError,
     editingFormulaLabel,
     editingFormula,
-    editingFormulaError,
+    editingFormulaError: state.editingFormulaError,
     formulaTokenOptions,
-    setFormulaError,
+    setFormulaError: state.setFormulaError,
     setIsAddingFormula,
-    setNewFormula,
-    setFormulas,
+    setNewFormula: state.setNewFormula,
+    setFormulas: state.setFormulas,
     patchEditingFormulaDraft,
     handleAddFormula,
     handleStartEditFormula,
@@ -237,29 +208,29 @@ export function useReportBuilderModel({
   return buildReportBuilderViewProps({
     showAuthoring,
     summaryItems,
-    canEditReport,
+    canEditReport: state.canEditReport,
     isEditMode,
     onJumpToSection: handleJumpToSection,
     onToggleEditMode: () => {
       setIsEditMode((previous) => !previous)
       setIsAddingFormula(false)
       setIsAddingColumn(false)
-      setFormulaError('')
+      state.setFormulaError('')
     },
-    sheetName,
-    currencySymbol,
-    onSheetNameChange: setSheetName,
-    onCurrencySymbolChange: setCurrencySymbol,
+    sheetName: state.sheetName,
+    currencySymbol: state.currencySymbol,
+    onSheetNameChange: state.setSheetName,
+    onCurrencySymbolChange: state.setCurrencySymbol,
     mappingPanelProps,
     seedFormulasProps,
     isTableFullscreen,
     isHorizontalTable,
     aggregateMode,
     showTotals,
-    fields: reportData.fields,
+    fields: state.reportData.fields,
     previewRows,
     verticalColumns,
-    tableScrollRef,
+    tableScrollRef: state.tableScrollRef,
     onAggregateModeChange: setAggregateMode,
     onToggleOrientation: () => {
       setTableOrientation((previous) => (previous === 'horizontal' ? 'vertical' : 'horizontal'))
@@ -271,7 +242,7 @@ export function useReportBuilderModel({
     getAggregatedFieldValue,
     formatValue: (value: number | null, displayType: DisplayType) => {
       if (value === null) return ''
-      return formatCellValue(value, displayType, { currencySymbol })
+      return formatCellValue(value, displayType, { currencySymbol: state.currencySymbol })
     },
   })
 }
