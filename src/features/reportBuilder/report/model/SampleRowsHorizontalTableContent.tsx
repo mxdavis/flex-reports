@@ -1,8 +1,7 @@
-import { Fragment } from 'react'
 import type { ReportRow } from '../../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
 import type { AggregateMode } from '../../types'
-import { buildNestedPivotGroups } from './sampleRowsPivot'
+import { buildPivotRenderRows } from './sampleRowsPivot'
 
 type SampleRowsHorizontalTableContentProps = {
   showTotals: boolean
@@ -60,10 +59,14 @@ export function SampleRowsHorizontalTableContent({
 
   const shouldRenderEmbeddedPivot = isGroupingEnabled && fields.length >= 2
   if (shouldRenderEmbeddedPivot) {
-    const pivotGroups = buildNestedPivotGroups({
+    const pivotRows = buildPivotRenderRows({
       previewRows,
       fields,
+      aggregateMode,
+      showTotals,
       getMappedValue,
+      getAggregatedFieldValue,
+      formatValue,
       isNumericDisplayType,
     })
 
@@ -77,50 +80,35 @@ export function SampleRowsHorizontalTableContent({
           </tr>
         </thead>
         <tbody>
-          {pivotGroups.map((group) => {
-            const groupTotalLabel = aggregateMode === 'count'
-              ? `${group.primaryValue} Count Total ${group.rows.length}`
-              : aggregateMode === 'distinct'
-                ? `${group.primaryValue} DISTINCT COUNT`
-              : `${group.primaryValue} ${aggregateSummaryLabel}`
-            return (
-              <Fragment key={`group-${group.primaryValue}`}>
-                {group.detailRows.map((detailRow) => (
-                  <tr key={`row-${group.primaryValue}-${detailRow.rowId}`}>
-                    {detailRow.cells.map((cell, column) => {
-                      if (!cell.render) return null
-                      if (column === 0) {
-                        return (
-                          <th
-                            key={`${detailRow.rowId}-${fields[column].id}`}
-                            scope="rowgroup"
-                            rowSpan={cell.rowSpan}
-                          >
-                            {cell.value}
-                          </th>
-                        )
-                      }
-                      return (
-                        <td
-                          key={`${detailRow.rowId}-${fields[column].id}`}
-                          rowSpan={cell.rowSpan}
-                          className={cell.isNumeric ? 'seed-table-value-numeric' : ''}
-                        >
-                          {cell.value}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-                {showTotals && (
-                  <tr key={`group-total-${group.primaryValue}`}>
-                    <th scope="row"><strong>{groupTotalLabel}</strong></th>
-                    {renderTotalCells(group.rows)}
-                  </tr>
-                )}
-              </Fragment>
-            )
-          })}
+          {pivotRows.map((pivotRow) => (
+            <tr key={pivotRow.key}>
+              {pivotRow.cells.map((cell) => {
+                const className = cell.isNumeric ? 'seed-table-value-numeric' : undefined
+                const content = cell.emphasis ? <strong>{cell.value}</strong> : cell.value
+                if (cell.tag === 'th') {
+                  return (
+                    <th
+                      key={`${pivotRow.key}-${cell.columnIndex}`}
+                      scope={cell.scope}
+                      rowSpan={cell.rowSpan}
+                      className={className}
+                    >
+                      {content}
+                    </th>
+                  )
+                }
+                return (
+                  <td
+                    key={`${pivotRow.key}-${cell.columnIndex}`}
+                    rowSpan={cell.rowSpan}
+                    className={className}
+                  >
+                    {content}
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
         </tbody>
         {showTotals && (
           <tfoot>
