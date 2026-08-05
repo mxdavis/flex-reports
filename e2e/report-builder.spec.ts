@@ -19,11 +19,37 @@ test('table controls expose aggregate options and vertical header semantics', as
   await expect(aggregateSelect.locator('option')).toHaveText(['None', 'Sum', 'Average'])
 
   await page.getByRole('button', { name: 'Vertical view' }).click()
-  await expect(page.getByText('Mode: Vertical')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Horizontal view' })).toBeVisible()
 
   const firstHeaderCell = page.locator('.seed-table table thead th').first()
   await expect(firstHeaderCell).not.toHaveText('Field')
   await expect(firstHeaderCell).not.toHaveText('Column 1')
+})
+
+test('grouping toggle enables grouped totals layout', async ({ page }) => {
+  await page.goto('/')
+
+  await enterEditMode(page)
+
+  const mappingSection = getMappingSection(page)
+
+  await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
+  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill('personName')
+  await mappingSection.getByRole('button', { name: 'Save COLUMN 1' }).click()
+
+  await mappingSection.getByRole('button', { name: 'Edit COLUMN 2' }).click()
+  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill('clientName')
+  await mappingSection.getByRole('button', { name: 'Save COLUMN 2' }).click()
+
+  const aggregateSelect = page.locator('#aggregate-mode')
+  await aggregateSelect.selectOption('sum')
+
+  const groupedTotalHeaders = page.getByRole('rowheader', { name: / Total$/ })
+  await expect(groupedTotalHeaders).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Grouping' }).click()
+
+  await expect(groupedTotalHeaders.first()).toBeVisible()
 })
 
 test('formula label rename syncs mapped column source', async ({ page }) => {

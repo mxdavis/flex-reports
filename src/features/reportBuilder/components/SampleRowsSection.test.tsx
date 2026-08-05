@@ -39,12 +39,14 @@ describe('SampleRowsSection', () => {
         isTableFullscreen={false}
         isHorizontalTable
         aggregateMode="none"
+        isGroupingEnabled={false}
         showTotals={false}
         fields={fields}
         previewRows={rows}
         verticalColumns={[]}
         tableScrollRef={{ current: null }}
         onAggregateModeChange={() => undefined}
+        onToggleGrouping={() => undefined}
         onToggleOrientation={() => undefined}
         onToggleFullscreen={() => undefined}
         getMappedValue={() => 'value'}
@@ -62,18 +64,20 @@ describe('SampleRowsSection', () => {
 
   it('forwards aggregate mode changes', () => {
     const onAggregateModeChange = vi.fn()
-    const { container } = render(
+    render(
       <SampleRowsSection
         sheetName="Finance Sheet"
         isTableFullscreen={false}
         isHorizontalTable
         aggregateMode="none"
+        isGroupingEnabled={false}
         showTotals={false}
         fields={fields}
         previewRows={rows}
         verticalColumns={[]}
         tableScrollRef={{ current: null }}
         onAggregateModeChange={onAggregateModeChange}
+        onToggleGrouping={() => undefined}
         onToggleOrientation={() => undefined}
         onToggleFullscreen={() => undefined}
         getMappedValue={() => 'value'}
@@ -82,13 +86,115 @@ describe('SampleRowsSection', () => {
       />,
     )
 
-    const select = container.querySelector('#aggregate-mode') as HTMLSelectElement | null
-    expect(select).toBeTruthy()
-    if (!select) {
-      return
-    }
+    const select = screen.getByLabelText('Aggregate mode') as HTMLSelectElement
     fireEvent.change(select, { target: { value: 'sum' } })
 
     expect(onAggregateModeChange).toHaveBeenCalledWith('sum')
+  })
+
+  it('toggles grouping when the grouping button is clicked', () => {
+    const onToggleGrouping = vi.fn()
+    render(
+      <SampleRowsSection
+        sheetName="Finance Sheet"
+        isTableFullscreen={false}
+        isHorizontalTable
+        aggregateMode="none"
+        isGroupingEnabled={false}
+        showTotals={false}
+        fields={fields}
+        previewRows={rows}
+        verticalColumns={[]}
+        tableScrollRef={{ current: null }}
+        onAggregateModeChange={() => undefined}
+        onToggleGrouping={onToggleGrouping}
+        onToggleOrientation={() => undefined}
+        onToggleFullscreen={() => undefined}
+        getMappedValue={() => 'value'}
+        getAggregatedFieldValue={() => null}
+        formatValue={() => ''}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Grouping' }))
+    expect(onToggleGrouping).toHaveBeenCalled()
+  })
+
+  it('locks body scroll while fullscreen is active', () => {
+    const { rerender } = render(
+      <SampleRowsSection
+        sheetName="Finance Sheet"
+        isTableFullscreen={false}
+        isHorizontalTable
+        aggregateMode="none"
+        isGroupingEnabled={false}
+        showTotals={false}
+        fields={fields}
+        previewRows={rows}
+        verticalColumns={[]}
+        tableScrollRef={{ current: null }}
+        onAggregateModeChange={() => undefined}
+        onToggleGrouping={() => undefined}
+        onToggleOrientation={() => undefined}
+        onToggleFullscreen={() => undefined}
+        getMappedValue={() => 'value'}
+        getAggregatedFieldValue={() => null}
+        formatValue={() => ''}
+      />,
+    )
+
+    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(false)
+
+    rerender(
+      <SampleRowsSection
+        sheetName="Finance Sheet"
+        isTableFullscreen
+        isHorizontalTable
+        aggregateMode="none"
+        isGroupingEnabled={false}
+        showTotals={false}
+        fields={fields}
+        previewRows={rows}
+        verticalColumns={[]}
+        tableScrollRef={{ current: null }}
+        onAggregateModeChange={() => undefined}
+        onToggleGrouping={() => undefined}
+        onToggleOrientation={() => undefined}
+        onToggleFullscreen={() => undefined}
+        getMappedValue={() => 'value'}
+        getAggregatedFieldValue={() => null}
+        formatValue={() => ''}
+      />,
+    )
+
+    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(true)
+  })
+
+  it('removes fullscreen body lock class on unmount', () => {
+    const { unmount } = render(
+      <SampleRowsSection
+        sheetName="Finance Sheet"
+        isTableFullscreen
+        isHorizontalTable
+        aggregateMode="none"
+        isGroupingEnabled={false}
+        showTotals={false}
+        fields={fields}
+        previewRows={rows}
+        verticalColumns={[]}
+        tableScrollRef={{ current: null }}
+        onAggregateModeChange={() => undefined}
+        onToggleGrouping={() => undefined}
+        onToggleOrientation={() => undefined}
+        onToggleFullscreen={() => undefined}
+        getMappedValue={() => 'value'}
+        getAggregatedFieldValue={() => null}
+        formatValue={() => ''}
+      />,
+    )
+
+    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(true)
+    unmount()
+    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(false)
   })
 })

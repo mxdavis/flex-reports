@@ -86,7 +86,7 @@ describe('ReportBuilderApp', () => {
   it('shows aggregate modes without count', () => {
     render(<ReportBuilderApp />)
 
-    const aggregateSelect = screen.getByLabelText('Aggregate')
+    const aggregateSelect = screen.getByLabelText('Aggregate mode')
     const options = Array.from((aggregateSelect as HTMLSelectElement).options).map((option) => option.text)
 
     expect(options).toEqual(['None', 'Sum', 'Average'])
