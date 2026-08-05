@@ -1,7 +1,15 @@
 import type { SeedFormula } from '../services/adapters'
 import type { DisplayType } from '../services/reportDefinition/types'
 
-export function formatCellValue(value: unknown, displayType: DisplayType): string {
+type FormatCellOptions = {
+  currencySymbol?: string
+}
+
+export function formatCellValue(
+  value: unknown,
+  displayType: DisplayType,
+  options?: FormatCellOptions,
+): string {
   if (value === null || value === undefined) {
     return ''
   }
@@ -31,16 +39,23 @@ export function formatCellValue(value: unknown, displayType: DisplayType): strin
     return String(value)
   }
 
+  const fixedTwoDecimals = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  const wholeNumber = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 0,
+  })
+
   switch (displayType) {
     case 'currency':
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(value)
+      return `${options?.currencySymbol || '$'}${fixedTwoDecimals.format(value)}`
+    case 'number':
+      return wholeNumber.format(value)
     case 'decimal':
-      return value.toFixed(2)
+      return fixedTwoDecimals.format(value)
     case 'percent':
-      return `${(value * 100).toFixed(2)}%`
+      return `${fixedTwoDecimals.format(value * 100)}%`
     default:
       return String(value)
   }

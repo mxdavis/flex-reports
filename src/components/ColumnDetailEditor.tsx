@@ -1,9 +1,18 @@
 import AutocompleteInput from './AutocompleteInput'
-import type { DisplayType, ReportField } from '../services/reportDefinition/types'
+import type {
+  ChipAggregationMode,
+  DisplayType,
+  ReportField,
+} from '../services/reportDefinition/types'
 import './ColumnDetailEditor.css'
 
 type DisplayTypeOption = {
   value: DisplayType
+  label: string
+}
+
+type ChipAggregationOption = {
+  value: ChipAggregationMode
   label: string
 }
 
@@ -12,9 +21,11 @@ type ColumnDetailEditorProps = {
   columnLabel: string
   sourceOptions: string[]
   displayTypeOptions: DisplayTypeOption[]
+  chipAggregationOptions: ChipAggregationOption[]
   onSourceChange: (nextValue: string) => void
   onLabelChange: (nextValue: string) => void
   onDisplayTypeChange: (nextValue: DisplayType) => void
+  onChipAggregationChange: (nextValue: ChipAggregationMode) => void
 }
 
 function ColumnDetailEditor({
@@ -22,9 +33,11 @@ function ColumnDetailEditor({
   columnLabel,
   sourceOptions,
   displayTypeOptions,
+  chipAggregationOptions,
   onSourceChange,
   onLabelChange,
   onDisplayTypeChange,
+  onChipAggregationChange,
 }: ColumnDetailEditorProps) {
   return (
     <div className="column-detail-editor drag-block">
@@ -60,6 +73,27 @@ function ColumnDetailEditor({
         {displayTypeOptions.map((displayTypeOption) => (
           <option key={displayTypeOption.value} value={displayTypeOption.value}>
             {displayTypeOption.label}
+          </option>
+        ))}
+      </select>
+
+      <label
+        htmlFor={`chip-aggregation-${field.id}`}
+        title="Controls how this column appears in summary chips above the chart."
+      >
+        Chip type
+      </label>
+      <select
+        id={`chip-aggregation-${field.id}`}
+        value={field.chipAggregation}
+        title="Controls how this column appears in summary chips above the chart."
+        onChange={(event) => {
+          onChipAggregationChange(event.target.value as ChipAggregationMode)
+        }}
+      >
+        {chipAggregationOptions.map((chipAggregationOption) => (
+          <option key={chipAggregationOption.value} value={chipAggregationOption.value}>
+            {chipAggregationOption.label}
           </option>
         ))}
       </select>

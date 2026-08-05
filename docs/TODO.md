@@ -34,11 +34,11 @@ Status tags used in each item:
 - [x] (in-pr) Build data adapter + mock billing seed dataset
 - [x] (in-pr) Build seed preview page in app (stats, formulas, sample rows)
 - [x] (in-pr) Address PR #2 review: DataSource factory + `VITE_DATA_SOURCE` env toggle, no-eval formula parser, `engines.node` >=22
-- [ ] (todo) Follow-up (PR #3 review): replace hardcoded `semanticFields`/default mapping in `App.tsx` with a schema-driven, saved report definition (JSON) sourced from `getSchema()`
-- [ ] (todo) Follow-up (PR #3 review): replace hardcoded data summary cards/labels with dynamic, schema-driven cards at the top of the report; labels come from configured fields and aggregation is type-based (string/date -> counts, numeric/decimal/percent -> numeric totals, currency -> currency totals).
-- [ ] (todo) Follow-up (PR #3 review): move formula application out of the seed data source into the report/formula layer (adapter returns raw rows only)
-- [ ] (todo) Follow-up (PR #3 review): replace bespoke `getTotalRevenue` with the pivot/aggregation engine
-- [ ] (todo) Build report definition store (localStorage)
+- [x] (in-pr) Follow-up (PR #3 review): replace hardcoded `semanticFields`/default mapping in `App.tsx` with a schema-driven, saved report definition (JSON) sourced from `getSchema()`
+- [x] (in-pr) Follow-up (PR #3 review): replace hardcoded data summary cards/labels with dynamic, schema-driven cards at the top of the report; labels come from configured fields and aggregation is type-based (string/date -> counts, numeric/decimal/percent -> numeric totals, currency -> currency totals).
+- [x] (in-pr) Follow-up (PR #3 review): move formula application out of the seed data source into the report/formula layer (adapter returns raw rows only)
+- [x] (in-pr) Follow-up (PR #3 review): replace bespoke `getTotalRevenue` with the pivot/aggregation engine
+- [x] (in-pr) Build report definition store (localStorage)
 - [ ] (todo) Replace prototype localStorage report-definition persistence with host-app backed persistence (DB/service API) for shared, durable report configs
 - [ ] (todo) Define persisted `reportData` contract (column names, source attrs, mappings, formulas, permissions)
 - [ ] (todo) Add reportData generator flow for host apps (initial target: Rails helper/service)
@@ -46,14 +46,17 @@ Status tags used in each item:
 - [ ] (todo) Add edit-mode permission gating (only allowed users see edit controls/button)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)
 - [ ] (todo) Add orientation toggle for report display: horizontal (rows) vs vertical (pivoted columns), including people-as-columns use case.
-- [~] (wip) Make sheet name editable at the top of edit mode, and use that name as the chart/table section heading instead of hardcoded "Sample rows".
+- [x] (in-main) Make sheet name editable at the top of edit mode, and use that name as the chart/table section heading instead of hardcoded "Sample rows".
 - [ ] (todo) Next PR: add embedded subcolumn pivot layout (Excel-like): first selected column is always the primary header/group, second selected column nests under it (no duplicated primary values), with aggregates/totals applied at subgroup, group, and grand-total levels.
 - [ ] (todo) Add customer UI column mapping (semantic field -> source column key)
 - [x] (in-pr) Add/remove report columns in edit mode (capped at 15)
 - [~] (in-pr) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)
 - [ ] (todo) Add value-template columns with `{{value_name}}` placeholders
 - [ ] (todo) Improve table readability (header styling, alternating row colors)
-- [ ] (todo) Design seeded formula authoring UX (how formulas are created/edited/validated)
+- [ ] (todo) Design seeded formula authoring UX (how formulas are created/edited/
+- [ ] (todo) Add filtering, sorting, etc. also should be able to filter by date range. add filters would be another thing on the sticky when in the view mode. When in edit mode be able to set the default for the filters created.
+- [ ] (todo) Make filters, columns, and formulas collapsable and expandable when in edit mode
+validated)
 - [ ] (todo) Add per-component stylesheets (final split by component)
 - [ ] (todo) Add CSV export
 - [ ] (todo) Add non-enforcing licenseKey seam

@@ -1,4 +1,5 @@
 import type {
+  ChipAggregationMode,
   DisplayType,
   ReportData,
   ReportField,
@@ -12,36 +13,40 @@ const REPORT_DATA_VERSION = 4
 
 function isDisplayType(value: unknown): value is DisplayType {
   return value === 'currency'
+    || value === 'number'
     || value === 'decimal'
     || value === 'percent'
     || value === 'date'
     || value === 'string'
 }
 
-const defaultFields: ReportField[] = [
-  { id: 'date', label: 'workDate', sourceKey: 'workDate', displayType: 'string' },
-  { id: 'people', label: 'personName', sourceKey: 'personName', displayType: 'string' },
-  { id: 'clients', label: 'clientName', sourceKey: 'clientName', displayType: 'string' },
-  { id: 'task', label: 'task', sourceKey: 'task', displayType: 'string' },
-  { id: 'hours', label: 'hours', sourceKey: 'hours', displayType: 'string' },
-  { id: 'rate', label: 'rate', sourceKey: 'rate', displayType: 'string' },
-  { id: 'total', label: 'total', sourceKey: 'total', displayType: 'string' },
-]
+function isChipAggregationMode(value: unknown): value is ChipAggregationMode {
+  return value === 'none'
+    || value === 'sum'
+    || value === 'avg'
+    || value === 'count'
+}
+
+function getDefaultChipAggregation(displayType: DisplayType): ChipAggregationMode {
+  return displayType === 'string' || displayType === 'date' ? 'count' : 'sum'
+}
+
+function getDefaultCurrencySymbol(displayType: DisplayType): string {
+  return displayType === 'currency' ? '$' : ''
+}
 
 export function generateDefaultReportData(sourceColumns: SourceColumn[]): ReportData {
-  const fallbackSourceKey = sourceColumns[0]?.key ?? 'workDate'
-
-  const fields = defaultFields.map((field, index) => {
-    const fallback = sourceColumns[index]
-    const sourceKey = sourceColumns.some((column) => column.key === field.sourceKey)
-      ? field.sourceKey
-      : (fallback?.key ?? fallbackSourceKey)
+  const fields = sourceColumns.map((column) => {
+    const sourceKey = String(column.key)
+    const displayType = getDefaultDisplayType(column)
 
     return {
-      ...field,
+      id: column.id,
+      label: column.label,
       sourceKey,
-      label: sourceKey,
-      displayType: getDefaultDisplayType(sourceKey),
+      displayType,
+      chipAggregation: getDefaultChipAggregation(displayType),
+      currencySymbol: getDefaultCurrencySymbol(displayType),
     }
   })
 
@@ -79,8 +84,10 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       return fallback
     }
 
+    const sourceColumnByKey = new Map(sourceColumns.map((column) => [String(column.key), column]))
+
     const fields = parsed.fields
-      .filter((field): field is ReportField => {
+      .filter((field): field is Pick<ReportField, 'id' | 'label' | 'sourceKey'> & Partial<ReportField> => {
         return Boolean(
           field
           && typeof field.id === 'string'
@@ -93,14 +100,22 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
         const sourceKey = field.sourceKey.trim().length > 0
           ? field.sourceKey
           : defaultField.sourceKey
+        const source = sourceColumnByKey.get(sourceKey)
+        const resolvedDisplayType = isDisplayType(field.displayType)
+          ? field.displayType
+          : getDefaultDisplayType(source ?? { key: sourceKey, dataType: 'string' })
 
         return {
           id: field.id,
           label: field.label.trim().length > 0 ? field.label : sourceKey,
           sourceKey,
-          displayType: isDisplayType(field.displayType)
-            ? field.displayType
-            : getDefaultDisplayType(sourceKey),
+          displayType: resolvedDisplayType,
+          chipAggregation: isChipAggregationMode(field.chipAggregation)
+            ? field.chipAggregation
+            : getDefaultChipAggregation(resolvedDisplayType),
+          currencySymbol: typeof field.currencySymbol === 'string'
+            ? field.currencySymbol
+            : getDefaultCurrencySymbol(resolvedDisplayType),
         }
       })
 

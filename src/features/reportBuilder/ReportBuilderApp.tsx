@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import {
   getBillingSeed,
+  getSchema,
   getReportRows,
-  getTotalRevenue,
 } from '../../services/adapters'
 import type { ReportRow } from '../../services/adapters'
 import type { SeedFormula } from '../../services/adapters'
@@ -36,6 +36,7 @@ import {
   validateFormulaInput,
 } from '../../utils/reportBuilder'
 import type {
+  ChipAggregationMode,
   DisplayType,
   ReportField,
   ReportData,
@@ -48,12 +49,22 @@ const MIN_REPORT_COLUMNS = 1
 const MAX_FORMULAS = 25
 const DEFAULT_SHEET_NAME = 'Sample rows'
 const SHEET_NAME_STORAGE_KEY = 'flex-reports.sheet-name.v1'
+const CURRENCY_SYMBOL_STORAGE_KEY = 'flex-reports.currency-symbol.v1'
+const DEFAULT_CURRENCY_SYMBOL = '$'
 const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'currency', label: 'Currency' },
+  { value: 'number', label: 'Number' },
   { value: 'decimal', label: 'Decimal number' },
   { value: 'percent', label: 'Percent' },
   { value: 'date', label: 'Date' },
   { value: 'string', label: 'String' },
+]
+
+const CHIP_AGGREGATION_OPTIONS: Array<{ value: ChipAggregationMode, label: string }> = [
+  { value: 'none', label: 'None' },
+  { value: 'sum', label: 'Sum' },
+  { value: 'avg', label: 'Average' },
+  { value: 'count', label: 'Count (unique values)' },
 ]
 
 const EDIT_MODE_JUMP_TARGETS = [
@@ -62,33 +73,26 @@ const EDIT_MODE_JUMP_TARGETS = [
   { id: 'report-chart', label: 'Chart' },
 ]
 
+const INTEGER_NUMBER_FORMAT = new Intl.NumberFormat('en-US')
+
 function ReportBuilderApp({
   initialTableOrientation = 'horizontal',
   initialAggregateMode = 'none',
   initialEditMode = false,
 }: ReportBuilderAppProps) {
   const seed = useMemo(() => getBillingSeed(), [])
+  const schema = useMemo(() => getSchema(), [])
   const rows = useMemo(() => getReportRows(), [])
-  const totalRevenue = useMemo(() => getTotalRevenue(rows), [rows])
   const canEditReport = import.meta.env.VITE_CAN_EDIT_REPORT !== 'false'
 
   const sourceColumns = useMemo<SourceColumn[]>(() => {
-    const configuredColumns: Array<keyof ReportRow> = [
-      'workDate',
-      'personName',
-      'clientName',
-      'task',
-      'hours',
-      'rate',
-      'total',
-    ]
-
-    return configuredColumns.map((key, index) => ({
-      id: `column${index + 1}`,
-      key,
-      defaultLabel: `column${index + 1}`,
+    return schema.map((field) => ({
+      id: field.id,
+      key: field.key,
+      label: field.label,
+      dataType: field.dataType,
     }))
-  }, [])
+  }, [schema])
 
   const [reportData, setReportData] = useState<ReportData>(() => {
     return loadReportData(sourceColumns)
@@ -102,6 +106,10 @@ function ReportBuilderApp({
   }))
   const [formulaError, setFormulaError] = useState<string>('')
   const [editingFormulaError, setEditingFormulaError] = useState<string>('')
+  const [addColumnSourceKey, setAddColumnSourceKey] = useState<string>('')
+  const [addColumnLabel, setAddColumnLabel] = useState<string>('')
+  const [addColumnDisplayType, setAddColumnDisplayType] = useState<DisplayType>('string')
+  const [addColumnChipAggregation, setAddColumnChipAggregation] = useState<ChipAggregationMode>('count')
   const [sheetName, setSheetName] = useState<string>(() => {
     if (typeof window === 'undefined') {
       return DEFAULT_SHEET_NAME
@@ -116,6 +124,22 @@ function ReportBuilderApp({
       return saved.trim().length > 0 ? saved : DEFAULT_SHEET_NAME
     } catch {
       return DEFAULT_SHEET_NAME
+    }
+  })
+  const [currencySymbol, setCurrencySymbol] = useState<string>(() => {
+    if (typeof window === 'undefined') {
+      return DEFAULT_CURRENCY_SYMBOL
+    }
+
+    try {
+      const saved = window.localStorage.getItem(CURRENCY_SYMBOL_STORAGE_KEY)
+      if (!saved || saved.trim().length === 0) {
+        return DEFAULT_CURRENCY_SYMBOL
+      }
+
+      return saved
+    } catch {
+      return DEFAULT_CURRENCY_SYMBOL
     }
   })
   const [ui, dispatchUi] = useReducer(
@@ -248,6 +272,18 @@ function ReportBuilderApp({
   }, [sheetName])
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      window.localStorage.setItem(CURRENCY_SYMBOL_STORAGE_KEY, currencySymbol)
+    } catch {
+      // Ignore storage write failures in private mode/full storage.
+    }
+  }, [currencySymbol])
+
+  useEffect(() => {
     const tableScrollElement = tableScrollRef.current
     if (!tableScrollElement) {
       return
@@ -310,23 +346,43 @@ function ReportBuilderApp({
     ]))
   }, [formulas, sourceColumns])
 
-  const previewRows = rows.slice(0, 10)
+  const previewRows = rows
   const isHorizontalTable = tableOrientation === 'horizontal'
   const showTotals = ui.aggregateMode !== 'none'
 
+  function getDefaultChipAggregation(displayType: DisplayType): ChipAggregationMode {
+    return displayType === 'string' || displayType === 'date' ? 'count' : 'sum'
+  }
+
+  function getChipAggregationLabel(
+    chipAggregation: ChipAggregationMode,
+    _displayType: DisplayType,
+  ): string {
+    return chipAggregation
+  }
+
+  function resolveChipAggregation(field: ReportField): ChipAggregationMode {
+    return field.chipAggregation ?? getDefaultChipAggregation(field.displayType)
+  }
+
   function getPreferredDisplayType(sourceKey: string): DisplayType {
     const normalizedKey = sourceKey.toLowerCase().trim()
-    const numericBaseKeys = new Set(['hours', 'rate', 'total', 'grossfees', 'writedown', 'netfees'])
+    const numericBaseKeys = new Set(['grossfees', 'writedown', 'netfees'])
 
     if (formulasByLabel.has(normalizedKey)) {
       return 'decimal'
+    }
+
+    const schemaField = sourceColumnByKey.get(sourceKey)
+    if (schemaField) {
+      return getDefaultDisplayType(schemaField)
     }
 
     if (numericBaseKeys.has(normalizedKey)) {
       return 'decimal'
     }
 
-    return getDefaultDisplayType(sourceKey)
+    return getDefaultDisplayType({ key: sourceKey, dataType: 'string' })
   }
 
   function buildBaseFormulaContext(row: ReportRow): Record<string, number> {
@@ -383,10 +439,17 @@ function ReportBuilderApp({
     row: ReportRow,
     sourceKey: string,
     displayType: DisplayType,
+    localCurrencySymbol?: string,
   ): string => {
+    const resolvedCurrencySymbol = displayType === 'currency'
+      ? (currencySymbol.trim() || localCurrencySymbol?.trim() || DEFAULT_CURRENCY_SYMBOL)
+      : undefined
+
     const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (mappedColumn) {
-      return formatCellValue(row[mappedColumn.key as keyof ReportRow], displayType)
+      return formatCellValue(row[mappedColumn.key as keyof ReportRow], displayType, {
+        currencySymbol: resolvedCurrencySymbol,
+      })
     }
 
     if (!formulasByLabel.has(sourceKey.toLowerCase())) {
@@ -395,8 +458,10 @@ function ReportBuilderApp({
 
     const context = buildBaseFormulaContext(row)
     const value = getFormulaValue(sourceKey, new Map<string, number>(), new Set<string>(), context)
-    return formatCellValue(value, displayType)
-  }, [formulasByLabel, getFormulaValue, sourceColumnByKey])
+    return formatCellValue(value, displayType, {
+      currencySymbol: resolvedCurrencySymbol,
+    })
+  }, [currencySymbol, formulasByLabel, getFormulaValue, sourceColumnByKey])
 
   function getMappedNumericValue(row: ReportRow, sourceKey: string): number | null {
     const mappedColumn = sourceColumnByKey.get(sourceKey)
@@ -489,6 +554,7 @@ function ReportBuilderApp({
         ? currentField.sourceKey !== ui.editingFieldDraft.sourceKey
           || currentField.label !== ui.editingFieldDraft.label
           || currentField.displayType !== ui.editingFieldDraft.displayType
+          || currentField.chipAggregation !== ui.editingFieldDraft.chipAggregation
         : false
 
       if (hasUnsavedChanges) {
@@ -533,15 +599,30 @@ function ReportBuilderApp({
         const nextLabelInput = fieldDraft.label.trim()
         const nextLabel = nextLabelInput || currentField.label
         const currentDefaultDisplayType = getPreferredDisplayType(currentField.sourceKey)
+        const didUserChangeDisplayType = fieldDraft.displayType !== currentField.displayType
         const shouldSyncDisplayType = currentField.displayType === currentDefaultDisplayType
+        const nextDisplayType = didUserChangeDisplayType
+          ? fieldDraft.displayType
+          : (shouldSyncDisplayType
+            ? getPreferredDisplayType(nextSourceKey)
+            : currentField.displayType)
+        const currentDefaultChipAggregation = getDefaultChipAggregation(currentField.displayType)
+        const didUserChangeChipAggregation = fieldDraft.chipAggregation !== currentField.chipAggregation
+        const shouldSyncChipAggregation = currentField.chipAggregation === currentDefaultChipAggregation
+        const nextChipAggregation = fieldDraft.chipAggregation ?? getDefaultChipAggregation(nextDisplayType)
+        const nextCurrencySymbol = nextDisplayType === 'currency'
+          ? (fieldDraft.currencySymbol || currentField.currencySymbol || '$')
+          : ''
 
         return {
           ...currentField,
           sourceKey: nextSourceKey,
           label: nextLabel,
-          displayType: shouldSyncDisplayType
-            ? getPreferredDisplayType(nextSourceKey)
-            : fieldDraft.displayType,
+          displayType: nextDisplayType,
+          chipAggregation: !didUserChangeChipAggregation && shouldSyncChipAggregation
+            ? getDefaultChipAggregation(nextDisplayType)
+            : nextChipAggregation,
+          currencySymbol: nextCurrencySymbol,
         }
       }),
     }))
@@ -653,11 +734,16 @@ function ReportBuilderApp({
         previous.fields.length,
       )
       const defaultSourceKey = sourceOptions[0] ?? 'workDate'
+      const nextSourceKey = addColumnSourceKey.trim() || defaultSourceKey
+      const nextDisplayType = addColumnDisplayType || getPreferredDisplayType(nextSourceKey)
+      const nextLabel = addColumnLabel.trim() || nextSourceKey
       const nextField: ReportField = {
         id: getNextFieldId(previous.fields.map((field) => field.id)),
-        label: defaultSourceKey,
-        sourceKey: defaultSourceKey,
-        displayType: getPreferredDisplayType(defaultSourceKey),
+        label: nextLabel,
+        sourceKey: nextSourceKey,
+        displayType: nextDisplayType,
+        chipAggregation: addColumnChipAggregation,
+        currencySymbol: nextDisplayType === 'currency' ? '$' : '',
       }
       const nextFields = [...previous.fields]
       nextFields.splice(insertionIndex, 0, nextField)
@@ -679,6 +765,77 @@ function ReportBuilderApp({
     window.history.replaceState(null, '', `#${sectionId}`)
   }
 
+  const summaryItems = reportData.fields.map((field) => {
+    if (field.chipAggregation === 'none') {
+      return null
+    }
+
+    const chipAggregation = resolveChipAggregation(field)
+    const aggregationLabel = getChipAggregationLabel(chipAggregation, field.displayType)
+
+    if (chipAggregation === 'count') {
+      const uniqueValues = new Set<string>()
+      for (const row of rows) {
+        const mapped = getMappedValue(row, field.sourceKey, field.displayType)
+        const normalizedValue = mapped.trim()
+        if (normalizedValue.length > 0) {
+          uniqueValues.add(normalizedValue)
+        }
+      }
+
+      return {
+        label: `${field.label} (${aggregationLabel})`,
+        value: INTEGER_NUMBER_FORMAT.format(uniqueValues.size),
+      }
+    }
+
+    let total = 0
+    let count = 0
+    let hasNumericValue = false
+    let hasInvalidValue = false
+
+    for (const row of rows) {
+      const numeric = getMappedNumericValue(row, field.sourceKey)
+      if (numeric === null) {
+        continue
+      }
+
+      if (Number.isNaN(numeric)) {
+        hasInvalidValue = true
+        break
+      }
+
+      total += numeric
+      count += 1
+      hasNumericValue = true
+    }
+
+    if (hasInvalidValue) {
+      return {
+        label: `${field.label} (${aggregationLabel})`,
+        value: 'Invalid formula',
+      }
+    }
+
+    if (!hasNumericValue) {
+      return {
+        label: `${field.label} (${aggregationLabel})`,
+        value: '0',
+      }
+    }
+
+    const aggregatedValue = chipAggregation === 'avg' ? total / count : total
+
+    return {
+      label: `${field.label} (${aggregationLabel})`,
+      value: formatCellValue(
+        aggregatedValue,
+        field.displayType === 'string' || field.displayType === 'date' ? 'decimal' : field.displayType,
+        { currencySymbol },
+      ),
+    }
+  }).filter((item): item is { label: string, value: string } => item !== null)
+
   return (
     <div className="seed-page">
       <EditModeToolbar
@@ -697,7 +854,9 @@ function ReportBuilderApp({
       {canEditReport && isEditMode && (
       <SeedHeader
         sheetName={sheetName}
+        currencySymbol={currencySymbol}
         onSheetNameChange={setSheetName}
+        onCurrencySymbolChange={setCurrencySymbol}
       />
       )}
 
@@ -706,6 +865,10 @@ function ReportBuilderApp({
         fields={reportData.fields}
         isAddingColumn={isAddingColumn}
         addColumnPosition={addColumnPosition}
+        addColumnSourceKey={addColumnSourceKey}
+        addColumnLabel={addColumnLabel}
+        addColumnDisplayType={addColumnDisplayType}
+        addColumnChipAggregation={addColumnChipAggregation}
         maxColumns={MAX_REPORT_COLUMNS}
         minColumns={MIN_REPORT_COLUMNS}
         draggedFieldId={draggedFieldId}
@@ -714,7 +877,14 @@ function ReportBuilderApp({
         editingFieldDraft={editingFieldDraft}
         sourceOptions={sourceOptions}
         displayTypeOptions={DISPLAY_TYPE_OPTIONS}
+        chipAggregationOptions={CHIP_AGGREGATION_OPTIONS}
         onStartAddColumn={() => {
+          const defaultSourceKey = sourceOptions[0] ?? 'workDate'
+          const defaultDisplayType = getPreferredDisplayType(defaultSourceKey)
+          setAddColumnSourceKey(defaultSourceKey)
+          setAddColumnLabel(defaultSourceKey)
+          setAddColumnDisplayType(defaultDisplayType)
+          setAddColumnChipAggregation(getDefaultChipAggregation(defaultDisplayType))
           setAddColumnPosition(reportData.fields.length + 1)
           setIsAddingColumn(true)
         }}
@@ -722,6 +892,19 @@ function ReportBuilderApp({
           setIsAddingColumn(false)
         }}
         onAddColumnPositionChange={setAddColumnPosition}
+        onAddColumnSourceKeyChange={(value) => {
+          const nextDisplayType = getPreferredDisplayType(value)
+          setAddColumnSourceKey(value)
+          setAddColumnLabel(value)
+          setAddColumnDisplayType(nextDisplayType)
+          setAddColumnChipAggregation(getDefaultChipAggregation(nextDisplayType))
+        }}
+        onAddColumnLabelChange={setAddColumnLabel}
+        onAddColumnDisplayTypeChange={(value) => {
+          setAddColumnDisplayType(value)
+          setAddColumnChipAggregation(getDefaultChipAggregation(value))
+        }}
+        onAddColumnChipAggregationChange={setAddColumnChipAggregation}
         onSaveNewColumn={() => {
           handleAddColumnAtPosition()
           setIsAddingColumn(false)
@@ -783,15 +966,18 @@ function ReportBuilderApp({
             }
           })
         }}
-      />
-      )}
+        onSetEditingFieldChipAggregation={(value) => {
+          setEditingFieldDraft((previous) => {
+            if (!previous) {
+              return previous
+            }
 
-      {canEditReport && isEditMode && (
-      <SeedStats
-        peopleCount={seed.personBilling.length}
-        clientsCount={seed.client.length}
-        timeEntriesCount={rows.length}
-        totalRevenue={totalRevenue}
+            return {
+              ...previous,
+              chipAggregation: value,
+            }
+          })
+        }}
       />
       )}
 
@@ -866,6 +1052,12 @@ function ReportBuilderApp({
       />
       )}
 
+      {summaryItems.length > 0 && (
+      <SeedStats
+        items={summaryItems}
+      />
+      )}
+
       <SampleRowsSection
         sheetName={sheetName.trim().length > 0 ? sheetName : DEFAULT_SHEET_NAME}
         isTableFullscreen={isTableFullscreen}
@@ -892,7 +1084,7 @@ function ReportBuilderApp({
             return ''
           }
 
-          return formatCellValue(value, displayType)
+          return formatCellValue(value, displayType, { currencySymbol })
         }}
       />
     </div>

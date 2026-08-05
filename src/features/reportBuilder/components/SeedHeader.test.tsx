@@ -7,10 +7,13 @@ describe('SeedHeader', () => {
     render(
       <SeedHeader
         sheetName="Ops Sheet"
+        currencySymbol="$"
         onSheetNameChange={() => undefined}
+        onCurrencySymbolChange={() => undefined}
       />,
     )
     expect(screen.getByRole('heading', { name: 'Flex Reports Seed Playground' })).toBeInTheDocument()
     expect(screen.getByLabelText('Sheet name')).toHaveValue('Ops Sheet')
+    expect(screen.getByLabelText('Currency symbol')).toHaveValue('$')
   })
 })

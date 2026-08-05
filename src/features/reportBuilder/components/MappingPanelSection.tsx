@@ -1,12 +1,20 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
 import EditableCard from '../../../components/EditableCard'
-import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
+import type {
+  ChipAggregationMode,
+  DisplayType,
+  ReportField,
+} from '../../../services/reportDefinition/types'
 import './MappingPanelSection.css'
 
 type MappingPanelSectionProps = {
   fields: ReportField[]
   isAddingColumn: boolean
   addColumnPosition: number
+  addColumnSourceKey: string
+  addColumnLabel: string
+  addColumnDisplayType: DisplayType
+  addColumnChipAggregation: ChipAggregationMode
   maxColumns: number
   minColumns: number
   draggedFieldId: string | null
@@ -15,9 +23,14 @@ type MappingPanelSectionProps = {
   editingFieldDraft: ReportField | null
   sourceOptions: string[]
   displayTypeOptions: Array<{ value: DisplayType, label: string }>
+  chipAggregationOptions: Array<{ value: ChipAggregationMode, label: string }>
   onStartAddColumn: () => void
   onCancelAddColumn: () => void
   onAddColumnPositionChange: (value: number) => void
+  onAddColumnSourceKeyChange: (value: string) => void
+  onAddColumnLabelChange: (value: string) => void
+  onAddColumnDisplayTypeChange: (value: DisplayType) => void
+  onAddColumnChipAggregationChange: (value: ChipAggregationMode) => void
   onSaveNewColumn: () => void
   onMoveField: (sourceId: string, targetId: string) => void
   onStartEditField: (field: ReportField) => void
@@ -29,11 +42,16 @@ type MappingPanelSectionProps = {
   onSetEditingFieldSourceKey: (value: string) => void
   onSetEditingFieldLabel: (value: string) => void
   onSetEditingFieldDisplayType: (value: DisplayType) => void
+  onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => void
 }
 function MappingPanelSection({
   fields,
   isAddingColumn,
   addColumnPosition,
+  addColumnSourceKey,
+  addColumnLabel,
+  addColumnDisplayType,
+  addColumnChipAggregation,
   maxColumns,
   minColumns,
   draggedFieldId,
@@ -42,9 +60,14 @@ function MappingPanelSection({
   editingFieldDraft,
   sourceOptions,
   displayTypeOptions,
+  chipAggregationOptions,
   onStartAddColumn,
   onCancelAddColumn,
   onAddColumnPositionChange,
+  onAddColumnSourceKeyChange,
+  onAddColumnLabelChange,
+  onAddColumnDisplayTypeChange,
+  onAddColumnChipAggregationChange,
   onSaveNewColumn,
   onMoveField,
   onStartEditField,
@@ -56,6 +79,7 @@ function MappingPanelSection({
   onSetEditingFieldSourceKey,
   onSetEditingFieldLabel,
   onSetEditingFieldDisplayType,
+  onSetEditingFieldChipAggregation,
 }: MappingPanelSectionProps) {
   return (
     <section id="report-columns" className="mapping-panel jump-target">
@@ -95,6 +119,24 @@ function MappingPanelSection({
               })}
             </select>
           </div>
+          <ColumnDetailEditor
+            field={{
+              id: 'add-column',
+              sourceKey: addColumnSourceKey,
+              label: addColumnLabel,
+              displayType: addColumnDisplayType,
+              chipAggregation: addColumnChipAggregation,
+              currencySymbol: '',
+            }}
+            columnLabel="Data point"
+            sourceOptions={sourceOptions}
+            displayTypeOptions={displayTypeOptions}
+            chipAggregationOptions={chipAggregationOptions}
+            onSourceChange={onAddColumnSourceKeyChange}
+            onLabelChange={onAddColumnLabelChange}
+            onDisplayTypeChange={onAddColumnDisplayTypeChange}
+            onChipAggregationChange={onAddColumnChipAggregationChange}
+          />
           <div className="formula-editor-actions">
             <button
               type="button"
@@ -152,20 +194,19 @@ function MappingPanelSection({
               draggedFieldId === field.id ? 'dragging' : '',
               dragOverFieldId === field.id ? 'drag-over' : '',
             ].filter(Boolean).join(' ')}
-            summaryLeft={`COLUMN ${index + 1}`}
-            summaryRight={field.label}
-            summaryLeftTooltip={index === 0
-              ? 'Column numbers are fixed after insert. To reorder, drag and drop cards. This column becomes the header row in vertical view.'
-              : 'Column numbers are fixed after insert. To reorder, drag and drop cards.'}
+            summaryLeft={field.label}
+            summaryRight={`COLUMN ${index + 1}`}
             detail={editingFieldId === field.id && editingFieldDraft ? (
               <ColumnDetailEditor
                 field={editingFieldDraft}
                 columnLabel={`COLUMN ${index + 1}`}
                 sourceOptions={sourceOptions}
                 displayTypeOptions={displayTypeOptions}
+                chipAggregationOptions={chipAggregationOptions}
                 onSourceChange={onSetEditingFieldSourceKey}
                 onLabelChange={onSetEditingFieldLabel}
                 onDisplayTypeChange={onSetEditingFieldDisplayType}
+                onChipAggregationChange={onSetEditingFieldChipAggregation}
               />
             ) : null}
             actions={

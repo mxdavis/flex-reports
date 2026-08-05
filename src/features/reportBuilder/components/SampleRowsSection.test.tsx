@@ -10,6 +10,7 @@ const fields: ReportField[] = [
     label: 'workDate',
     sourceKey: 'workDate',
     displayType: 'date',
+    chipAggregation: 'count',
   },
 ]
 
@@ -26,9 +27,6 @@ const rows: ReportRow[] = [
     hours: 1,
     rate: 100,
     total: 100,
-    grossFees: 100,
-    writeDown: 10,
-    netFees: 90,
   },
 ]
 

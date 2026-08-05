@@ -25,9 +25,13 @@ type SampleRowsSectionProps = {
   onAggregateModeChange: (mode: AggregateMode) => void
   onToggleOrientation: () => void
   onToggleFullscreen: () => void
-  getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType) => string
+  getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, currencySymbol?: string) => string
   getAggregatedFieldValue: (rowsToAggregate: ReportRow[], sourceKey: string, mode: AggregateMode) => number | null
-  formatValue: (value: number | null, displayType: DisplayType) => string
+  formatValue: (value: number | null, displayType: DisplayType, currencySymbol?: string) => string
+}
+
+function isNumericDisplayType(displayType: DisplayType): boolean {
+  return displayType === 'number' || displayType === 'decimal' || displayType === 'currency'
 }
 
 function SampleRowsSection({
@@ -113,9 +117,15 @@ function SampleRowsSection({
                           row,
                           field.sourceKey,
                           field.displayType,
+                          field.currencySymbol,
                         )
                         return (
-                          <td key={`${row.id}-${field.id}`}>{mappedValue}</td>
+                          <td
+                            key={`${row.id}-${field.id}`}
+                            className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+                          >
+                            {mappedValue}
+                          </td>
                         )
                       })}
                     </tr>
@@ -135,7 +145,10 @@ function SampleRowsSection({
                           aggregateMode,
                         )
                         return (
-                          <td key={`total-value-${field.id}`}>
+                          <td
+                            key={`total-value-${field.id}`}
+                            className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+                          >
                             <strong>{formatValue(aggregatedValue, field.displayType)}</strong>
                           </td>
                         )
@@ -175,21 +188,30 @@ function SampleRowsSection({
                                 column.rows[0],
                                 field.sourceKey,
                                 field.displayType,
+                                field.currencySymbol,
                               )
                             }
 
-                            return formatValue(aggregatedValue, field.displayType)
+                            return formatValue(aggregatedValue, field.displayType, field.currencySymbol)
                           })()
                           : getMappedValue(
                             column.rows[0],
                             field.sourceKey,
                             field.displayType,
+                            field.currencySymbol,
                           )
 
-                        return <td key={`${field.id}-${column.key}`}>{mappedValue}</td>
+                        return (
+                          <td
+                            key={`${field.id}-${column.key}`}
+                            className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+                          >
+                            {mappedValue}
+                          </td>
+                        )
                       })}
                       {showTotals && (
-                        <td>
+                        <td className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}>
                           <strong>
                             {formatValue(
                               getAggregatedFieldValue(
@@ -198,6 +220,7 @@ function SampleRowsSection({
                                 aggregateMode,
                               ),
                               field.displayType,
+                              field.currencySymbol,
                             )}
                           </strong>
                         </td>
