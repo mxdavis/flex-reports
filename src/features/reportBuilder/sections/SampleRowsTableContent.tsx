@@ -86,7 +86,7 @@ function SampleRowsTableContent({
                     key={`total-value-${field.id}`}
                     className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
                   >
-                    <strong>{formatValue(aggregatedValue, field.displayType)}</strong>
+                    <strong>{formatValue(aggregatedValue, field.displayType, field.currencySymbol)}</strong>
                   </td>
                 )
               })}

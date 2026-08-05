@@ -49,7 +49,7 @@ export function formatCellValue(
 
   switch (displayType) {
     case 'currency':
-      return `${options?.currencySymbol || '$'}${fixedTwoDecimals.format(value)}`
+      return `${value < 0 ? '-' : ''}${options?.currencySymbol || '$'}${fixedTwoDecimals.format(Math.abs(value))}`
     case 'number':
       return wholeNumber.format(value)
     case 'decimal':

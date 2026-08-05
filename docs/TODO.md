@@ -53,10 +53,11 @@ Status tags used in each item:
 - [~] (in-pr) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)
 - [ ] (todo) Add value-template columns with `{{value_name}}` placeholders
 - [ ] (todo) Improve table readability (header styling, alternating row colors)
-- [ ] (todo) Design seeded formula authoring UX (how formulas are created/edited/
+- [ ] (todo) Design seeded formula authoring UX (how formulas are created/edited/validated)
 - [ ] (todo) Add filtering, sorting, etc. also should be able to filter by date range. add filters would be another thing on the sticky when in the view mode. When in edit mode be able to set the default for the filters created.
 - [ ] (todo) Make filters, columns, and formulas collapsable and expandable when in edit mode
-validated)
+- [ ] (todo) Make sure every value (formulas, columns, currency, sheetName, defaultFilters, chips, can all be saved and loaded by an external system and ensure the readme says what shape the report should come in. What the table should look like if we want to persist our table settings, and then we can send data in as we go.)
+- [ ] 
 - [ ] (todo) Add per-component stylesheets (final split by component)
 - [ ] (todo) Add CSV export
 - [ ] (todo) Add non-enforcing licenseKey seam
