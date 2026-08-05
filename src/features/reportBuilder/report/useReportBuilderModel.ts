@@ -239,7 +239,13 @@ export function useReportBuilderModel({
       setIsGroupingEnabled(!state.ui.isGroupingEnabled)
     },
     onToggleOrientation: () => {
-      setTableOrientation((previous) => (previous === 'horizontal' ? 'vertical' : 'horizontal'))
+      if (state.ui.tableOrientation === 'horizontal') {
+        setIsGroupingEnabled(false)
+        setTableOrientation('vertical')
+        return
+      }
+
+      setTableOrientation('horizontal')
     },
     onToggleFullscreen: () => {
       setIsTableFullscreen((previous) => !previous)

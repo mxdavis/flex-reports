@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import EditModeToolbar from '../components/EditModeToolbar'
 import MappingPanelSection from '../components/MappingPanelSection'
 import SampleRowsSection from '../components/SampleRowsSection'
@@ -18,21 +19,42 @@ function ReportBuilderView({
   sampleRowsProps,
 }: ReportBuilderViewProps) {
   const isTableFullscreen = sampleRowsProps.isTableFullscreen
+  const [isSettingsCollapsed, setIsSettingsCollapsed] = useState(false)
+  const [isColumnsCollapsed, setIsColumnsCollapsed] = useState(false)
+  const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
 
   return (
     <div className="seed-page">
       {!isTableFullscreen && <EditModeToolbar {...editModeToolbarProps} />}
 
       {!isTableFullscreen && showAuthoring && (
-        <SeedHeader {...seedHeaderProps} />
+        <SeedHeader
+          {...seedHeaderProps}
+          isCollapsed={isSettingsCollapsed}
+          onToggleCollapsed={() => {
+            setIsSettingsCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
       {!isTableFullscreen && showAuthoring && (
-        <MappingPanelSection {...mappingPanelProps} />
+        <MappingPanelSection
+          {...mappingPanelProps}
+          isCollapsed={isColumnsCollapsed}
+          onToggleCollapsed={() => {
+            setIsColumnsCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
       {!isTableFullscreen && showAuthoring && (
-        <SeedFormulasSection {...seedFormulasProps} />
+        <SeedFormulasSection
+          {...seedFormulasProps}
+          isCollapsed={isFormulasCollapsed}
+          onToggleCollapsed={() => {
+            setIsFormulasCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
       {!isTableFullscreen && summaryItems.length > 0 && (

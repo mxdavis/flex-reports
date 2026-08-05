@@ -197,4 +197,36 @@ describe('SampleRowsSection', () => {
     unmount()
     expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(false)
   })
+
+  it('disables grouping toggle in vertical view', () => {
+    render(
+      <SampleRowsSection
+        sheetName="Finance Sheet"
+        isTableFullscreen={false}
+        isHorizontalTable={false}
+        aggregateMode="none"
+        isGroupingEnabled={false}
+        showTotals={false}
+        fields={fields}
+        previewRows={rows}
+        verticalColumns={[]}
+        tableScrollRef={{ current: null }}
+        onAggregateModeChange={() => undefined}
+        onToggleGrouping={() => undefined}
+        onToggleOrientation={() => undefined}
+        onToggleFullscreen={() => undefined}
+        getMappedValue={() => 'value'}
+        getAggregatedFieldValue={() => null}
+        formatValue={() => ''}
+      />,
+    )
+
+    const groupingButton = screen.getByRole('button', { name: 'Grouping' })
+    expect(groupingButton).toBeDisabled()
+    expect(groupingButton).toHaveAttribute('aria-pressed', 'false')
+
+    const wrapper = groupingButton.closest('.grouping-toggle-wrapper')
+    expect(wrapper).toBeTruthy()
+    expect(wrapper).toHaveAttribute('title', 'Switch to horizontal view to use grouping.')
+  })
 })

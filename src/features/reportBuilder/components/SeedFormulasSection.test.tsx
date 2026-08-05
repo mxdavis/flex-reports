@@ -34,7 +34,7 @@ describe('SeedFormulasSection', () => {
       />,
     )
 
-    const heading = screen.getByRole('heading', { name: 'Seeded formulas' })
+    const heading = screen.getByRole('heading', { name: 'Formulas' })
     const section = heading.closest('section')
 
     expect(section).toBeTruthy()

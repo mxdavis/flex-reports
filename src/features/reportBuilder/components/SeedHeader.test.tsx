@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import SeedHeader from './SeedHeader'
 
 describe('SeedHeader', () => {
-  it('renders heading text', () => {
+  it('renders sheet and currency controls', () => {
     render(
       <SeedHeader
         sheetName="Ops Sheet"
@@ -12,7 +12,7 @@ describe('SeedHeader', () => {
         onCurrencySymbolChange={() => undefined}
       />,
     )
-    expect(screen.getByRole('heading', { name: 'Flex Reports Seed Playground' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Report Settings' })).toBeInTheDocument()
     expect(screen.getByLabelText('Sheet name')).toHaveValue('Ops Sheet')
     expect(screen.getByLabelText('Currency symbol')).toHaveValue('$')
   })
