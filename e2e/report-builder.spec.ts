@@ -5,6 +5,17 @@ async function enterEditMode(page: Parameters<typeof test>[0]['page']) {
   await expect(page.getByRole('button', { name: 'View mode' })).toBeVisible()
 }
 
+async function setColumnSource(
+  page: Parameters<typeof test>[0]['page'],
+  mappingSection: ReturnType<typeof getMappingSection>,
+  column: number,
+  sourceKey: string,
+) {
+  await mappingSection.getByRole('button', { name: `Edit COLUMN ${column}` }).click()
+  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill(sourceKey)
+  await mappingSection.getByRole('button', { name: `Save COLUMN ${column}` }).click()
+}
+
 function getMappingSection(page: Parameters<typeof test>[0]['page']) {
   return page.locator('section', {
     has: page.getByRole('heading', { name: 'Column Mapping' }),
@@ -89,8 +100,63 @@ test('grouped count shows row count once in the left total label', async ({ page
 
   const singleRowCells = (await singleSubgroupRow.locator('td').allTextContents()).map((value) => value.trim())
   expect(singleRowCells[0]).toBe('Delta Freight')
-  expect(singleRowCells).toContain('p2')
+  expect(singleRowCells).toContain('Review')
   expect(singleRowCells).toContain('$540.00')
+})
+
+test('grouped subtotals are rendered at each nested subgroup level for all aggregate modes', async ({ page }) => {
+  await page.goto('/')
+
+  await enterEditMode(page)
+  const mappingSection = getMappingSection(page)
+
+  await setColumnSource(page, mappingSection, 1, 'personName')
+  await setColumnSource(page, mappingSection, 2, 'rate')
+  await setColumnSource(page, mappingSection, 3, 'clientName')
+  await setColumnSource(page, mappingSection, 4, 'workDate')
+  await setColumnSource(page, mappingSection, 5, 'grossFees')
+
+  await page.getByRole('button', { name: 'Grouping' }).click()
+
+  const aggregateSelect = page.locator('#aggregate-mode')
+  const modeExpectations: Array<{
+    mode: 'sum' | 'avg' | 'count' | 'distinct'
+    subgroupLabel: RegExp
+    midGroupLabel: RegExp
+    topGroupLabel: RegExp
+  }> = [
+    {
+      mode: 'sum',
+      subgroupLabel: /^Delta Freight Total$/,
+      midGroupLabel: /^\$?240(\.00)? Total$/,
+      topGroupLabel: /^Alex Rivera Total$/,
+    },
+    {
+      mode: 'avg',
+      subgroupLabel: /^Delta Freight Average$/,
+      midGroupLabel: /^\$?240(\.00)? Average$/,
+      topGroupLabel: /^Alex Rivera Average$/,
+    },
+    {
+      mode: 'count',
+      subgroupLabel: /^Delta Freight Count Total 3$/,
+      midGroupLabel: /^\$?240(\.00)? Count Total 7$/,
+      topGroupLabel: /^Alex Rivera Count Total 7$/,
+    },
+    {
+      mode: 'distinct',
+      subgroupLabel: /^Delta Freight DISTINCT COUNT$/,
+      midGroupLabel: /^\$?240(\.00)? DISTINCT COUNT$/,
+      topGroupLabel: /^Alex Rivera DISTINCT COUNT$/,
+    },
+  ]
+
+  for (const expectation of modeExpectations) {
+    await aggregateSelect.selectOption(expectation.mode)
+    await expect(page.getByRole('rowheader', { name: expectation.subgroupLabel }).first()).toBeVisible()
+    await expect(page.getByRole('rowheader', { name: expectation.midGroupLabel }).first()).toBeVisible()
+    await expect(page.getByRole('rowheader', { name: expectation.topGroupLabel }).first()).toBeVisible()
+  }
 })
 
 test('formula label rename syncs mapped column source', async ({ page }) => {

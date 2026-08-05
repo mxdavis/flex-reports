@@ -190,6 +190,17 @@ describe('SampleRowsTableContent', () => {
     }
     expect(within(groupTotalRow).getByText('10')).toBeInTheDocument()
 
+    // Subtotals hit every subgroup: Client A (hours 2 + 3) has its own subtotal.
+    const clientASubtotalRow = screen.getByRole('rowheader', { name: 'Client A Total' }).closest('tr')
+    expect(clientASubtotalRow).toBeTruthy()
+    if (!clientASubtotalRow) {
+      return
+    }
+    expect(within(clientASubtotalRow).getByText('5')).toBeInTheDocument()
+
+    // Single-row subgroups (Client B) are not duplicated with a redundant subtotal.
+    expect(screen.queryByRole('rowheader', { name: 'Client B Total' })).toBeNull()
+
     const grandTotalRow = screen.getByRole('rowheader', { name: 'Grand total' }).closest('tr')
     expect(grandTotalRow).toBeTruthy()
     if (!grandTotalRow) {
@@ -323,5 +334,122 @@ describe('SampleRowsTableContent', () => {
     expect(within(totalRow).queryByText('10')).toBeNull()
     const totalCells = Array.from(totalRow.querySelectorAll('td')).map((cell) => cell.textContent?.trim() ?? '')
     expect(totalCells.every((value) => value === '')).toBe(true)
+  })
+
+  it('renders subgroup subtotal labels for sum, avg, count, and distinct modes', () => {
+    const modeFields: ReportField[] = [
+      {
+        id: 'field-person',
+        label: 'Person',
+        sourceKey: 'personName',
+        displayType: 'string',
+        chipAggregation: 'count',
+        currencySymbol: '',
+      },
+      {
+        id: 'field-rate',
+        label: 'Rate',
+        sourceKey: 'rate',
+        displayType: 'number',
+        chipAggregation: 'sum',
+        currencySymbol: '',
+      },
+      {
+        id: 'field-client',
+        label: 'Client',
+        sourceKey: 'clientName',
+        displayType: 'string',
+        chipAggregation: 'count',
+        currencySymbol: '',
+      },
+      {
+        id: 'field-gross',
+        label: 'Gross',
+        sourceKey: 'total',
+        displayType: 'number',
+        chipAggregation: 'sum',
+        currencySymbol: '',
+      },
+    ]
+
+    const modeRows: ReportRow[] = [
+      { ...row, id: 'alex-1', personName: 'Alex Rivera', rate: 240, clientName: 'Delta Freight', total: 780 },
+      { ...row, id: 'alex-2', personName: 'Alex Rivera', rate: 240, clientName: 'Delta Freight', total: 300 },
+      { ...row, id: 'alex-3', personName: 'Alex Rivera', rate: 240, clientName: 'Delta Freight', total: 540 },
+      { ...row, id: 'alex-4', personName: 'Alex Rivera', rate: 240, clientName: 'Northwind Manufacturing', total: 600 },
+      { ...row, id: 'alex-5', personName: 'Alex Rivera', rate: 240, clientName: 'Northwind Manufacturing', total: 360 },
+      { ...row, id: 'alex-6', personName: 'Alex Rivera', rate: 240, clientName: 'ACME Legal', total: 1080 },
+      { ...row, id: 'alex-7', personName: 'Alex Rivera', rate: 240, clientName: 'Summit Health', total: 540 },
+    ]
+
+    const getAggregatedFieldValue = (rowsToAggregate: ReportRow[], sourceKey: string, mode: 'none' | 'sum' | 'avg' | 'count' | 'distinct') => {
+      if (mode === 'none') return null
+      if (mode === 'count') return rowsToAggregate.length
+      if (mode === 'distinct') {
+        const distinctValues = new Set(rowsToAggregate.map((mappedRow) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')))
+        return distinctValues.size
+      }
+      const values = rowsToAggregate.map((mappedRow) => Number(mappedRow[sourceKey as keyof ReportRow] ?? Number.NaN)).filter((value) => Number.isFinite(value))
+      if (values.length === 0) return null
+      const sum = values.reduce((total, value) => total + value, 0)
+      return mode === 'avg' ? sum / values.length : sum
+    }
+
+    const expectations: Array<{
+      mode: 'sum' | 'avg' | 'count' | 'distinct'
+      subgroupLabel: string
+      midGroupLabel: string
+      topGroupLabel: string
+    }> = [
+      {
+        mode: 'sum',
+        subgroupLabel: 'Delta Freight Total',
+        midGroupLabel: '240 Total',
+        topGroupLabel: 'Alex Rivera Total',
+      },
+      {
+        mode: 'avg',
+        subgroupLabel: 'Delta Freight Average',
+        midGroupLabel: '240 Average',
+        topGroupLabel: 'Alex Rivera Average',
+      },
+      {
+        mode: 'count',
+        subgroupLabel: 'Delta Freight Count Total 3',
+        midGroupLabel: '240 Count Total 7',
+        topGroupLabel: 'Alex Rivera Count Total 7',
+      },
+      {
+        mode: 'distinct',
+        subgroupLabel: 'Delta Freight DISTINCT COUNT',
+        midGroupLabel: '240 DISTINCT COUNT',
+        topGroupLabel: 'Alex Rivera DISTINCT COUNT',
+      },
+    ]
+
+    for (const expectation of expectations) {
+      const { unmount } = render(
+        <table>
+          <SampleRowsTableContent
+            isHorizontalTable
+            showTotals
+            aggregateMode={expectation.mode}
+            isGroupingEnabled
+            fields={modeFields}
+            previewRows={modeRows}
+            verticalColumns={[]}
+            getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
+            getAggregatedFieldValue={getAggregatedFieldValue}
+            formatValue={(value) => (value === null ? '' : String(value))}
+          />
+        </table>,
+      )
+
+      expect(screen.getByRole('rowheader', { name: expectation.subgroupLabel })).toBeInTheDocument()
+      expect(screen.getByRole('rowheader', { name: expectation.midGroupLabel })).toBeInTheDocument()
+      expect(screen.getByRole('rowheader', { name: expectation.topGroupLabel })).toBeInTheDocument()
+
+      unmount()
+    }
   })
 })
