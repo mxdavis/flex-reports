@@ -11,6 +11,7 @@ const fields: ReportField[] = [
     sourceKey: 'workDate',
     displayType: 'date',
     chipAggregation: 'count',
+    currencySymbol: '',
   },
 ]
 
