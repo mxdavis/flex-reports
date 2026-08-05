@@ -57,6 +57,7 @@
     - run command (for example `npm run dev`)
     - local URL (for example `http://localhost:5173`)
 - Merge rule: lint + test + build CI checks must be green before merging.
+- skip local lint/test/practices checks while iterating on functionality until MVP behavior is approved.
 
 ## Data sources
 
