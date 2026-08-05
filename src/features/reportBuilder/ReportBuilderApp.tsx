@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import {
   getBillingSeed,
   getReportRows,
@@ -310,9 +310,8 @@ function ReportBuilderApp({
     return context
   }
 
-  function getFormulaValue(
+  const getFormulaValue = useCallback(function getFormulaValue(
     formulaLabel: string,
-    row: ReportRow,
     cache: Map<string, number>,
     visiting: Set<string>,
     context: Record<string, number>,
@@ -338,7 +337,7 @@ function ReportBuilderApp({
         continue
       }
 
-      context[dependency] = getFormulaValue(dependency, row, cache, visiting, context)
+      context[dependency] = getFormulaValue(dependency, cache, visiting, context)
     }
 
     const result = evaluateFormula(expression, context)
@@ -348,13 +347,13 @@ function ReportBuilderApp({
     context[normalizedFormulaLabel] = value
     visiting.delete(formulaLabel)
     return value
-  }
+  }, [formulasByLabel])
 
-  function getMappedValue(
+  const getMappedValue = useCallback((
     row: ReportRow,
     sourceKey: string,
     displayType: DisplayType,
-  ): string {
+  ): string => {
     const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (mappedColumn) {
       return formatCellValue(row[mappedColumn.key as keyof ReportRow], displayType)
@@ -365,9 +364,9 @@ function ReportBuilderApp({
     }
 
     const context = buildBaseFormulaContext(row)
-    const value = getFormulaValue(sourceKey, row, new Map<string, number>(), new Set<string>(), context)
+    const value = getFormulaValue(sourceKey, new Map<string, number>(), new Set<string>(), context)
     return formatCellValue(value, displayType)
-  }
+  }, [formulasByLabel, getFormulaValue, sourceColumnByKey])
 
   function getMappedNumericValue(row: ReportRow, sourceKey: string): number | null {
     const mappedColumn = sourceColumnByKey.get(sourceKey)
@@ -381,7 +380,7 @@ function ReportBuilderApp({
     }
 
     const context = buildBaseFormulaContext(row)
-    return getFormulaValue(sourceKey, row, new Map<string, number>(), new Set<string>(), context)
+    return getFormulaValue(sourceKey, new Map<string, number>(), new Set<string>(), context)
   }
 
   function getAggregatedFieldValue(
