@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
 
+async function enterEditMode(page: Parameters<typeof test>[0]['page']) {
+  await page.getByRole('button', { name: 'Edit mode' }).click()
+  await expect(page.getByRole('button', { name: 'View mode' })).toBeVisible()
+}
+
 test('table controls expose aggregate options and vertical header semantics', async ({ page }) => {
   await page.goto('/')
 
@@ -18,25 +23,40 @@ test('table controls expose aggregate options and vertical header semantics', as
 test('formula label rename syncs mapped column source', async ({ page }) => {
   await page.goto('/')
 
-  const column1SourceInput = page.getByLabel('column1')
+  await enterEditMode(page)
+
+  await page.getByRole('button', { name: 'Edit COLUMN 1' }).click()
+
+  const column1SourceInput = page.locator('#mapping-date')
   await column1SourceInput.fill('grossFees')
   await expect(column1SourceInput).toHaveValue('grossFees')
+  await page.getByRole('button', { name: 'Save COLUMN 1' }).click()
 
-  await page.getByRole('button', { name: 'Edit' }).first().click()
+  const formulasSection = page.locator('section', {
+    has: page.getByRole('heading', { name: 'Seeded formulas' }),
+  })
+  await formulasSection.getByRole('button', { name: 'Edit' }).first().click()
 
   const formulaLabelInput = page.locator('#edit-label-grossFees')
   await formulaLabelInput.fill('Gross Renamed')
   await page.getByRole('button', { name: 'Save' }).click()
 
+  await page.getByRole('button', { name: 'Edit COLUMN 1' }).click()
   await expect(column1SourceInput).toHaveValue('Gross Renamed')
 })
 
 test('typing {{ in formula expression opens token suggestions', async ({ page }) => {
   await page.goto('/')
 
-  await page.getByRole('button', { name: 'Add formula' }).click()
+  await enterEditMode(page)
 
-  const expressionInput = page.getByLabel('Expression')
+  const formulasSection = page.locator('section', {
+    has: page.getByRole('heading', { name: 'Seeded formulas' }),
+  })
+
+  await formulasSection.getByRole('button', { name: 'Add formula' }).click()
+
+  const expressionInput = formulasSection.getByLabel('Expression')
   await expressionInput.fill('{{')
 
   await expect(page.getByRole('listbox', { name: 'Formula token suggestions' })).toBeVisible()

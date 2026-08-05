@@ -17,12 +17,18 @@ const rows: ReportRow[] = [
   {
     id: 'row1',
     workDate: '2024-01-01',
+    personId: 'person1',
     personName: 'A',
+    clientId: 'client1',
     clientName: 'C',
+    originatingPersonId: 'person1',
     task: 'Task',
     hours: 1,
     rate: 100,
     total: 100,
+    grossFees: 100,
+    writeDown: 10,
+    netFees: 90,
   },
 ]
 
@@ -56,7 +62,7 @@ describe('SampleRowsSection', () => {
 
   it('forwards aggregate mode changes', () => {
     const onAggregateModeChange = vi.fn()
-    render(
+    const { container } = render(
       <SampleRowsSection
         isTableFullscreen={false}
         isHorizontalTable
@@ -75,7 +81,11 @@ describe('SampleRowsSection', () => {
       />,
     )
 
-    const select = screen.getByLabelText('Aggregate') as HTMLSelectElement
+    const select = container.querySelector('#aggregate-mode') as HTMLSelectElement | null
+    expect(select).toBeTruthy()
+    if (!select) {
+      return
+    }
     fireEvent.change(select, { target: { value: 'sum' } })
 
     expect(onAggregateModeChange).toHaveBeenCalledWith('sum')

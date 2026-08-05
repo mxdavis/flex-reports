@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ReportBuilderApp from './ReportBuilderApp'
 
 function createMemoryStorage(): Storage {
@@ -65,7 +65,7 @@ describe('ReportBuilderApp', () => {
 
   it('syncs mapped column source when a formula label is renamed', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp />)
+    render(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     let columnOneSource = screen.getByLabelText('COLUMN 1') as HTMLInputElement
@@ -87,7 +87,7 @@ describe('ReportBuilderApp', () => {
 
   it('reverts blank column edits on save', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp />)
+    render(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     const sourceInput = screen.getByLabelText('COLUMN 1') as HTMLInputElement
@@ -105,7 +105,7 @@ describe('ReportBuilderApp', () => {
 
   it('sorts autocomplete suggestions alphabetically', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp />)
+    render(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     await user.click(screen.getByTitle('Show options'))
@@ -121,7 +121,7 @@ describe('ReportBuilderApp', () => {
 
   it('re-sorts formulas alphabetically after saving an edited label', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp />)
+    render(<ReportBuilderApp initialEditMode />)
 
     const formulasSection = screen.getByRole('heading', { name: 'Seeded formulas' }).closest('section')
     expect(formulasSection).toBeTruthy()
@@ -152,7 +152,7 @@ describe('ReportBuilderApp', () => {
 
   it('inserts a new column at selected position and shifts following columns', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp />)
+    render(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
     const columnTwoSource = screen.getByLabelText('COLUMN 2') as HTMLInputElement
@@ -178,12 +178,49 @@ describe('ReportBuilderApp', () => {
       return
     }
 
-    const scrollSpy = vi.fn()
-    formulasSection.scrollIntoView = scrollSpy
+    const scrollSpy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => undefined)
 
     await user.click(screen.getByRole('button', { name: 'Formulas' }))
 
     expect(scrollSpy).toHaveBeenCalled()
     expect(window.location.hash).toBe('#report-formulas')
+    scrollSpy.mockRestore()
+  })
+
+  it('prevents switching column edit when unsaved changes are not confirmed', async () => {
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<ReportBuilderApp initialEditMode />)
+
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
+    fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Changed Label' } })
+
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
+
+    expect(confirmSpy).toHaveBeenCalled()
+    expect(screen.getByLabelText('Display label')).toHaveValue('Changed Label')
+    expect(screen.queryByRole('button', { name: 'Save COLUMN 2' })).not.toBeInTheDocument()
+
+    confirmSpy.mockRestore()
+  })
+
+  it('saves current column before switching when confirm is accepted', async () => {
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    render(<ReportBuilderApp initialEditMode />)
+
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
+    fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Saved Label' } })
+
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
+
+    expect(confirmSpy).toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Save COLUMN 2' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Cancel COLUMN 2' }))
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
+    expect(screen.getByLabelText('Display label')).toHaveValue('Saved Label')
+
+    confirmSpy.mockRestore()
   })
 })

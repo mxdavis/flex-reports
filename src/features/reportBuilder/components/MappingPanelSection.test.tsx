@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReportField } from '../../../services/reportDefinition/types'
 import MappingPanelSection from './MappingPanelSection'
@@ -51,7 +51,7 @@ describe('MappingPanelSection', () => {
 
   it('forwards add column intent', () => {
     const onStartAddColumn = vi.fn()
-    render(
+    const { container } = render(
       <MappingPanelSection
         fields={fields}
         isAddingColumn={false}
@@ -81,7 +81,13 @@ describe('MappingPanelSection', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add column' }))
+    const section = container.querySelector('#report-columns')
+    expect(section).toBeTruthy()
+    if (!(section instanceof HTMLElement)) {
+      return
+    }
+
+    fireEvent.click(within(section).getByRole('button', { name: 'Add column' }))
     expect(onStartAddColumn).toHaveBeenCalledTimes(1)
   })
 })

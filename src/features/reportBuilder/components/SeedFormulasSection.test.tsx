@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { SeedFormula } from '../../../services/adapters'
 import SeedFormulasSection from './SeedFormulasSection'
@@ -43,7 +43,7 @@ describe('SeedFormulasSection', () => {
 
   it('forwards add-formula click', () => {
     const onStartAddFormula = vi.fn()
-    render(
+    const { container } = render(
       <SeedFormulasSection
         formulas={formulas}
         isAddingFormula={false}
@@ -68,7 +68,13 @@ describe('SeedFormulasSection', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add formula' }))
+    const section = container.querySelector('#report-formulas')
+    expect(section).toBeTruthy()
+    if (!(section instanceof HTMLElement)) {
+      return
+    }
+
+    fireEvent.click(within(section).getByRole('button', { name: 'Add formula' }))
     expect(onStartAddFormula).toHaveBeenCalledTimes(1)
   })
 })
