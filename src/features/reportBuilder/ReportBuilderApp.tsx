@@ -46,6 +46,8 @@ import './ReportBuilderApp.css'
 const MAX_REPORT_COLUMNS = 15
 const MIN_REPORT_COLUMNS = 1
 const MAX_FORMULAS = 25
+const DEFAULT_SHEET_NAME = 'Sample rows'
+const SHEET_NAME_STORAGE_KEY = 'flex-reports.sheet-name.v1'
 const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'currency', label: 'Currency' },
   { value: 'decimal', label: 'Decimal number' },
@@ -100,6 +102,23 @@ function ReportBuilderApp({
   }))
   const [formulaError, setFormulaError] = useState<string>('')
   const [editingFormulaError, setEditingFormulaError] = useState<string>('')
+  const [sheetName, setSheetName] = useState<string>(() => {
+    if (typeof window === 'undefined') {
+      return DEFAULT_SHEET_NAME
+    }
+
+    try {
+      const saved = window.localStorage.getItem(SHEET_NAME_STORAGE_KEY)
+      if (!saved) {
+        return DEFAULT_SHEET_NAME
+      }
+
+      const trimmed = saved.trim()
+      return trimmed.length > 0 ? trimmed : DEFAULT_SHEET_NAME
+    } catch {
+      return DEFAULT_SHEET_NAME
+    }
+  })
   const [ui, dispatchUi] = useReducer(
     uiReducer,
     {
@@ -216,6 +235,18 @@ function ReportBuilderApp({
   useEffect(() => {
     saveFormulaData(formulas)
   }, [formulas])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      window.localStorage.setItem(SHEET_NAME_STORAGE_KEY, sheetName)
+    } catch {
+      // Ignore storage write failures in private mode/full storage.
+    }
+  }, [sheetName])
 
   useEffect(() => {
     const tableScrollElement = tableScrollRef.current
@@ -665,7 +696,10 @@ function ReportBuilderApp({
       />
 
       {canEditReport && isEditMode && (
-      <SeedHeader />
+      <SeedHeader
+        sheetName={sheetName}
+        onSheetNameChange={setSheetName}
+      />
       )}
 
       {canEditReport && isEditMode && (
@@ -834,6 +868,7 @@ function ReportBuilderApp({
       )}
 
       <SampleRowsSection
+        sheetName={sheetName.trim() || DEFAULT_SHEET_NAME}
         isTableFullscreen={isTableFullscreen}
         isHorizontalTable={isHorizontalTable}
         aggregateMode={aggregateMode}

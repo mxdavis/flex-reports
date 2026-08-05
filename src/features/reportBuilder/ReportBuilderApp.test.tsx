@@ -54,6 +54,17 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('heading', { name: 'Sample rows' })).toBeInTheDocument()
   })
 
+  it('updates chart/table heading when sheet name changes in header', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp initialEditMode />)
+
+    const sheetNameInput = screen.getByLabelText('Sheet name') as HTMLInputElement
+    await user.clear(sheetNameInput)
+    await user.type(sheetNameInput, 'Client Utilization')
+
+    expect(screen.getByRole('heading', { name: 'Client Utilization' })).toBeInTheDocument()
+  })
+
   it('shows aggregate modes without count', () => {
     render(<ReportBuilderApp />)
 

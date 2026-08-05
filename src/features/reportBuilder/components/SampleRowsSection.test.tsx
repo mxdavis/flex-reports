@@ -36,6 +36,7 @@ describe('SampleRowsSection', () => {
   it('renders section with chart jump target id', () => {
     render(
       <SampleRowsSection
+        sheetName="Finance Sheet"
         isTableFullscreen={false}
         isHorizontalTable
         aggregateMode="none"
@@ -53,7 +54,7 @@ describe('SampleRowsSection', () => {
       />,
     )
 
-    const heading = screen.getByRole('heading', { name: 'Sample rows' })
+    const heading = screen.getByRole('heading', { name: 'Finance Sheet' })
     const section = heading.closest('section')
 
     expect(section).toBeTruthy()
@@ -64,6 +65,7 @@ describe('SampleRowsSection', () => {
     const onAggregateModeChange = vi.fn()
     const { container } = render(
       <SampleRowsSection
+        sheetName="Finance Sheet"
         isTableFullscreen={false}
         isHorizontalTable
         aggregateMode="none"
