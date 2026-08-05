@@ -2,7 +2,7 @@ import EditIcon from '../../../shared/icons/EditIcon'
 import ViewIcon from '../../../shared/icons/ViewIcon'
 import './EditModeToolbar.css'
 
-type EditModeToolbarProps = {
+export type EditModeToolbarProps = {
   canEditReport: boolean
   isEditMode: boolean
   onToggle: () => void

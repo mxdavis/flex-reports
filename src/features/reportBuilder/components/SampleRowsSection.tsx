@@ -13,7 +13,7 @@ type VerticalColumn = {
   rows: ReportRow[]
 }
 
-type SampleRowsSectionProps = {
+export type SampleRowsSectionProps = {
   sheetName: string
   isTableFullscreen: boolean
   isHorizontalTable: boolean

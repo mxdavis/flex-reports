@@ -7,7 +7,7 @@ import type {
 } from '../../../services/reportDefinition/types'
 import './MappingPanelSection.css'
 
-type MappingPanelSectionProps = {
+export type MappingPanelSectionProps = {
   fields: ReportField[]
   isAddingColumn: boolean
   addColumnPosition: number

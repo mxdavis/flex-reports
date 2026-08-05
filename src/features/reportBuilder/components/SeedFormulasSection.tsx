@@ -4,7 +4,7 @@ import TokenizedExpressionInput from '../../../shared/components/TokenizedExpres
 import type { SeedFormula } from '../../../services/adapters'
 import './SeedFormulasSection.css'
 
-type SeedFormulasSectionProps = {
+export type SeedFormulasSectionProps = {
   formulas: SeedFormula[]
   isAddingFormula: boolean
   maxFormulas: number

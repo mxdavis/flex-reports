@@ -1,32 +1,12 @@
 import './SeedHeader.css'
+import { CURRENCY_SYMBOL_OPTIONS } from '../../../utils/currencySymbols'
 
-type SeedHeaderProps = {
+export type SeedHeaderProps = {
   sheetName: string
   currencySymbol: string
   onSheetNameChange: (nextValue: string) => void
   onCurrencySymbolChange: (nextValue: string) => void
 }
-
-const CURRENCY_SYMBOL_OPTIONS = [
-  '$',
-  '€',
-  '£',
-  '¥',
-  '₹',
-  'A$',
-  'C$',
-  'CHF',
-  '₪',
-  '₩',
-  '₺',
-  '₫',
-  '₱',
-  'R$',
-  'MX$',
-  'NZ$',
-  'S$',
-  'HK$',
-]
 
 function SeedHeader({
   sheetName,
