@@ -45,6 +45,7 @@ Status tags used in each item:
 - [ ] (todo) Add edit-mode permission gating (only allowed users see edit controls/button)
 - [ ] (todo) Build Report view (clean web page with filters + table + chart)
 - [ ] (todo) Add orientation toggle for report display: horizontal (rows) vs vertical (pivoted columns), including people-as-columns use case.
+- [ ] (todo) Next PR: add embedded subcolumn pivot layout (Excel-like): first selected column is always the primary header/group, second selected column nests under it (no duplicated primary values), with aggregates/totals applied at subgroup, group, and grand-total levels.
 - [ ] (todo) Add customer UI column mapping (semantic field -> source column key)
 - [x] (in-pr) Add/remove report columns in edit mode (capped at 15)
 - [~] (in-pr) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)

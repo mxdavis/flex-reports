@@ -33,6 +33,9 @@
 
 - Write tests for engine/logic (formulas, pivot, services).
 - Prefer small, focused unit tests with clear names.
+- Default workflow: do not run local e2e routinely; rely on CI e2e as the
+  enforcement gate. Run local e2e only when actively debugging a failing e2e
+  scenario.
 
 ## UI
 
