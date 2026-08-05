@@ -45,7 +45,7 @@ Status tags used in each item:
 - [x] (in-main) Scope decision: report view is spreadsheet/table-only (no chart visualization).
 - [x] (in-main) Add orientation toggle for report display: horizontal (rows) vs vertical (pivoted columns), including people-as-columns use case.
 - [x] (in-main) Make sheet name editable at the top of edit mode, and use that name as the chart/table section heading instead of hardcoded "Sample rows".
-- [ ] (todo) Next PR: add embedded subcolumn pivot layout (Excel-like): first selected column is always the primary header/group, second selected column nests under it (no duplicated primary values), with aggregates/totals applied at subgroup, group, and grand-total levels.
+- [x] (in-pr) Next PR: add embedded subcolumn pivot layout (Excel-like): first selected column is always the primary header/group, second selected column nests under it (no duplicated primary values), with aggregates/totals applied at subgroup, group, and grand-total levels.
 - [x] (in-main) Scope decision: no separate semantic mapping layer; use direct source-key mapping and editable column naming.
 - [x] (in-main) Add/remove report columns in edit mode (capped at 15)
 - [x] (in-main) Add per-column `displayType` formatting options (currency, decimal number, percent, date, string, etc.)
