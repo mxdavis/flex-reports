@@ -16,11 +16,9 @@ function AutocompleteOptionsList({
   return (
     <ul className="autocomplete-list" role="listbox" aria-label={ariaLabel}>
       {options.map((option, index) => (
-        <li key={option}>
+        <li key={option} role="option" aria-selected={index === highlightedIndex}>
           <button
             type="button"
-            role="option"
-            aria-selected={index === highlightedIndex}
             className={index === highlightedIndex ? 'highlighted' : ''}
             onMouseDown={(event) => {
               event.preventDefault()

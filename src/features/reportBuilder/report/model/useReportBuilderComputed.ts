@@ -3,14 +3,14 @@ import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
 import { getDefaultDisplayType } from '../../../../services/reportDefinition/displayType'
 import type { ReportRow, SeedFormula } from '../../../../services/adapters'
 import type { AggregateMode } from '../../types'
-import type { ChipAggregationMode, DisplayType, ReportField } from '../../../../services/reportDefinition/types'
+import type { ChipAggregationMode, DisplayType, ReportField, SourceColumn } from '../../../../services/reportDefinition/types'
 import { DEFAULT_CURRENCY_SYMBOL, getChipAggregationLabel, getDefaultChipAggregation } from '../../config'
 import { formatCellValue } from '../../../../utils/reportBuilder'
 import { buildSummaryItems } from '../../summaryItems'
 
 type UseReportBuilderComputedArgs = {
   rows: ReportRow[]
-  sourceColumns: Array<{ key: string }>
+  sourceColumns: SourceColumn[]
   reportFields: ReportField[]
   formulas: SeedFormula[]
   currencySymbol: string
@@ -65,7 +65,7 @@ export function useReportBuilderComputed({
     if (formulasByLabel.has(normalizedKey)) return 'decimal'
 
     const schemaField = sourceColumnByKey.get(sourceKey)
-    if (schemaField) return getDefaultDisplayType(schemaField as never)
+    if (schemaField) return getDefaultDisplayType(schemaField)
     if (numericBaseKeys.has(normalizedKey)) return 'decimal'
     return getDefaultDisplayType({ key: sourceKey, dataType: 'string' })
   }

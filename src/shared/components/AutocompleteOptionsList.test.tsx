@@ -16,7 +16,9 @@ describe('AutocompleteOptionsList', () => {
     )
 
     expect(screen.getByRole('listbox', { name: 'Suggestions' })).toBeInTheDocument()
-    const rateButton = screen.getByRole('option', { name: 'rate' })
+    const rateOption = screen.getByRole('option', { name: 'rate' })
+    const rateButton = screen.getByRole('button', { name: 'rate' })
+    expect(rateOption).toHaveAttribute('aria-selected', 'true')
     expect(rateButton).toHaveClass('highlighted')
 
     fireEvent.click(rateButton)

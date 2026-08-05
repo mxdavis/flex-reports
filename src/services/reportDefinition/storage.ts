@@ -97,9 +97,11 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       })
       .map((field, index) => {
         const defaultField = fallback.fields[index] ?? fallback.fields[0]
+        const defaultSourceKey = defaultField?.sourceKey
+          ?? String(sourceColumns[index]?.key ?? sourceColumns[0]?.key ?? '')
         const sourceKey = field.sourceKey.trim().length > 0
           ? field.sourceKey
-          : defaultField.sourceKey
+          : defaultSourceKey
         const source = sourceColumnByKey.get(sourceKey)
         const resolvedDisplayType = isDisplayType(field.displayType)
           ? field.displayType
