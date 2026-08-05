@@ -6,6 +6,41 @@
   overflow-x: clip;
 }
 
+.workspace-toolbar {
+  position: sticky;
+  top: 10px;
+  z-index: 50;
+}
+
+.workspace-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.1);
+  padding: 8px;
+  width: fit-content;
+}
+
+.workspace-toolbar-button {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 6px 10px;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspace-toolbar-button svg {
+  display: block;
+}
+
 .seed-header,
 .mapping-panel,
 .seed-stats,
@@ -131,6 +166,80 @@
   background: #ffffff;
 }
 
+.autocomplete {
+  position: relative;
+}
+
+.autocomplete-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.autocomplete-row input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  padding: 7px 9px;
+  background: transparent;
+}
+
+.autocomplete-toggle {
+  border: 0;
+  border-left: 1px solid #d0d5dd;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 9px;
+  font: inherit;
+  cursor: pointer;
+  color: #475467;
+}
+
+.autocomplete:focus-within .autocomplete-row {
+  border-color: #7f56d9;
+  box-shadow: 0 0 0 2px rgba(127, 86, 217, 0.14);
+}
+
+.autocomplete-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.12);
+  max-height: 180px;
+  overflow-y: auto;
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 30;
+}
+
+.autocomplete-list li button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.autocomplete-list li button:hover,
+.autocomplete-list li button.highlighted {
+  background: #f2f4f7;
+}
+
+.tokenized-expression {
+  position: relative;
+}
+
 .mapping-grid small {
   color: #475467;
 }
@@ -183,6 +292,96 @@
   font-size: 20px;
 }
 
+.formula-help {
+  margin: 0 0 12px;
+  color: #475467;
+  font-size: 13px;
+}
+
+.formula-editor {
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px;
+  margin-bottom: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.formula-add-card {
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.formula-add-card button {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 6px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.formula-add-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.formula-editor-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.formula-editor-grid label {
+  font-size: 12px;
+  color: #344054;
+  font-weight: 600;
+}
+
+.formula-editor-grid input {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font: inherit;
+  background: #ffffff;
+}
+
+.formula-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.formula-editor-actions button,
+.seed-formulas li button {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 6px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.formula-editor-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.formula-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 13px;
+}
+
 .seed-formulas ul {
   list-style: none;
   margin: 0;
@@ -192,13 +391,28 @@
 }
 
 .seed-formulas li {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.formula-item-readonly {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  border: 1px solid #e4e7ec;
-  border-radius: 8px;
-  padding: 8px 10px;
+}
+
+.formula-item-details {
+  display: grid;
+  gap: 2px;
+}
+
+.formula-item-details small {
+  color: #667085;
+  text-transform: lowercase;
 }
 
 .seed-formulas code {
@@ -206,6 +420,33 @@
   border-radius: 6px;
   padding: 3px 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.formula-item-edit-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.formula-item-edit-grid label {
+  font-size: 12px;
+  color: #344054;
+  font-weight: 600;
+}
+
+.formula-item-edit-grid input {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font: inherit;
+  background: #ffffff;
+}
+
+.formula-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .seed-table {
@@ -225,6 +466,19 @@
   margin: 0;
 }
 
+.seed-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.seed-table-mode {
+  font-size: 12px;
+  color: #475467;
+  padding: 0 6px;
+}
+
 .seed-table-header button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
@@ -232,6 +486,17 @@
   padding: 6px 10px;
   font: inherit;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.seed-table-actions select {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 6px 10px;
+  font: inherit;
 }
 
 .seed-table-scroll {
@@ -293,9 +558,20 @@
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 
-  .seed-formulas li {
+  .formula-item-readonly {
+    width: 100%;
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .formula-item-edit-grid {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .formula-editor-grid {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
   .seed-table.fullscreen {

@@ -14,7 +14,7 @@ export function createSeedDataSource(
 ): SeedDataSource {
   const formulas = seed.formulas.reduce<Record<string, string>>(
     (memo, formula) => {
-      memo[formula.columnId] = formula.expression
+      memo[formula.label] = formula.expression
       return memo
     },
     {},
@@ -27,19 +27,19 @@ export function createSeedDataSource(
   const clientsById = new Map(seed.client.map((client) => [client.id, client]))
 
   const reportedColumns = new Set<string>()
-  function evaluateColumn(columnId: string, context: FormulaContext): number {
-    const result = evaluateFormula(formulas[columnId], context)
+  function evaluateColumn(formulaLabel: string, context: FormulaContext): number {
+    const result = evaluateFormula(formulas[formulaLabel], context)
     if (result.ok) {
       return result.value
     }
 
-    if (!reportedColumns.has(columnId)) {
-      reportedColumns.add(columnId)
+    if (!reportedColumns.has(formulaLabel)) {
+      reportedColumns.add(formulaLabel)
       console.error(
-        `[seedDataSource] Column "${columnId}" formula error: ${result.message}`,
+        `[seedDataSource] Column "${formulaLabel}" formula error: ${result.message}`,
       )
     }
-    return 0
+    return Number.NaN
   }
 
   function getReportRows(): ReportRow[] {

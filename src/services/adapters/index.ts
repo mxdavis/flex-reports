@@ -2,6 +2,7 @@ import { createSeedDataSource, type SeedDataSource } from './seedDataSource'
 import type { BillingSeed, DataSource, ReportRow } from './types'
 
 export type { BillingSeed, DataSource, ReportRow } from './types'
+export type { SeedFormula } from './types'
 export { getRevenueByPerson, getTotalRevenue } from './metrics'
 
 type DataSourceKind = 'seed'

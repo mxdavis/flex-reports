@@ -79,8 +79,6 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       return fallback
     }
 
-    const safeSourceKeys = new Set(sourceColumns.map((column) => column.key))
-
     const fields = parsed.fields
       .filter((field): field is ReportField => {
         return Boolean(
@@ -92,7 +90,7 @@ export function loadReportData(sourceColumns: SourceColumn[]): ReportData {
       })
       .map((field, index) => {
         const defaultField = fallback.fields[index] ?? fallback.fields[0]
-        const sourceKey = safeSourceKeys.has(field.sourceKey)
+        const sourceKey = field.sourceKey.trim().length > 0
           ? field.sourceKey
           : defaultField.sourceKey
 

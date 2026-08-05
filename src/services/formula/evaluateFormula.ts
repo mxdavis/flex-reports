@@ -9,7 +9,7 @@ export type FormulaResult =
   | { ok: true; value: number }
   | { ok: false; code: FormulaErrorCode; message: string }
 
-const TOKEN_REGEX = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g
+const TOKEN_REGEX = /\{\{\s*(%?[a-zA-Z][a-zA-Z0-9_ ]*)\s*\}\}/g
 const SAFE_EXPRESSION_REGEX = /^[0-9+\-*/().\s]+$/
 
 function normalizePercent(expression: string): string {
@@ -17,8 +17,14 @@ function normalizePercent(expression: string): string {
 }
 
 function injectTokens(expression: string, context: FormulaContext): string {
+  const caseInsensitiveContext = new Map<string, number>()
+  for (const [key, value] of Object.entries(context)) {
+    caseInsensitiveContext.set(key.toLowerCase(), value)
+  }
+
   return expression.replace(TOKEN_REGEX, (_, token: string) => {
-    const value = context[token]
+    const normalizedToken = (token.startsWith('%') ? token.slice(1) : token).trim().toLowerCase()
+    const value = caseInsensitiveContext.get(normalizedToken)
     return Number.isFinite(value) ? String(value) : '0'
   })
 }
@@ -165,11 +171,15 @@ export function evaluateFormula(
   try {
     const value = evaluateTokens(tokenize(prepared))
     if (!Number.isFinite(value)) {
-      return {
-        ok: false,
-        code: 'malformed-expression',
-        message: `Formula "${expression}" did not evaluate to a finite number.`,
+      if (Number.isNaN(value)) {
+        return {
+          ok: false,
+          code: 'malformed-expression',
+          message: `Formula "${expression}" did not evaluate to a number.`,
+        }
       }
+
+      return { ok: true, value: Number.NaN }
     }
     return { ok: true, value }
   } catch (error) {
