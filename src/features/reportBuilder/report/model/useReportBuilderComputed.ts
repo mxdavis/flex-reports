@@ -142,8 +142,32 @@ export function useReportBuilderComputed({
     return getFormulaValue(sourceKey, new Map(), new Set(), context)
   }
 
+  function getMappedRawValue(row: ReportRow, sourceKey: string): unknown {
+    const mappedColumn = sourceColumnByKey.get(sourceKey)
+    if (mappedColumn) {
+      return (row as Record<string, unknown>)[String((mappedColumn as { key: string }).key)]
+    }
+
+    if (!formulasByLabel.has(sourceKey.toLowerCase())) return null
+    const context = buildBaseFormulaContext(row)
+    return getFormulaValue(sourceKey, new Map(), new Set(), context)
+  }
+
+  function getDistinctCount(rowsToAggregate: ReportRow[], sourceKey: string): number {
+    const seen = new Set<string>()
+    for (const row of rowsToAggregate) {
+      const value = getMappedRawValue(row, sourceKey)
+      if (value === null || value === undefined || value === '') continue
+      if (typeof value === 'number' && Number.isNaN(value)) continue
+      seen.add(`${typeof value}:${String(value)}`)
+    }
+    return seen.size
+  }
+
   function getAggregatedFieldValue(rowsToAggregate: ReportRow[], sourceKey: string, mode: AggregateMode): number | null {
     if (mode === 'none') return null
+    if (mode === 'count') return rowsToAggregate.length
+    if (mode === 'distinct') return getDistinctCount(rowsToAggregate, sourceKey)
     let total = 0
     let count = 0
     for (const row of rowsToAggregate) {

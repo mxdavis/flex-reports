@@ -2,7 +2,7 @@ import { Fragment } from 'react'
 import type { ReportRow } from '../../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
 import type { AggregateMode } from '../../types'
-import { buildEmbeddedPivotGroups } from '../../sections/sampleRowsPivot'
+import { buildNestedPivotGroups } from './sampleRowsPivot'
 
 type SampleRowsHorizontalTableContentProps = {
   showTotals: boolean
@@ -27,30 +27,44 @@ export function SampleRowsHorizontalTableContent({
   formatValue,
   isNumericDisplayType,
 }: SampleRowsHorizontalTableContentProps) {
-  const renderFieldValue = (rowsToRender: ReportRow[], field: ReportField): string => {
-    if (rowsToRender.length > 1) {
-      const aggregatedValue = getAggregatedFieldValue(rowsToRender, field.sourceKey, aggregateMode)
-      if (aggregatedValue !== null) {
-        return formatValue(aggregatedValue, field.displayType, field.currencySymbol)
-      }
-    }
+  const aggregateSummaryLabel = aggregateMode === 'avg'
+    ? 'Average'
+    : aggregateMode === 'count'
+      ? 'Count'
+      : aggregateMode === 'distinct'
+        ? 'DISTINCT COUNT'
+      : 'Total'
 
-    return getMappedValue(
-      rowsToRender[0],
-      field.sourceKey,
-      field.displayType,
-      field.currencySymbol,
-    )
+  const getAggregateDisplayType = (field: ReportField): DisplayType => {
+    return (aggregateMode === 'count' || aggregateMode === 'distinct') ? 'number' : field.displayType
   }
+
+  // Total row: first column carries the group label (with the plain row count
+  // shown once for count mode); the remaining columns show the per-column
+  // aggregate (distinct count / sum / average).
+  const renderTotalCells = (rowsForTotals: ReportRow[]) =>
+    fields.slice(1).map((field) => (
+      <td
+        key={`total-${field.id}`}
+        className={aggregateMode === 'count' || aggregateMode === 'distinct' || isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+      >
+        {aggregateMode === 'count'
+          ? ''
+          : <strong>{formatValue(
+            getAggregatedFieldValue(rowsForTotals, field.sourceKey, aggregateMode),
+            getAggregateDisplayType(field),
+            field.currencySymbol,
+          )}</strong>}
+      </td>
+    ))
 
   const shouldRenderEmbeddedPivot = isGroupingEnabled && fields.length >= 2
   if (shouldRenderEmbeddedPivot) {
-    const [primaryField, secondaryField, ...metricFields] = fields
-    const pivotGroups = buildEmbeddedPivotGroups({
+    const pivotGroups = buildNestedPivotGroups({
       previewRows,
-      primaryField,
-      secondaryField,
+      fields,
       getMappedValue,
+      isNumericDisplayType,
     })
 
     return (
@@ -64,44 +78,44 @@ export function SampleRowsHorizontalTableContent({
         </thead>
         <tbody>
           {pivotGroups.map((group) => {
+            const groupTotalLabel = aggregateMode === 'count'
+              ? `${group.primaryValue} Count Total ${group.rows.length}`
+              : aggregateMode === 'distinct'
+                ? `${group.primaryValue} DISTINCT COUNT`
+              : `${group.primaryValue} ${aggregateSummaryLabel}`
             return (
               <Fragment key={`group-${group.primaryValue}`}>
-                {group.subgroups.map((subgroup, subgroupIndex) => {
-                  return (
-                    <tr key={`subgroup-${group.primaryValue}-${subgroup.secondaryValue}-${subgroupIndex}`}>
-                      <th>{subgroupIndex === 0 ? group.primaryValue : ''}</th>
-                      <td>{subgroup.secondaryValue}</td>
-                      {metricFields.map((field) => {
+                {group.detailRows.map((detailRow) => (
+                  <tr key={`row-${group.primaryValue}-${detailRow.rowId}`}>
+                    {detailRow.cells.map((cell, column) => {
+                      if (!cell.render) return null
+                      if (column === 0) {
                         return (
-                          <td
-                            key={`${group.primaryValue}-${subgroup.secondaryValue}-${field.id}`}
-                            className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+                          <th
+                            key={`${detailRow.rowId}-${fields[column].id}`}
+                            scope="rowgroup"
+                            rowSpan={cell.rowSpan}
                           >
-                            {renderFieldValue(subgroup.rows, field)}
-                          </td>
+                            {cell.value}
+                          </th>
                         )
-                      })}
-                    </tr>
-                  )
-                })}
-                {showTotals && (
-                  <tr key={`group-total-${group.primaryValue}`}>
-                    <th><strong>{`${group.primaryValue} Total`}</strong></th>
-                    <td><strong>{aggregateMode === 'avg' ? 'Average' : 'Total'}</strong></td>
-                    {metricFields.map((field) => {
+                      }
                       return (
                         <td
-                          key={`group-total-${group.primaryValue}-${field.id}`}
-                          className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+                          key={`${detailRow.rowId}-${fields[column].id}`}
+                          rowSpan={cell.rowSpan}
+                          className={cell.isNumeric ? 'seed-table-value-numeric' : ''}
                         >
-                          <strong>{formatValue(
-                            getAggregatedFieldValue(group.rows, field.sourceKey, aggregateMode),
-                            field.displayType,
-                            field.currencySymbol,
-                          )}</strong>
+                          {cell.value}
                         </td>
                       )
                     })}
+                  </tr>
+                ))}
+                {showTotals && (
+                  <tr key={`group-total-${group.primaryValue}`}>
+                    <th scope="row"><strong>{groupTotalLabel}</strong></th>
+                    {renderTotalCells(group.rows)}
                   </tr>
                 )}
               </Fragment>
@@ -111,22 +125,12 @@ export function SampleRowsHorizontalTableContent({
         {showTotals && (
           <tfoot>
             <tr>
-              <th><strong>Grand total</strong></th>
-              <td><strong>{aggregateMode === 'avg' ? 'Average' : 'Total'}</strong></td>
-              {metricFields.map((field) => {
-                return (
-                  <td
-                    key={`grand-total-${field.id}`}
-                    className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
-                  >
-                    <strong>{formatValue(
-                      getAggregatedFieldValue(previewRows, field.sourceKey, aggregateMode),
-                      field.displayType,
-                      field.currencySymbol,
-                    )}</strong>
-                  </td>
-                )
-              })}
+              <th scope="row">
+                <strong>
+                  {aggregateMode === 'count' ? `Grand Count Total ${previewRows.length}` : 'Grand total'}
+                </strong>
+              </th>
+              {renderTotalCells(previewRows)}
             </tr>
           </tfoot>
         )}
@@ -170,7 +174,13 @@ export function SampleRowsHorizontalTableContent({
           <tr>
             {fields.map((field, index) => {
               if (index === 0) {
-                return <th key={`total-label-${field.id}`}><strong>Total</strong></th>
+                return (
+                  <th key={`total-label-${field.id}`}>
+                    <strong>
+                      {aggregateMode === 'count' ? `Count Total ${previewRows.length}` : aggregateSummaryLabel}
+                    </strong>
+                  </th>
+                )
               }
 
               const aggregatedValue = getAggregatedFieldValue(
@@ -181,9 +191,15 @@ export function SampleRowsHorizontalTableContent({
               return (
                 <td
                   key={`total-value-${field.id}`}
-                  className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+                  className={aggregateMode === 'count' || aggregateMode === 'distinct' || isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
                 >
-                  <strong>{formatValue(aggregatedValue, field.displayType, field.currencySymbol)}</strong>
+                  {aggregateMode === 'count'
+                    ? ''
+                    : <strong>{formatValue(
+                      aggregatedValue,
+                      getAggregateDisplayType(field),
+                      field.currencySymbol,
+                    )}</strong>}
                 </td>
               )
             })}

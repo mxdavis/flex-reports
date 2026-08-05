@@ -21,7 +21,8 @@ export const CHIP_AGGREGATION_OPTIONS: Array<{ value: ChipAggregationMode, label
   { value: 'none', label: 'None' },
   { value: 'sum', label: 'Sum' },
   { value: 'avg', label: 'Average' },
-  { value: 'count', label: 'Count (unique values)' },
+  { value: 'count', label: 'Count' },
+  { value: 'distinct', label: 'Distinct count' },
 ]
 
 export const EDIT_MODE_JUMP_TARGETS = [
@@ -31,12 +32,13 @@ export const EDIT_MODE_JUMP_TARGETS = [
 ]
 
 export function getDefaultChipAggregation(displayType: DisplayType): ChipAggregationMode {
-  return displayType === 'string' || displayType === 'date' ? 'count' : 'sum'
+  return displayType === 'string' || displayType === 'date' ? 'distinct' : 'sum'
 }
 
 export function getChipAggregationLabel(
   chipAggregation: ChipAggregationMode,
   _displayType: DisplayType,
 ): string {
+  if (chipAggregation === 'distinct') return 'distinct count'
   return chipAggregation
 }

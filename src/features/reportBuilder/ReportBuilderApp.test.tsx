@@ -83,13 +83,13 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('heading', { name: 'Client Utilization' })).toBeInTheDocument()
   })
 
-  it('shows aggregate modes without count', () => {
+  it('shows aggregate modes including count and distinct count', () => {
     render(<ReportBuilderApp />)
 
     const aggregateSelect = screen.getByLabelText('Aggregate mode')
     const options = Array.from((aggregateSelect as HTMLSelectElement).options).map((option) => option.text)
 
-    expect(options).toEqual(['None', 'Sum', 'Average'])
+    expect(options).toEqual(['None', 'Sum', 'Average', 'Count', 'Distinct Count'])
   })
 
   it('syncs mapped column source when a formula label is renamed', async () => {
@@ -152,7 +152,7 @@ describe('ReportBuilderApp', () => {
     const user = userEvent.setup()
     render(<ReportBuilderApp initialEditMode />)
 
-    const formulasSection = screen.getByRole('heading', { name: 'Seeded formulas' }).closest('section')
+    const formulasSection = screen.getByRole('heading', { name: 'Formulas' }).closest('section')
     expect(formulasSection).toBeTruthy()
     if (!formulasSection) {
       return
@@ -214,6 +214,43 @@ describe('ReportBuilderApp', () => {
     expect(scrollSpy).toHaveBeenCalled()
     expect(window.location.hash).toBe('#report-formulas')
     scrollSpy.mockRestore()
+  })
+
+  it('collapses and expands settings, columns, and formulas in edit mode', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp initialEditMode />)
+
+    await user.click(screen.getByRole('button', { name: 'Collapse settings' }))
+    expect(screen.queryByLabelText('Sheet name')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Expand settings' }))
+    expect(screen.getByLabelText('Sheet name')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Collapse columns' }))
+    expect(screen.queryByRole('button', { name: 'Add column' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Expand columns' }))
+    expect(screen.getByRole('button', { name: 'Add column' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Collapse formulas' }))
+    expect(screen.queryByRole('button', { name: 'Add formula' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Expand formulas' }))
+    expect(screen.getByRole('button', { name: 'Add formula' })).toBeInTheDocument()
+  })
+
+  it('turns grouping off when switching to vertical view', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp initialEditMode />)
+
+    const groupingButton = screen.getByRole('button', { name: 'Grouping' })
+    await user.click(groupingButton)
+    expect(groupingButton).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Vertical view' }))
+    const groupingButtonInVertical = screen.getByRole('button', { name: 'Grouping' })
+    expect(groupingButtonInVertical).toBeDisabled()
+    expect(groupingButtonInVertical).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(screen.getByRole('button', { name: 'Horizontal view' }))
+    expect(screen.getByRole('button', { name: 'Grouping' })).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('prevents switching column edit when unsaved changes are not confirmed', async () => {

@@ -1,4 +1,4 @@
-export type AggregateMode = 'none' | 'sum' | 'avg'
+export type AggregateMode = 'none' | 'sum' | 'avg' | 'count' | 'distinct'
 export type TableOrientation = 'horizontal' | 'vertical'
 
 export type ReportBuilderAppProps = {

@@ -11,7 +11,7 @@ export type SourceColumn = {
 
 export type DisplayType = 'currency' | 'number' | 'decimal' | 'percent' | 'date' | 'string'
 
-export type ChipAggregationMode = 'none' | 'sum' | 'avg' | 'count'
+export type ChipAggregationMode = 'none' | 'sum' | 'avg' | 'count' | 'distinct'
 
 export type ReportField = {
   id: string

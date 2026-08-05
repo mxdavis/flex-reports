@@ -163,23 +163,34 @@ describe('SampleRowsTableContent', () => {
       </table>,
     )
 
-    expect(screen.getByRole('columnheader', { name: 'Alice' })).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: 'Alice' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: '' })).toBeNull()
 
-    const subgroupRow = screen.getByText('Client A').closest('tr')
-    expect(subgroupRow).toBeTruthy()
-    if (!subgroupRow) {
+    // Detail rows are expanded: Client A has two rows (hours 2 and 3) shown
+    // individually rather than collapsed into a single summed cell.
+    const clientARow = screen.getByText('Client A').closest('tr')
+    expect(clientARow).toBeTruthy()
+    if (!clientARow) {
       return
     }
-    expect(within(subgroupRow).getByText('5')).toBeInTheDocument()
+    expect(within(clientARow).getByText('2')).toBeInTheDocument()
 
-    const groupTotalRow = screen.getByRole('columnheader', { name: 'Alice Total' }).closest('tr')
+    // Client B is a single-row subgroup showing its raw value.
+    const clientBRow = screen.getByText('Client B').closest('tr')
+    expect(clientBRow).toBeTruthy()
+    if (!clientBRow) {
+      return
+    }
+    expect(within(clientBRow).getByText('5')).toBeInTheDocument()
+
+    const groupTotalRow = screen.getByRole('rowheader', { name: 'Alice Total' }).closest('tr')
     expect(groupTotalRow).toBeTruthy()
     if (!groupTotalRow) {
       return
     }
     expect(within(groupTotalRow).getByText('10')).toBeInTheDocument()
 
-    const grandTotalRow = screen.getByRole('columnheader', { name: 'Grand total' }).closest('tr')
+    const grandTotalRow = screen.getByRole('rowheader', { name: 'Grand total' }).closest('tr')
     expect(grandTotalRow).toBeTruthy()
     if (!grandTotalRow) {
       return
@@ -207,5 +218,110 @@ describe('SampleRowsTableContent', () => {
 
     expect(screen.getAllByRole('cell', { name: 'Alice' }).length).toBeGreaterThan(0)
     expect(screen.queryByRole('rowheader', { name: 'Alice Total' })).toBeNull()
+  })
+
+  it('preserves raw values for single-row grouped subgroups when aggregate mode is count', () => {
+    render(
+      <table>
+        <SampleRowsTableContent
+          isHorizontalTable
+          showTotals
+          aggregateMode="count"
+          isGroupingEnabled
+          fields={pivotFields}
+          previewRows={pivotRows}
+          verticalColumns={[]}
+          getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
+          getAggregatedFieldValue={(rowsToAggregate) => rowsToAggregate.length}
+          formatValue={(value) => (value === null ? '' : String(value))}
+        />
+      </table>,
+    )
+
+    const bobRow = screen.getByRole('rowheader', { name: 'Bob' }).closest('tr')
+    expect(bobRow).toBeTruthy()
+    if (!bobRow) {
+      return
+    }
+
+    expect(within(bobRow).getByText('Client C')).toBeInTheDocument()
+    expect(within(bobRow).getByText('4')).toBeInTheDocument()
+  })
+
+  it('shows data (not counts) in multi-row grouped subgroup rows while totals show counts', () => {
+    // Regression: previously count mode replaced every metric cell in a
+    // multi-row subgroup with the row count (e.g. "3 3 3"), hiding the data.
+    // Detail rows must show data; only the total rows should show counts.
+    const countBugFields: ReportField[] = [
+      {
+        id: 'field-person',
+        label: 'Person',
+        sourceKey: 'personName',
+        displayType: 'string',
+        chipAggregation: 'count',
+        currencySymbol: '',
+      },
+      {
+        id: 'field-client',
+        label: 'Client',
+        sourceKey: 'clientName',
+        displayType: 'string',
+        chipAggregation: 'count',
+        currencySymbol: '',
+      },
+      {
+        id: 'field-hours',
+        label: 'Hours',
+        sourceKey: 'hours',
+        displayType: 'number',
+        chipAggregation: 'sum',
+        currencySymbol: '',
+      },
+    ]
+
+    // Alex / ClientX has 3 rows: count = 3, but the representative value is 10.
+    const countBugRows: ReportRow[] = [
+      { ...row, id: 'alex-1', personName: 'Alex', clientName: 'ClientX', hours: 10 },
+      { ...row, id: 'alex-2', personName: 'Alex', clientName: 'ClientX', hours: 20 },
+      { ...row, id: 'alex-3', personName: 'Alex', clientName: 'ClientX', hours: 30 },
+    ]
+
+    render(
+      <table>
+        <SampleRowsTableContent
+          isHorizontalTable
+          showTotals
+          aggregateMode="count"
+          isGroupingEnabled
+          fields={countBugFields}
+          previewRows={countBugRows}
+          verticalColumns={[]}
+          getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
+          getAggregatedFieldValue={(rowsToAggregate) => rowsToAggregate.length}
+          formatValue={(value) => (value === null ? '' : String(value))}
+        />
+      </table>,
+    )
+
+    // Detail subgroup row must show the underlying data (10), not the count (3).
+    const subgroupRow = screen.getByText('ClientX').closest('tr')
+    expect(subgroupRow).toBeTruthy()
+    if (!subgroupRow) {
+      return
+    }
+    expect(within(subgroupRow).getByText('10')).toBeInTheDocument()
+    expect(within(subgroupRow).queryByText('3')).toBeNull()
+
+    // The group total row is where the count belongs, labelled once with the
+    // plain row count for the group.
+    const totalRow = screen.getByRole('rowheader', { name: 'Alex Count Total 3' }).closest('tr')
+    expect(totalRow).toBeTruthy()
+    if (!totalRow) {
+      return
+    }
+    expect(totalRow).toHaveTextContent('Alex Count Total 3')
+    expect(within(totalRow).queryByText('10')).toBeNull()
+    const totalCells = Array.from(totalRow.querySelectorAll('td')).map((cell) => cell.textContent?.trim() ?? '')
+    expect(totalCells.every((value) => value === '')).toBe(true)
   })
 })

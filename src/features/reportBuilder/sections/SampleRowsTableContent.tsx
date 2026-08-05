@@ -89,7 +89,11 @@ function SampleRowsTableContent({
                     )
                   }
 
-                  return formatValue(aggregatedValue, field.displayType, field.currencySymbol)
+                  return formatValue(
+                    aggregatedValue,
+                    (aggregateMode === 'count' || aggregateMode === 'distinct') ? 'number' : field.displayType,
+                    field.currencySymbol,
+                  )
                 })()
                 : getMappedValue(
                   column.rows[0],
@@ -116,7 +120,7 @@ function SampleRowsTableContent({
                       field.sourceKey,
                       aggregateMode,
                     ),
-                    field.displayType,
+                    (aggregateMode === 'count' || aggregateMode === 'distinct') ? 'number' : field.displayType,
                     field.currencySymbol,
                   )}
                 </strong>

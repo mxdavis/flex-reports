@@ -25,10 +25,11 @@ function isChipAggregationMode(value: unknown): value is ChipAggregationMode {
     || value === 'sum'
     || value === 'avg'
     || value === 'count'
+    || value === 'distinct'
 }
 
 function getDefaultChipAggregation(displayType: DisplayType): ChipAggregationMode {
-  return displayType === 'string' || displayType === 'date' ? 'count' : 'sum'
+  return displayType === 'string' || displayType === 'date' ? 'distinct' : 'sum'
 }
 
 function getDefaultCurrencySymbol(displayType: DisplayType): string {

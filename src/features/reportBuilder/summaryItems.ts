@@ -41,9 +41,16 @@ export function buildSummaryItems({
     const aggregationLabel = getChipAggregationLabel(chipAggregation, field.displayType)
 
     if (chipAggregation === 'count') {
+      return {
+        label: `${field.label} (${aggregationLabel})`,
+        value: INTEGER_NUMBER_FORMAT.format(rows.length),
+      }
+    }
+
+    if (chipAggregation === 'distinct') {
       const uniqueValues = new Set<string>()
       for (const row of rows) {
-        const mapped = getMappedValue(row, field.sourceKey, field.displayType)
+        const mapped = getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)
         const normalizedValue = mapped.trim()
         if (normalizedValue.length > 0) {
           uniqueValues.add(normalizedValue)

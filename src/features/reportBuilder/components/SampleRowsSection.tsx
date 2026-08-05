@@ -52,6 +52,9 @@ function SampleRowsSection({
   getAggregatedFieldValue,
   formatValue,
 }: SampleRowsSectionProps) {
+  const isGroupingUnavailable = !isHorizontalTable
+  const isGroupingActive = isHorizontalTable && isGroupingEnabled
+
   useEffect(() => {
     if (!isTableFullscreen) {
       return
@@ -83,16 +86,24 @@ function SampleRowsSection({
             <option value="none">None</option>
             <option value="sum">Sum</option>
             <option value="avg">Average</option>
+            <option value="count">Count</option>
+            <option value="distinct">Distinct Count</option>
           </select>
-          <button
-            type="button"
-            className="grouping-toggle-button"
-            aria-pressed={isGroupingEnabled}
-            onClick={onToggleGrouping}
-            title="Toggle embedded grouping by first two columns"
+          <span
+            className="grouping-toggle-wrapper"
+            title={isGroupingUnavailable ? 'Switch to horizontal view to use grouping.' : ''}
           >
-            Grouping
-          </button>
+            <button
+              type="button"
+              className="grouping-toggle-button"
+              aria-pressed={isGroupingActive}
+              disabled={isGroupingUnavailable}
+              onClick={onToggleGrouping}
+              title={isGroupingUnavailable ? '' : 'Toggle embedded grouping by first two columns'}
+            >
+              Grouping
+            </button>
+          </span>
           <button
             type="button"
             onClick={onToggleOrientation}

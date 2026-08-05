@@ -16,7 +16,7 @@ test('table controls expose aggregate options and vertical header semantics', as
 
   const aggregateSelect = page.locator('#aggregate-mode')
   await expect(aggregateSelect).toBeVisible()
-  await expect(aggregateSelect.locator('option')).toHaveText(['None', 'Sum', 'Average'])
+  await expect(aggregateSelect.locator('option')).toHaveText(['None', 'Sum', 'Average', 'Count', 'Distinct Count'])
 
   await page.getByRole('button', { name: 'Vertical view' }).click()
   await expect(page.getByRole('button', { name: 'Horizontal view' })).toBeVisible()
@@ -52,6 +52,47 @@ test('grouping toggle enables grouped totals layout', async ({ page }) => {
   await expect(groupedTotalHeaders.first()).toBeVisible()
 })
 
+test('grouped count shows row count once in the left total label', async ({ page }) => {
+  await page.goto('/')
+
+  await enterEditMode(page)
+
+  const mappingSection = getMappingSection(page)
+
+  await mappingSection.getByRole('button', { name: 'Edit COLUMN 2' }).click()
+  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill('clientName')
+  await mappingSection.getByRole('button', { name: 'Save COLUMN 2' }).click()
+
+  await mappingSection.getByRole('button', { name: 'Edit COLUMN 3' }).click()
+  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill('originatingPersonId')
+  await mappingSection.getByRole('button', { name: 'Save COLUMN 3' }).click()
+
+  const aggregateSelect = page.locator('#aggregate-mode')
+  await aggregateSelect.selectOption('count')
+
+  await page.getByRole('button', { name: 'Grouping' }).click()
+
+  const totalRow = page.locator('tr', {
+    has: page.getByRole('rowheader', { name: '07/01/2026 Count Total 3' }),
+  })
+  await expect(totalRow).toBeVisible()
+
+  const totalCells = await totalRow.locator('td').allTextContents()
+  for (const cellValue of totalCells) {
+    expect(cellValue.trim()).toBe('')
+  }
+
+  const singleSubgroupRow = page.locator('tr', {
+    has: page.getByRole('rowheader', { name: /^07\/10\/2026$/ }),
+  })
+  await expect(singleSubgroupRow).toBeVisible()
+
+  const singleRowCells = (await singleSubgroupRow.locator('td').allTextContents()).map((value) => value.trim())
+  expect(singleRowCells[0]).toBe('Delta Freight')
+  expect(singleRowCells).toContain('p2')
+  expect(singleRowCells).toContain('$540.00')
+})
+
 test('formula label rename syncs mapped column source', async ({ page }) => {
   await page.goto('/')
 
@@ -67,7 +108,7 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
   await mappingSection.getByRole('button', { name: 'Save COLUMN 1' }).click()
 
   const formulasSection = page.locator('section', {
-    has: page.getByRole('heading', { name: 'Seeded formulas' }),
+    has: page.getByRole('heading', { name: 'Formulas' }),
   })
   await formulasSection.getByRole('button', { name: 'Edit' }).first().click()
 
@@ -128,7 +169,7 @@ test('typing {{ in formula expression opens token suggestions', async ({ page })
   await enterEditMode(page)
 
   const formulasSection = page.locator('section', {
-    has: page.getByRole('heading', { name: 'Seeded formulas' }),
+    has: page.getByRole('heading', { name: 'Formulas' }),
   })
 
   await formulasSection.getByRole('button', { name: 'Add formula' }).click()
