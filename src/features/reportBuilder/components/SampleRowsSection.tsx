@@ -13,6 +13,7 @@ type VerticalColumn = {
 }
 
 type SampleRowsSectionProps = {
+  sheetName: string
   isTableFullscreen: boolean
   isHorizontalTable: boolean
   aggregateMode: AggregateMode
@@ -30,6 +31,7 @@ type SampleRowsSectionProps = {
 }
 
 function SampleRowsSection({
+  sheetName,
   isTableFullscreen,
   isHorizontalTable,
   aggregateMode,
@@ -51,7 +53,7 @@ function SampleRowsSection({
       className={`seed-table sample-rows-jump-target ${isTableFullscreen ? 'fullscreen' : ''}`}
     >
       <div className="seed-table-header">
-        <h2>Sample rows</h2>
+        <h2>{sheetName}</h2>
         <div className="seed-table-actions">
           <span className="seed-table-mode">{`Mode: ${isHorizontalTable ? 'Horizontal' : 'Vertical'}`}</span>
           <label htmlFor="aggregate-mode" className="seed-table-mode">

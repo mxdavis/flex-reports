@@ -4,7 +4,13 @@ import SeedHeader from './SeedHeader'
 
 describe('SeedHeader', () => {
   it('renders heading text', () => {
-    render(<SeedHeader />)
+    render(
+      <SeedHeader
+        sheetName="Ops Sheet"
+        onSheetNameChange={() => undefined}
+      />,
+    )
     expect(screen.getByRole('heading', { name: 'Flex Reports Seed Playground' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Sheet name')).toHaveValue('Ops Sheet')
   })
 })
