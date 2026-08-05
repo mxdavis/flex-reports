@@ -22,7 +22,7 @@ describe('AutocompleteInput', () => {
 
     expect(suggestions).toEqual(['alpha', 'bravo', 'zebra'])
 
-    fireEvent.click(screen.getByRole('option', { name: 'bravo' }))
+    fireEvent.click(screen.getByRole('button', { name: 'bravo' }))
     expect(onChange).toHaveBeenCalledWith('bravo')
   })
 

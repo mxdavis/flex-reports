@@ -14,7 +14,7 @@ describe('TokenizedExpressionInput', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('option', { name: 'hours' }))
+    fireEvent.click(screen.getByRole('button', { name: 'hours' }))
     expect(onChange).toHaveBeenCalledWith('{{hours}}')
   })
 })
