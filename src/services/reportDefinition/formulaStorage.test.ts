@@ -70,4 +70,11 @@ describe('formula storage', () => {
     const loaded = loadFormulaData(fallbackFormulas)
     expect(loaded).toEqual(fallbackFormulas)
   })
+
+  it('keeps explicitly saved empty formula list', () => {
+    window.localStorage.setItem(FORMULA_DATA_STORAGE_KEY, JSON.stringify([]))
+
+    const loaded = loadFormulaData(fallbackFormulas)
+    expect(loaded).toEqual([])
+  })
 })

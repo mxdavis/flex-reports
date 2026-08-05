@@ -52,6 +52,11 @@ export function loadFormulaData(fallback: SeedFormula[]): SeedFormula[] {
       return fallback
     }
 
+    // Preserve an explicitly-saved empty list (user removed all formulas).
+    if (parsed.length === 0) {
+      return []
+    }
+
     const formulas = parsed
       .map(toSeedFormula)
       .filter((formula): formula is SeedFormula => Boolean(formula))

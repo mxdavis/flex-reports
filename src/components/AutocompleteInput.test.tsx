@@ -25,4 +25,21 @@ describe('AutocompleteInput', () => {
     fireEvent.click(screen.getByRole('button', { name: 'bravo' }))
     expect(onChange).toHaveBeenCalledWith('bravo')
   })
+
+  it('exposes meaningful toggle accessibility metadata', () => {
+    render(
+      <AutocompleteInput
+        id="source"
+        value=""
+        options={['alpha']}
+        onChange={() => undefined}
+      />, 
+    )
+
+    const toggle = screen.getByRole('button', { name: 'Show options' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+
+    fireEvent.click(toggle)
+    expect(screen.getByRole('button', { name: 'Hide options' })).toHaveAttribute('aria-expanded', 'true')
+  })
 })

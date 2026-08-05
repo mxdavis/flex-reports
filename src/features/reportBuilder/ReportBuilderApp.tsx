@@ -316,22 +316,22 @@ function ReportBuilderApp({
     visiting: Set<string>,
     context: Record<string, number>,
   ): number {
-    const cached = cache.get(formulaLabel)
+    const normalizedFormulaLabel = formulaLabel.toLowerCase()
+    const cached = cache.get(normalizedFormulaLabel)
     if (cached !== undefined) {
       return cached
     }
 
-    if (visiting.has(formulaLabel)) {
+    if (visiting.has(normalizedFormulaLabel)) {
       return Number.NaN
     }
 
-    const normalizedFormulaLabel = formulaLabel.toLowerCase()
     const expression = formulasByLabel.get(normalizedFormulaLabel)
     if (!expression) {
       return Number.NaN
     }
 
-    visiting.add(formulaLabel)
+    visiting.add(normalizedFormulaLabel)
     for (const dependency of formulasByLabel.keys()) {
       if (dependency === normalizedFormulaLabel || context[dependency] !== undefined) {
         continue
@@ -342,10 +342,10 @@ function ReportBuilderApp({
 
     const result = evaluateFormula(expression, context)
     const value = result.ok ? result.value : Number.NaN
-    cache.set(formulaLabel, value)
+    cache.set(normalizedFormulaLabel, value)
     context[formulaLabel] = value
     context[normalizedFormulaLabel] = value
-    visiting.delete(formulaLabel)
+    visiting.delete(normalizedFormulaLabel)
     return value
   }, [formulasByLabel])
 

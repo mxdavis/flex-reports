@@ -127,6 +127,8 @@ export default function AutocompleteInput({
           type="button"
           className="autocomplete-toggle"
           title="Show options"
+          aria-label={isOpen ? 'Hide options' : 'Show options'}
+          aria-expanded={isOpen}
           disabled={disabled}
           onClick={() => {
             setIsOpen((previous) => !previous)
