@@ -1,0 +1,45 @@
+.workspace-toolbar {
+  position: sticky;
+  top: 10px;
+  z-index: 50;
+}
+
+.workspace-toolbar-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.1);
+  padding: 8px;
+  width: fit-content;
+}
+
+.workspace-toolbar-button {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 6px 10px;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspace-toolbar-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.workspace-toolbar-jump {
+  padding: 6px 9px;
+}
+
+.workspace-toolbar-button svg {
+  display: block;
+}

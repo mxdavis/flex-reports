@@ -6,63 +6,12 @@
   overflow-x: clip;
 }
 
-.workspace-toolbar {
-  position: sticky;
-  top: 10px;
-  z-index: 50;
-}
-
-.workspace-toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  border: 1px solid #e4e7ec;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.1);
-  padding: 8px;
-  width: fit-content;
-}
-
-.workspace-toolbar-button {
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 6px 10px;
-  font: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.workspace-toolbar-button svg {
-  display: block;
-}
-
-.seed-header,
 .mapping-panel,
-.seed-stats,
 .seed-formulas,
 .seed-table {
   background: #ffffff;
   border: 1px solid #e4e7ec;
   border-radius: 12px;
-}
-
-.seed-header {
-  padding: 20px;
-}
-
-.seed-header h1 {
-  margin: 0 0 8px;
-  font-size: 30px;
-}
-
-.seed-header p {
-  margin: 0;
-  color: #475467;
 }
 
 .mapping-panel {
@@ -91,7 +40,7 @@
 
 .mapping-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(230px, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
@@ -99,9 +48,9 @@
   border: 1px solid #e4e7ec;
   border-radius: 10px;
   padding: 10px;
-  background: #f8fafc;
+  background: #ffffff;
   display: grid;
-  gap: 6px;
+  gap: 8px;
   position: relative;
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
@@ -118,126 +67,9 @@
   transform: translateY(-1px);
 }
 
-.column-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .drag-block {
   display: grid;
   gap: 6px;
-}
-
-.column-card-header strong {
-  color: #475467;
-  font-size: 12px;
-  text-transform: uppercase;
-}
-
-.column-card-header button,
-.add-column-card button {
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 6px 10px;
-  font: inherit;
-  cursor: pointer;
-}
-
-.column-card-header button:disabled,
-.add-column-card button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.mapping-grid label {
-  font-size: 12px;
-  color: #344054;
-  font-weight: 600;
-}
-
-.mapping-grid select,
-.mapping-grid input {
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  padding: 7px 9px;
-  font: inherit;
-  background: #ffffff;
-}
-
-.autocomplete {
-  position: relative;
-}
-
-.autocomplete-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #ffffff;
-  overflow: hidden;
-}
-
-.autocomplete-row input {
-  width: 100%;
-  border: 0;
-  outline: none;
-  padding: 7px 9px;
-  background: transparent;
-}
-
-.autocomplete-toggle {
-  border: 0;
-  border-left: 1px solid #d0d5dd;
-  border-radius: 0;
-  background: transparent;
-  padding: 0 9px;
-  font: inherit;
-  cursor: pointer;
-  color: #475467;
-}
-
-.autocomplete:focus-within .autocomplete-row {
-  border-color: #7f56d9;
-  box-shadow: 0 0 0 2px rgba(127, 86, 217, 0.14);
-}
-
-.autocomplete-list {
-  list-style: none;
-  margin: 4px 0 0;
-  padding: 4px;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.12);
-  max-height: 180px;
-  overflow-y: auto;
-  position: absolute;
-  left: 0;
-  right: 0;
-  z-index: 30;
-}
-
-.autocomplete-list li button {
-  width: 100%;
-  text-align: left;
-  border: 0;
-  background: transparent;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font: inherit;
-  cursor: pointer;
-}
-
-.autocomplete-list li button:hover,
-.autocomplete-list li button.highlighted {
-  background: #f2f4f7;
-}
-
-.tokenized-expression {
-  position: relative;
 }
 
 .mapping-grid small {
@@ -246,40 +78,6 @@
 
 .field-hint {
   font-size: 12px;
-}
-
-.add-column-card {
-  place-content: center;
-  text-align: center;
-}
-
-.add-column-card small {
-  color: #475467;
-}
-
-.seed-stats {
-  padding: 14px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
-  gap: 10px;
-}
-
-.seed-stats article {
-  background: #f8fafc;
-  border: 1px solid #e4e7ec;
-  border-radius: 10px;
-  padding: 12px;
-}
-
-.seed-stats h2 {
-  font-size: 12px;
-  margin: 0 0 8px;
-  text-transform: uppercase;
-  color: #667085;
-}
-
-.seed-stats strong {
-  font-size: 22px;
 }
 
 .seed-formulas {
@@ -355,6 +153,14 @@
   background: #ffffff;
 }
 
+.formula-editor-grid select {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font: inherit;
+  background: #ffffff;
+}
+
 .formula-editor-actions {
   display: flex;
   align-items: center;
@@ -362,7 +168,7 @@
 }
 
 .formula-editor-actions button,
-.seed-formulas li button {
+.editable-card-actions button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -382,15 +188,12 @@
   font-size: 13px;
 }
 
-.seed-formulas ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.formula-card-list {
   display: grid;
   gap: 8px;
 }
 
-.seed-formulas li {
+.formula-card-list .editable-card {
   display: grid;
   gap: 8px;
   border: 1px solid #e4e7ec;
@@ -398,56 +201,14 @@
   padding: 8px 10px;
 }
 
-.formula-item-readonly {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-}
-
-.formula-item-details {
-  display: grid;
-  gap: 2px;
-}
-
-.formula-item-details small {
-  color: #667085;
-  text-transform: lowercase;
-}
-
 .seed-formulas code {
   background: #f2f4f7;
   border-radius: 6px;
   padding: 3px 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  max-width: 100%;
 }
 
-.formula-item-edit-grid {
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 8px;
-  align-items: center;
-}
-
-.formula-item-edit-grid label {
-  font-size: 12px;
-  color: #344054;
-  font-weight: 600;
-}
-
-.formula-item-edit-grid input {
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  padding: 7px 9px;
-  font: inherit;
-  background: #ffffff;
-}
-
-.formula-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 .seed-table {
   padding: 16px;
@@ -550,25 +311,6 @@
 }
 
 @media (max-width: 900px) {
-  .mapping-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .seed-stats {
-    grid-template-columns: repeat(2, minmax(120px, 1fr));
-  }
-
-  .formula-item-readonly {
-    width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .formula-item-edit-grid {
-    grid-template-columns: 1fr;
-    gap: 4px;
-  }
-
   .formula-editor-grid {
     grid-template-columns: 1fr;
     gap: 4px;

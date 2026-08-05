@@ -15,7 +15,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "lint": "oxlint",
+    "lint": "oxlint . --ignore-pattern src/seeds/**",
+    "check:practices": "node scripts/check-practices.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

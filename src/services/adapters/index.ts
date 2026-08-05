@@ -1,4 +1,7 @@
-import { createSeedDataSource, type SeedDataSource } from './seedDataSource'
+import {
+  createSeedDataSource,
+  type SeedDataSource,
+} from '../../seeds/factory/createSeedDataSource'
 import type { BillingSeed, DataSource, ReportRow } from './types'
 
 export type { BillingSeed, DataSource, ReportRow } from './types'

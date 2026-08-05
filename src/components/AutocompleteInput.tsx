@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import './AutocompleteInput.css'
 
 type AutocompleteInputProps = {
   id: string
@@ -35,6 +36,7 @@ export default function AutocompleteInput({
   const filteredOptions = useMemo(() => {
     const normalizedQuery = normalize(activeQuery)
     const unique = Array.from(new Set(options))
+      .sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }))
 
     if (!normalizedQuery) {
       return unique
