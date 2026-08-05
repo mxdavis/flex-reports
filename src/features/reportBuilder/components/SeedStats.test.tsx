@@ -6,15 +6,17 @@ describe('SeedStats', () => {
   it('renders summary values', () => {
     render(
       <SeedStats
-        peopleCount={4}
-        clientsCount={3}
-        timeEntriesCount={20}
-        totalRevenue={12600}
+        items={[
+          { label: 'People (count)', value: '4' },
+          { label: 'Clients (count)', value: '3' },
+          { label: 'Time Entries (count)', value: '20' },
+          { label: 'Total Revenue (sum)', value: '$12,600.00' },
+        ]}
       />,
     )
 
-    expect(screen.getByRole('heading', { name: 'People' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'People (count)' })).toBeInTheDocument()
     expect(screen.getByText('4')).toBeInTheDocument()
-    expect(screen.getByText('$12600.00')).toBeInTheDocument()
+    expect(screen.getByText('$12,600.00')).toBeInTheDocument()
   })
 })

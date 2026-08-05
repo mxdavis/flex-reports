@@ -12,9 +12,15 @@ export type ReportRow = {
   hours: number
   rate: number
   total: number
-  grossFees: number
-  writeDown: number
-  netFees: number
+}
+
+export type SchemaDataType = 'string' | 'number' | 'date' | 'currency'
+
+export type SchemaField = {
+  id: string
+  key: keyof ReportRow | string
+  label: string
+  dataType: SchemaDataType
 }
 
 // Mock fixture types. These mimic the records a host billing app would send in,
@@ -57,4 +63,5 @@ export type BillingSeed = {
 // engine. The bundled SeedDataSource mimics a host by replaying mock JSON.
 export interface DataSource {
   getReportRows(): ReportRow[]
+  getSchema(): SchemaField[]
 }

@@ -1,0 +1,31 @@
+.autocomplete-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.12);
+  max-height: 180px;
+  overflow-y: auto;
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 30;
+}
+
+.autocomplete-list li button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.autocomplete-list li button:hover,
+.autocomplete-list li button.highlighted {
+  background: #f2f4f7;
+}

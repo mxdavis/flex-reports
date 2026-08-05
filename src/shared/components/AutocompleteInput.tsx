@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import AutocompleteOptionsList from './AutocompleteOptionsList'
 import './AutocompleteInput.css'
 
 type AutocompleteInputProps = {
@@ -139,24 +140,12 @@ export default function AutocompleteInput({
       </div>
 
       {isOpen && filteredOptions.length > 0 && (
-        <ul className="autocomplete-list" role="listbox" aria-label="Suggestions">
-          {filteredOptions.map((option, index) => (
-            <li key={option}>
-              <button
-                type="button"
-                className={index === highlightedIndex ? 'highlighted' : ''}
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                }}
-                onClick={() => {
-                  selectOption(option)
-                }}
-              >
-                {option}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <AutocompleteOptionsList
+          options={filteredOptions}
+          highlightedIndex={highlightedIndex}
+          ariaLabel="Suggestions"
+          onSelect={selectOption}
+        />
       )}
     </div>
   )

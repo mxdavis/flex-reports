@@ -15,11 +15,27 @@
   color: #475467;
 }
 
-.seed-header-sheet-name {
+.seed-header-controls {
   margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.seed-header-sheet-name,
+.seed-header-currency-symbol {
   display: grid;
   gap: 6px;
-  max-width: 360px;
+}
+
+.seed-header-sheet-name {
+  flex: 1 1 360px;
+  max-width: 420px;
+}
+
+.seed-header-currency-symbol {
+  width: 150px;
 }
 
 .seed-header-sheet-name label {
@@ -28,7 +44,21 @@
   font-weight: 600;
 }
 
+.seed-header-currency-symbol label {
+  font-size: 12px;
+  color: #344054;
+  font-weight: 600;
+}
+
 .seed-header-sheet-name input {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font: inherit;
+  background: #ffffff;
+}
+
+.seed-header-currency-symbol select {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   padding: 7px 9px;

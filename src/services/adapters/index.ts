@@ -2,11 +2,11 @@ import {
   createSeedDataSource,
   type SeedDataSource,
 } from '../../seeds/factory/createSeedDataSource'
-import type { BillingSeed, DataSource, ReportRow } from './types'
+import type { BillingSeed, DataSource, ReportRow, SchemaField } from './types'
 
-export type { BillingSeed, DataSource, ReportRow } from './types'
+export type { BillingSeed, DataSource, ReportRow, SchemaDataType } from './types'
 export type { SeedFormula } from './types'
-export { getRevenueByPerson, getTotalRevenue } from './metrics'
+export type { SchemaField } from './types'
 
 type DataSourceKind = 'seed'
 
@@ -41,6 +41,10 @@ export function getDataSource(): DataSource {
 
 export function getReportRows(): ReportRow[] {
   return getDataSource().getReportRows()
+}
+
+export function getSchema(): SchemaField[] {
+  return getDataSource().getSchema()
 }
 
 // Mock-only helper for the seed playground UI (raw counts + formulas).

@@ -5,6 +5,12 @@ async function enterEditMode(page: Parameters<typeof test>[0]['page']) {
   await expect(page.getByRole('button', { name: 'View mode' })).toBeVisible()
 }
 
+function getMappingSection(page: Parameters<typeof test>[0]['page']) {
+  return page.locator('section', {
+    has: page.getByRole('heading', { name: 'Column Mapping' }),
+  })
+}
+
 test('table controls expose aggregate options and vertical header semantics', async ({ page }) => {
   await page.goto('/')
 
@@ -25,12 +31,14 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
 
   await enterEditMode(page)
 
-  await page.getByRole('button', { name: 'Edit COLUMN 1' }).click()
+  const mappingSection = getMappingSection(page)
 
-  const column1SourceInput = page.locator('#mapping-date')
+  await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
+
+  const column1SourceInput = mappingSection.getByRole('textbox', { name: 'COLUMN' }).first()
   await column1SourceInput.fill('grossFees')
   await expect(column1SourceInput).toHaveValue('grossFees')
-  await page.getByRole('button', { name: 'Save COLUMN 1' }).click()
+  await mappingSection.getByRole('button', { name: 'Save COLUMN 1' }).click()
 
   const formulasSection = page.locator('section', {
     has: page.getByRole('heading', { name: 'Seeded formulas' }),
@@ -41,8 +49,51 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
   await formulaLabelInput.fill('Gross Renamed')
   await page.getByRole('button', { name: 'Save' }).click()
 
-  await page.getByRole('button', { name: 'Edit COLUMN 1' }).click()
+  await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
   await expect(column1SourceInput).toHaveValue('Gross Renamed')
+})
+
+test('add column uses shared field editor controls and persists chip type', async ({ page }) => {
+  await page.goto('/')
+
+  await enterEditMode(page)
+
+  const mappingSection = getMappingSection(page)
+  await mappingSection.getByRole('button', { name: 'Add column' }).click()
+
+  await expect(mappingSection.getByLabel('Column number')).toBeVisible()
+  await expect(mappingSection.getByLabel('Data point')).toBeVisible()
+  await expect(mappingSection.getByLabel('Display label')).toBeVisible()
+  await expect(mappingSection.getByLabel('Display type')).toBeVisible()
+  await expect(mappingSection.getByLabel('Chip type')).toBeVisible()
+
+  await mappingSection.getByLabel('Data point').fill('hours')
+  await mappingSection.getByLabel('Display label').fill('Hours Rounded')
+  await mappingSection.getByLabel('Display type').selectOption('number')
+  await mappingSection.getByLabel('Chip type').selectOption('avg')
+  await mappingSection.getByRole('button', { name: 'Save column' }).click()
+
+  await expect(mappingSection.getByText('Hours Rounded')).toBeVisible()
+
+  await mappingSection.getByRole('button', { name: 'Edit COLUMN 8' }).click()
+  await expect(mappingSection.getByRole('textbox', { name: 'COLUMN' }).first()).toHaveValue('hours')
+  await expect(mappingSection.getByLabel('Display type')).toHaveValue('number')
+  await expect(mappingSection.getByLabel('Chip type')).toHaveValue('avg')
+})
+
+test('global currency symbol selector updates currency display values', async ({ page }) => {
+  await page.goto('/')
+
+  await enterEditMode(page)
+
+  await page.getByLabel('Currency symbol').selectOption('₪')
+
+  const totalChip = page.locator('.seed-stats article', {
+    has: page.getByRole('heading', { name: /Total \(sum\)/ }),
+  })
+  await expect(totalChip.locator('strong')).toContainText('₪')
+
+  await expect(page.locator('.seed-table tbody td', { hasText: '₪' }).first()).toBeVisible()
 })
 
 test('typing {{ in formula expression opens token suggestions', async ({ page }) => {

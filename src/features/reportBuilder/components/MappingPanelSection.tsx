@@ -1,12 +1,20 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
-import EditableCard from '../../../components/EditableCard'
-import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
+import MappingFieldCard from '../sections/MappingFieldCard'
+import type {
+  ChipAggregationMode,
+  DisplayType,
+  ReportField,
+} from '../../../services/reportDefinition/types'
 import './MappingPanelSection.css'
 
-type MappingPanelSectionProps = {
+export type MappingPanelSectionProps = {
   fields: ReportField[]
   isAddingColumn: boolean
   addColumnPosition: number
+  addColumnSourceKey: string
+  addColumnLabel: string
+  addColumnDisplayType: DisplayType
+  addColumnChipAggregation: ChipAggregationMode
   maxColumns: number
   minColumns: number
   draggedFieldId: string | null
@@ -15,9 +23,14 @@ type MappingPanelSectionProps = {
   editingFieldDraft: ReportField | null
   sourceOptions: string[]
   displayTypeOptions: Array<{ value: DisplayType, label: string }>
+  chipAggregationOptions: Array<{ value: ChipAggregationMode, label: string }>
   onStartAddColumn: () => void
   onCancelAddColumn: () => void
   onAddColumnPositionChange: (value: number) => void
+  onAddColumnSourceKeyChange: (value: string) => void
+  onAddColumnLabelChange: (value: string) => void
+  onAddColumnDisplayTypeChange: (value: DisplayType) => void
+  onAddColumnChipAggregationChange: (value: ChipAggregationMode) => void
   onSaveNewColumn: () => void
   onMoveField: (sourceId: string, targetId: string) => void
   onStartEditField: (field: ReportField) => void
@@ -29,11 +42,16 @@ type MappingPanelSectionProps = {
   onSetEditingFieldSourceKey: (value: string) => void
   onSetEditingFieldLabel: (value: string) => void
   onSetEditingFieldDisplayType: (value: DisplayType) => void
+  onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => void
 }
 function MappingPanelSection({
   fields,
   isAddingColumn,
   addColumnPosition,
+  addColumnSourceKey,
+  addColumnLabel,
+  addColumnDisplayType,
+  addColumnChipAggregation,
   maxColumns,
   minColumns,
   draggedFieldId,
@@ -42,9 +60,14 @@ function MappingPanelSection({
   editingFieldDraft,
   sourceOptions,
   displayTypeOptions,
+  chipAggregationOptions,
   onStartAddColumn,
   onCancelAddColumn,
   onAddColumnPositionChange,
+  onAddColumnSourceKeyChange,
+  onAddColumnLabelChange,
+  onAddColumnDisplayTypeChange,
+  onAddColumnChipAggregationChange,
   onSaveNewColumn,
   onMoveField,
   onStartEditField,
@@ -56,6 +79,7 @@ function MappingPanelSection({
   onSetEditingFieldSourceKey,
   onSetEditingFieldLabel,
   onSetEditingFieldDisplayType,
+  onSetEditingFieldChipAggregation,
 }: MappingPanelSectionProps) {
   return (
     <section id="report-columns" className="mapping-panel jump-target">
@@ -95,6 +119,24 @@ function MappingPanelSection({
               })}
             </select>
           </div>
+          <ColumnDetailEditor
+            field={{
+              id: 'add-column',
+              sourceKey: addColumnSourceKey,
+              label: addColumnLabel,
+              displayType: addColumnDisplayType,
+              chipAggregation: addColumnChipAggregation,
+              currencySymbol: '',
+            }}
+            columnLabel="Data point"
+            sourceOptions={sourceOptions}
+            displayTypeOptions={displayTypeOptions}
+            chipAggregationOptions={chipAggregationOptions}
+            onSourceChange={onAddColumnSourceKeyChange}
+            onLabelChange={onAddColumnLabelChange}
+            onDisplayTypeChange={onAddColumnDisplayTypeChange}
+            onChipAggregationChange={onAddColumnChipAggregationChange}
+          />
           <div className="formula-editor-actions">
             <button
               type="button"
@@ -112,103 +154,30 @@ function MappingPanelSection({
       )}
       <div className="mapping-grid">
         {fields.map((field, index) => (
-          <EditableCard
+          <MappingFieldCard
             key={field.id}
-            draggable
-            onDragStart={(event) => {
-              const target = event.target as HTMLElement
-              if (target.closest('.drag-block') || target.closest('button')) {
-                event.preventDefault()
-                return
-              }
-
-              onSetDraggedFieldId(field.id)
-            }}
-            onDragEnter={(event) => {
-              event.preventDefault()
-              if (draggedFieldId && draggedFieldId !== field.id) {
-                onSetDragOverFieldId(field.id)
-              }
-            }}
-            onDragOver={(event) => {
-              event.preventDefault()
-              if (draggedFieldId && draggedFieldId !== field.id) {
-                onSetDragOverFieldId(field.id)
-              }
-            }}
-            onDrop={(event) => {
-              event.preventDefault()
-              if (draggedFieldId) {
-                onMoveField(draggedFieldId, field.id)
-              }
-              onSetDraggedFieldId(null)
-              onSetDragOverFieldId(null)
-            }}
-            onDragEnd={() => {
-              onSetDraggedFieldId(null)
-              onSetDragOverFieldId(null)
-            }}
-            className={[
-              draggedFieldId === field.id ? 'dragging' : '',
-              dragOverFieldId === field.id ? 'drag-over' : '',
-            ].filter(Boolean).join(' ')}
-            summaryLeft={`COLUMN ${index + 1}`}
-            summaryRight={field.label}
-            summaryLeftTooltip={index === 0
-              ? 'Column numbers are fixed after insert. To reorder, drag and drop cards. This column becomes the header row in vertical view.'
-              : 'Column numbers are fixed after insert. To reorder, drag and drop cards.'}
-            detail={editingFieldId === field.id && editingFieldDraft ? (
-              <ColumnDetailEditor
-                field={editingFieldDraft}
-                columnLabel={`COLUMN ${index + 1}`}
-                sourceOptions={sourceOptions}
-                displayTypeOptions={displayTypeOptions}
-                onSourceChange={onSetEditingFieldSourceKey}
-                onLabelChange={onSetEditingFieldLabel}
-                onDisplayTypeChange={onSetEditingFieldDisplayType}
-              />
-            ) : null}
-            actions={
-              <>
-                {editingFieldId === field.id ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => onSaveEditField(field.id)}
-                      title="Save this column edit."
-                      aria-label={`Save COLUMN ${index + 1}`}
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onCancelEditField}
-                      title="Cancel this column edit."
-                      aria-label={`Cancel COLUMN ${index + 1}`}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onStartEditField(field)}
-                    title="Open column editor."
-                    aria-label={`Edit COLUMN ${index + 1}`}
-                  >
-                    Edit
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => onRemoveField(field.id)}
-                  disabled={fields.length <= minColumns}
-                  title="Remove this column from the report layout."
-                >
-                  Remove
-                </button>
-              </>
-            }
+            field={field}
+            index={index}
+            fieldsLength={fields.length}
+            draggedFieldId={draggedFieldId}
+            dragOverFieldId={dragOverFieldId}
+            editingFieldId={editingFieldId}
+            editingFieldDraft={editingFieldDraft}
+            sourceOptions={sourceOptions}
+            displayTypeOptions={displayTypeOptions}
+            chipAggregationOptions={chipAggregationOptions}
+            minColumns={minColumns}
+            onMoveField={onMoveField}
+            onStartEditField={onStartEditField}
+            onCancelEditField={onCancelEditField}
+            onSaveEditField={onSaveEditField}
+            onRemoveField={onRemoveField}
+            onSetDraggedFieldId={onSetDraggedFieldId}
+            onSetDragOverFieldId={onSetDragOverFieldId}
+            onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
+            onSetEditingFieldLabel={onSetEditingFieldLabel}
+            onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
+            onSetEditingFieldChipAggregation={onSetEditingFieldChipAggregation}
           />
         ))}
       </div>

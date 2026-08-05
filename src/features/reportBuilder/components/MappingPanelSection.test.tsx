@@ -9,6 +9,8 @@ const fields: ReportField[] = [
     label: 'workDate',
     sourceKey: 'workDate',
     displayType: 'date',
+    chipAggregation: 'count',
+    currencySymbol: '',
   },
 ]
 
@@ -19,6 +21,10 @@ describe('MappingPanelSection', () => {
         fields={fields}
         isAddingColumn={false}
         addColumnPosition={1}
+        addColumnSourceKey="workDate"
+        addColumnLabel="workDate"
+        addColumnDisplayType="date"
+        addColumnChipAggregation="count"
         maxColumns={15}
         minColumns={1}
         draggedFieldId={null}
@@ -27,9 +33,14 @@ describe('MappingPanelSection', () => {
         editingFieldDraft={null}
         sourceOptions={['workDate']}
         displayTypeOptions={[{ value: 'date', label: 'Date' }]}
+        chipAggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
         onStartAddColumn={() => undefined}
         onCancelAddColumn={() => undefined}
         onAddColumnPositionChange={() => undefined}
+        onAddColumnSourceKeyChange={() => undefined}
+        onAddColumnLabelChange={() => undefined}
+        onAddColumnDisplayTypeChange={() => undefined}
+        onAddColumnChipAggregationChange={() => undefined}
         onSaveNewColumn={() => undefined}
         onMoveField={() => undefined}
         onStartEditField={() => undefined}
@@ -41,6 +52,7 @@ describe('MappingPanelSection', () => {
         onSetEditingFieldSourceKey={() => undefined}
         onSetEditingFieldLabel={() => undefined}
         onSetEditingFieldDisplayType={() => undefined}
+        onSetEditingFieldChipAggregation={() => undefined}
       />,
     )
 
@@ -56,6 +68,10 @@ describe('MappingPanelSection', () => {
         fields={fields}
         isAddingColumn={false}
         addColumnPosition={1}
+        addColumnSourceKey="workDate"
+        addColumnLabel="workDate"
+        addColumnDisplayType="date"
+        addColumnChipAggregation="count"
         maxColumns={15}
         minColumns={1}
         draggedFieldId={null}
@@ -64,9 +80,14 @@ describe('MappingPanelSection', () => {
         editingFieldDraft={null}
         sourceOptions={['workDate']}
         displayTypeOptions={[{ value: 'date', label: 'Date' }]}
+        chipAggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
         onStartAddColumn={onStartAddColumn}
         onCancelAddColumn={() => undefined}
         onAddColumnPositionChange={() => undefined}
+        onAddColumnSourceKeyChange={() => undefined}
+        onAddColumnLabelChange={() => undefined}
+        onAddColumnDisplayTypeChange={() => undefined}
+        onAddColumnChipAggregationChange={() => undefined}
         onSaveNewColumn={() => undefined}
         onMoveField={() => undefined}
         onStartEditField={() => undefined}
@@ -78,6 +99,7 @@ describe('MappingPanelSection', () => {
         onSetEditingFieldSourceKey={() => undefined}
         onSetEditingFieldLabel={() => undefined}
         onSetEditingFieldDisplayType={() => undefined}
+        onSetEditingFieldChipAggregation={() => undefined}
       />,
     )
 

@@ -17,7 +17,7 @@ describe('AutocompleteInput', () => {
     fireEvent.click(screen.getByTitle('Show options'))
 
     const suggestions = within(screen.getByRole('listbox', { name: 'Suggestions' }))
-      .getAllByRole('button')
+      .getAllByRole('option')
       .map((button) => button.textContent)
 
     expect(suggestions).toEqual(['alpha', 'bravo', 'zebra'])
@@ -33,7 +33,7 @@ describe('AutocompleteInput', () => {
         value=""
         options={['alpha']}
         onChange={() => undefined}
-      />, 
+      />,
     )
 
     const toggle = screen.getByRole('button', { name: 'Show options' })

@@ -54,6 +54,24 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('heading', { name: 'Sample rows' })).toBeInTheDocument()
   })
 
+  it('shows summary chips above chart in view mode', () => {
+    const { container } = render(<ReportBuilderApp />)
+
+    expect(screen.getByRole('heading', { name: 'Rate (sum)' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Hours (sum)' })).toBeInTheDocument()
+
+    const stats = container.querySelector('.seed-stats')
+    const chart = container.querySelector('#report-chart')
+    expect(stats).toBeTruthy()
+    expect(chart).toBeTruthy()
+    if (!stats || !chart) {
+      return
+    }
+
+    const position = stats.compareDocumentPosition(chart)
+    expect((position & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true)
+  })
+
   it('updates chart/table heading when sheet name changes in header', async () => {
     const user = userEvent.setup()
     render(<ReportBuilderApp initialEditMode />)
@@ -111,7 +129,7 @@ describe('ReportBuilderApp', () => {
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
 
     expect((screen.getByLabelText('COLUMN 1') as HTMLInputElement).value).toBe('workDate')
-    expect((screen.getByLabelText('Display label') as HTMLInputElement).value).toBe('workDate')
+    expect((screen.getByLabelText('Display label') as HTMLInputElement).value).toBe('Work Date')
   })
 
   it('sorts autocomplete suggestions alphabetically', async () => {
@@ -122,7 +140,7 @@ describe('ReportBuilderApp', () => {
     await user.click(screen.getByTitle('Show options'))
 
     const suggestions = within(screen.getByRole('listbox', { name: 'Suggestions' }))
-      .getAllByRole('button')
+      .getAllByRole('option')
       .map((button) => button.textContent ?? '')
     const sortedSuggestions = [...suggestions]
       .sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }))

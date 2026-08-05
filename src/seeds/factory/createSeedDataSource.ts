@@ -1,7 +1,10 @@
 import defaultSeed from '../billing.seed.json'
-import { evaluateFormula } from '../../services/formula/evaluateFormula'
-import type { FormulaContext } from '../../services/formula/evaluateFormula'
-import type { BillingSeed, DataSource, ReportRow } from '../../services/adapters/types'
+import type {
+  BillingSeed,
+  DataSource,
+  ReportRow,
+  SchemaField,
+} from '../../services/adapters/types'
 
 // A DataSource backed by static seed JSON. It stands in for a real host adapter
 // so the rest of the app can be built and tested against realistic rows.
@@ -12,13 +15,15 @@ export interface SeedDataSource extends DataSource {
 export function createSeedDataSource(
   seed: BillingSeed = defaultSeed as BillingSeed,
 ): SeedDataSource {
-  const formulas = seed.formulas.reduce<Record<string, string>>(
-    (memo, formula) => {
-      memo[formula.label] = formula.expression
-      return memo
-    },
-    {},
-  )
+  const schema: SchemaField[] = [
+    { id: 'workDate', key: 'workDate', label: 'Work Date', dataType: 'date' },
+    { id: 'personName', key: 'personName', label: 'Person', dataType: 'string' },
+    { id: 'clientName', key: 'clientName', label: 'Client', dataType: 'string' },
+    { id: 'task', key: 'task', label: 'Task', dataType: 'string' },
+    { id: 'hours', key: 'hours', label: 'Hours', dataType: 'number' },
+    { id: 'rate', key: 'rate', label: 'Rate', dataType: 'currency' },
+    { id: 'total', key: 'total', label: 'Total', dataType: 'currency' },
+  ]
 
   const peopleById = new Map(
     seed.personBilling.map((person) => [person.id, person.name]),
@@ -26,31 +31,9 @@ export function createSeedDataSource(
 
   const clientsById = new Map(seed.client.map((client) => [client.id, client]))
 
-  const reportedColumns = new Set<string>()
-  function evaluateColumn(formulaLabel: string, context: FormulaContext): number {
-    const result = evaluateFormula(formulas[formulaLabel], context)
-    if (result.ok) {
-      return result.value
-    }
-
-    if (!reportedColumns.has(formulaLabel)) {
-      reportedColumns.add(formulaLabel)
-      console.error(
-        `[seedDataSource] Column "${formulaLabel}" formula error: ${result.message}`,
-      )
-    }
-    return Number.NaN
-  }
-
   function getReportRows(): ReportRow[] {
     return seed.personClientTime.map((entry) => {
       const client = clientsById.get(entry.clientId)
-      const grossFees = evaluateColumn('grossFees', {
-        hours: entry.timeWorked,
-        rate: entry.rate,
-      })
-      const writeDown = evaluateColumn('writeDown', { grossFees })
-      const netFees = evaluateColumn('netFees', { grossFees, writeDown })
 
       return {
         id: entry.id,
@@ -64,15 +47,13 @@ export function createSeedDataSource(
         hours: entry.timeWorked,
         rate: entry.rate,
         total: entry.total,
-        grossFees,
-        writeDown,
-        netFees,
       }
     })
   }
 
   return {
     getReportRows,
+    getSchema: () => schema,
     getSeed: () => seed,
   }
 }

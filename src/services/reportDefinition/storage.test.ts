@@ -9,13 +9,13 @@ import {
 import type { ReportData, SourceColumn } from './types'
 
 const sourceColumns: SourceColumn[] = [
-  { id: 'column1', key: 'workDate', defaultLabel: 'column1' },
-  { id: 'column2', key: 'personName', defaultLabel: 'column2' },
-  { id: 'column3', key: 'clientName', defaultLabel: 'column3' },
-  { id: 'column4', key: 'task', defaultLabel: 'column4' },
-  { id: 'column5', key: 'hours', defaultLabel: 'column5' },
-  { id: 'column6', key: 'rate', defaultLabel: 'column6' },
-  { id: 'column7', key: 'total', defaultLabel: 'column7' },
+  { id: 'column1', key: 'workDate', label: 'Work Date', dataType: 'date' },
+  { id: 'column2', key: 'personName', label: 'Person', dataType: 'string' },
+  { id: 'column3', key: 'clientName', label: 'Client', dataType: 'string' },
+  { id: 'column4', key: 'task', label: 'Task', dataType: 'string' },
+  { id: 'column5', key: 'hours', label: 'Hours', dataType: 'number' },
+  { id: 'column6', key: 'rate', label: 'Rate', dataType: 'currency' },
+  { id: 'column7', key: 'total', label: 'Total', dataType: 'currency' },
 ]
 
 function createMemoryStorage(): Storage {
@@ -59,9 +59,11 @@ describe('reportDefinition storage', () => {
     expect(defaults.version).toBe(4)
     expect(defaults.fields.length).toBe(7)
     expect(defaults.fields[0]?.sourceKey).toBe('workDate')
-    expect(defaults.fields[0]?.label).toBe('workDate')
-    expect(defaults.fields[0]?.displayType).toBe('string')
-    expect(defaults.fields[5]?.displayType).toBe('decimal')
+    expect(defaults.fields[0]?.label).toBe('Work Date')
+    expect(defaults.fields[0]?.displayType).toBe('date')
+    expect(defaults.fields[0]?.chipAggregation).toBe('count')
+    expect(defaults.fields[5]?.displayType).toBe('currency')
+    expect(defaults.fields[5]?.chipAggregation).toBe('sum')
   })
 
   it('persists and reloads reportData', () => {
@@ -69,7 +71,7 @@ describe('reportDefinition storage', () => {
     const updated: ReportData = {
       ...defaults,
       fields: defaults.fields.map((field) => {
-        if (field.id !== 'people') {
+        if (field.id !== 'column2') {
           return field
         }
 
@@ -77,6 +79,7 @@ describe('reportDefinition storage', () => {
           ...field,
           sourceKey: 'clientName' as const,
           displayType: 'string',
+          chipAggregation: 'count',
         }
       }),
     }
@@ -84,9 +87,10 @@ describe('reportDefinition storage', () => {
     saveReportData(updated)
     const loaded = loadReportData(sourceColumns)
 
-    expect(loaded.fields.find((field) => field.id === 'people')?.sourceKey).toBe('clientName')
-    expect(loaded.fields.find((field) => field.id === 'people')?.label).toBe('personName')
-    expect(loaded.fields.find((field) => field.id === 'people')?.displayType).toBe('string')
+    expect(loaded.fields.find((field) => field.id === 'column2')?.sourceKey).toBe('clientName')
+    expect(loaded.fields.find((field) => field.id === 'column2')?.label).toBe('Person')
+    expect(loaded.fields.find((field) => field.id === 'column2')?.displayType).toBe('string')
+    expect(loaded.fields.find((field) => field.id === 'column2')?.chipAggregation).toBe('count')
   })
 
   it('falls back when stored version is invalid', () => {
@@ -115,8 +119,10 @@ describe('reportDefinition storage', () => {
     const loaded = loadReportData(sourceColumns)
 
     expect(loaded.version).toBe(4)
-    expect(loaded.fields.find((field) => field.id === 'date')?.displayType).toBe('string')
-    expect(loaded.fields.find((field) => field.id === 'rate')?.displayType).toBe('decimal')
+    expect(loaded.fields.find((field) => field.id === 'date')?.displayType).toBe('date')
+    expect(loaded.fields.find((field) => field.id === 'rate')?.displayType).toBe('currency')
+    expect(loaded.fields.find((field) => field.id === 'date')?.chipAggregation).toBe('count')
+    expect(loaded.fields.find((field) => field.id === 'rate')?.chipAggregation).toBe('sum')
     expect(window.localStorage.getItem(REPORT_DATA_STORAGE_KEY)).toBeTruthy()
     expect(window.localStorage.getItem(LEGACY_REPORT_DATA_STORAGE_KEY)).toBeNull()
   })

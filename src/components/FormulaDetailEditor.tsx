@@ -1,4 +1,4 @@
-import TokenizedExpressionInput from './TokenizedExpressionInput'
+import TokenizedExpressionInput from '../shared/components/TokenizedExpressionInput'
 import type { SeedFormula } from '../services/adapters'
 import './FormulaDetailEditor.css'
 
