@@ -1,6 +1,6 @@
 import EditableCard from '../../../components/EditableCard'
 import FormulaDetailEditor from '../../../components/FormulaDetailEditor'
-import TokenizedExpressionInput from '../../../components/TokenizedExpressionInput'
+import TokenizedExpressionInput from '../../../shared/components/TokenizedExpressionInput'
 import type { SeedFormula } from '../../../services/adapters'
 import './SeedFormulasSection.css'
 

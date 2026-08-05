@@ -1,4 +1,4 @@
-import AutocompleteInput from './AutocompleteInput'
+import AutocompleteInput from '../shared/components/AutocompleteInput'
 import type {
   ChipAggregationMode,
   DisplayType,

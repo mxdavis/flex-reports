@@ -33,7 +33,7 @@ describe('AutocompleteInput', () => {
         value=""
         options={['alpha']}
         onChange={() => undefined}
-      />, 
+      />,
     )
 
     const toggle = screen.getByRole('button', { name: 'Show options' })

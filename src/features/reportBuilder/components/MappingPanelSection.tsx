@@ -1,5 +1,5 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
-import EditableCard from '../../../components/EditableCard'
+import MappingFieldCard from '../sections/MappingFieldCard'
 import type {
   ChipAggregationMode,
   DisplayType,
@@ -154,102 +154,30 @@ function MappingPanelSection({
       )}
       <div className="mapping-grid">
         {fields.map((field, index) => (
-          <EditableCard
+          <MappingFieldCard
             key={field.id}
-            draggable
-            onDragStart={(event) => {
-              const target = event.target as HTMLElement
-              if (target.closest('.drag-block') || target.closest('button')) {
-                event.preventDefault()
-                return
-              }
-
-              onSetDraggedFieldId(field.id)
-            }}
-            onDragEnter={(event) => {
-              event.preventDefault()
-              if (draggedFieldId && draggedFieldId !== field.id) {
-                onSetDragOverFieldId(field.id)
-              }
-            }}
-            onDragOver={(event) => {
-              event.preventDefault()
-              if (draggedFieldId && draggedFieldId !== field.id) {
-                onSetDragOverFieldId(field.id)
-              }
-            }}
-            onDrop={(event) => {
-              event.preventDefault()
-              if (draggedFieldId) {
-                onMoveField(draggedFieldId, field.id)
-              }
-              onSetDraggedFieldId(null)
-              onSetDragOverFieldId(null)
-            }}
-            onDragEnd={() => {
-              onSetDraggedFieldId(null)
-              onSetDragOverFieldId(null)
-            }}
-            className={[
-              draggedFieldId === field.id ? 'dragging' : '',
-              dragOverFieldId === field.id ? 'drag-over' : '',
-            ].filter(Boolean).join(' ')}
-            summaryLeft={field.label}
-            summaryRight={`COLUMN ${index + 1}`}
-            detail={editingFieldId === field.id && editingFieldDraft ? (
-              <ColumnDetailEditor
-                field={editingFieldDraft}
-                columnLabel={`COLUMN ${index + 1}`}
-                sourceOptions={sourceOptions}
-                displayTypeOptions={displayTypeOptions}
-                chipAggregationOptions={chipAggregationOptions}
-                onSourceChange={onSetEditingFieldSourceKey}
-                onLabelChange={onSetEditingFieldLabel}
-                onDisplayTypeChange={onSetEditingFieldDisplayType}
-                onChipAggregationChange={onSetEditingFieldChipAggregation}
-              />
-            ) : null}
-            actions={
-              <>
-                {editingFieldId === field.id ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => onSaveEditField(field.id)}
-                      title="Save this column edit."
-                      aria-label={`Save COLUMN ${index + 1}`}
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onCancelEditField}
-                      title="Cancel this column edit."
-                      aria-label={`Cancel COLUMN ${index + 1}`}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onStartEditField(field)}
-                    title="Open column editor."
-                    aria-label={`Edit COLUMN ${index + 1}`}
-                  >
-                    Edit
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => onRemoveField(field.id)}
-                  disabled={fields.length <= minColumns}
-                  title="Remove this column from the report layout."
-                >
-                  Remove
-                </button>
-              </>
-            }
+            field={field}
+            index={index}
+            fieldsLength={fields.length}
+            draggedFieldId={draggedFieldId}
+            dragOverFieldId={dragOverFieldId}
+            editingFieldId={editingFieldId}
+            editingFieldDraft={editingFieldDraft}
+            sourceOptions={sourceOptions}
+            displayTypeOptions={displayTypeOptions}
+            chipAggregationOptions={chipAggregationOptions}
+            minColumns={minColumns}
+            onMoveField={onMoveField}
+            onStartEditField={onStartEditField}
+            onCancelEditField={onCancelEditField}
+            onSaveEditField={onSaveEditField}
+            onRemoveField={onRemoveField}
+            onSetDraggedFieldId={onSetDraggedFieldId}
+            onSetDragOverFieldId={onSetDragOverFieldId}
+            onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
+            onSetEditingFieldLabel={onSetEditingFieldLabel}
+            onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
+            onSetEditingFieldChipAggregation={onSetEditingFieldChipAggregation}
           />
         ))}
       </div>

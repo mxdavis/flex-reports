@@ -35,6 +35,21 @@ import {
   sortFormulasByLabel,
   validateFormulaInput,
 } from '../../utils/reportBuilder'
+import {
+  CHIP_AGGREGATION_OPTIONS,
+  CURRENCY_SYMBOL_STORAGE_KEY,
+  DEFAULT_CURRENCY_SYMBOL,
+  DEFAULT_SHEET_NAME,
+  DISPLAY_TYPE_OPTIONS,
+  EDIT_MODE_JUMP_TARGETS,
+  MAX_FORMULAS,
+  MAX_REPORT_COLUMNS,
+  MIN_REPORT_COLUMNS,
+  SHEET_NAME_STORAGE_KEY,
+  getChipAggregationLabel,
+  getDefaultChipAggregation,
+} from './config'
+import { buildSummaryItems } from './summaryItems'
 import type {
   ChipAggregationMode,
   DisplayType,
@@ -43,37 +58,6 @@ import type {
   SourceColumn,
 } from '../../services/reportDefinition/types'
 import './ReportBuilderApp.css'
-
-const MAX_REPORT_COLUMNS = 15
-const MIN_REPORT_COLUMNS = 1
-const MAX_FORMULAS = 25
-const DEFAULT_SHEET_NAME = 'Sample rows'
-const SHEET_NAME_STORAGE_KEY = 'flex-reports.sheet-name.v1'
-const CURRENCY_SYMBOL_STORAGE_KEY = 'flex-reports.currency-symbol.v1'
-const DEFAULT_CURRENCY_SYMBOL = '$'
-const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
-  { value: 'currency', label: 'Currency' },
-  { value: 'number', label: 'Number' },
-  { value: 'decimal', label: 'Decimal number' },
-  { value: 'percent', label: 'Percent' },
-  { value: 'date', label: 'Date' },
-  { value: 'string', label: 'String' },
-]
-
-const CHIP_AGGREGATION_OPTIONS: Array<{ value: ChipAggregationMode, label: string }> = [
-  { value: 'none', label: 'None' },
-  { value: 'sum', label: 'Sum' },
-  { value: 'avg', label: 'Average' },
-  { value: 'count', label: 'Count (unique values)' },
-]
-
-const EDIT_MODE_JUMP_TARGETS = [
-  { id: 'report-columns', label: 'Columns' },
-  { id: 'report-formulas', label: 'Formulas' },
-  { id: 'report-chart', label: 'Chart' },
-]
-
-const INTEGER_NUMBER_FORMAT = new Intl.NumberFormat('en-US')
 
 function ReportBuilderApp({
   initialTableOrientation = 'horizontal',
@@ -173,50 +157,40 @@ function ReportBuilderApp({
     const nextValue = typeof updater === 'function' ? updater(ui.isEditMode) : updater
     dispatchUi({ type: 'setIsEditMode', value: nextValue })
   }
-
   function setIsAddingFormula(value: boolean): void {
     dispatchUi({ type: 'setIsAddingFormula', value })
   }
-
   function setEditingFormula(
     updater: SeedFormula | null | ((previous: SeedFormula | null) => SeedFormula | null),
   ): void {
     const nextValue = typeof updater === 'function' ? updater(ui.editingFormula) : updater
     dispatchUi({ type: 'setEditingFormulaState', value: nextValue })
   }
-
   function setIsAddingColumn(value: boolean): void {
     dispatchUi({ type: 'setIsAddingColumn', value })
   }
-
   function setAddColumnPosition(value: number): void {
     dispatchUi({ type: 'setAddColumnPosition', value })
   }
-
   function setTableOrientation(
     updater: TableOrientation | ((previous: TableOrientation) => TableOrientation),
   ): void {
     const nextValue = typeof updater === 'function' ? updater(ui.tableOrientation) : updater
     dispatchUi({ type: 'setTableOrientation', value: nextValue })
   }
-
   function setAggregateMode(value: AggregateMode): void {
     dispatchUi({ type: 'setAggregateMode', value })
   }
-
   function setDraggedFieldId(value: string | null): void {
     dispatchUi({ type: 'setDraggedFieldId', value })
   }
-
   function setDragOverFieldId(value: string | null): void {
     dispatchUi({ type: 'setDragOverFieldId', value })
   }
-
   function setIsTableFullscreen(updater: boolean | ((previous: boolean) => boolean)): void {
     const nextValue = typeof updater === 'function' ? updater(ui.isTableFullscreen) : updater
     dispatchUi({ type: 'setIsTableFullscreen', value: nextValue })
   }
-
   function setEditingFieldDraft(
     updater: ReportField | null | ((previous: ReportField | null) => ReportField | null),
   ): void {
@@ -349,17 +323,6 @@ function ReportBuilderApp({
   const previewRows = rows
   const isHorizontalTable = tableOrientation === 'horizontal'
   const showTotals = ui.aggregateMode !== 'none'
-
-  function getDefaultChipAggregation(displayType: DisplayType): ChipAggregationMode {
-    return displayType === 'string' || displayType === 'date' ? 'count' : 'sum'
-  }
-
-  function getChipAggregationLabel(
-    chipAggregation: ChipAggregationMode,
-    _displayType: DisplayType,
-  ): string {
-    return chipAggregation
-  }
 
   function resolveChipAggregation(field: ReportField): ChipAggregationMode {
     return field.chipAggregation ?? getDefaultChipAggregation(field.displayType)
@@ -765,76 +728,15 @@ function ReportBuilderApp({
     window.history.replaceState(null, '', `#${sectionId}`)
   }
 
-  const summaryItems = reportData.fields.map((field) => {
-    if (field.chipAggregation === 'none') {
-      return null
-    }
-
-    const chipAggregation = resolveChipAggregation(field)
-    const aggregationLabel = getChipAggregationLabel(chipAggregation, field.displayType)
-
-    if (chipAggregation === 'count') {
-      const uniqueValues = new Set<string>()
-      for (const row of rows) {
-        const mapped = getMappedValue(row, field.sourceKey, field.displayType)
-        const normalizedValue = mapped.trim()
-        if (normalizedValue.length > 0) {
-          uniqueValues.add(normalizedValue)
-        }
-      }
-
-      return {
-        label: `${field.label} (${aggregationLabel})`,
-        value: INTEGER_NUMBER_FORMAT.format(uniqueValues.size),
-      }
-    }
-
-    let total = 0
-    let count = 0
-    let hasNumericValue = false
-    let hasInvalidValue = false
-
-    for (const row of rows) {
-      const numeric = getMappedNumericValue(row, field.sourceKey)
-      if (numeric === null) {
-        continue
-      }
-
-      if (Number.isNaN(numeric)) {
-        hasInvalidValue = true
-        break
-      }
-
-      total += numeric
-      count += 1
-      hasNumericValue = true
-    }
-
-    if (hasInvalidValue) {
-      return {
-        label: `${field.label} (${aggregationLabel})`,
-        value: 'Invalid formula',
-      }
-    }
-
-    if (!hasNumericValue) {
-      return {
-        label: `${field.label} (${aggregationLabel})`,
-        value: '0',
-      }
-    }
-
-    const aggregatedValue = chipAggregation === 'avg' ? total / count : total
-
-    return {
-      label: `${field.label} (${aggregationLabel})`,
-      value: formatCellValue(
-        aggregatedValue,
-        field.displayType === 'string' || field.displayType === 'date' ? 'decimal' : field.displayType,
-        { currencySymbol },
-      ),
-    }
-  }).filter((item): item is { label: string, value: string } => item !== null)
+  const summaryItems = buildSummaryItems({
+    fields: reportData.fields,
+    rows,
+    currencySymbol,
+    resolveChipAggregation,
+    getChipAggregationLabel,
+    getMappedValue,
+    getMappedNumericValue,
+  })
 
   return (
     <div className="seed-page">

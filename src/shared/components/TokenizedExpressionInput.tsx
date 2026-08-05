@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './TokenizedExpressionInput.css'
 import { filterTokenOptions, getTriggerState } from './tokenizedExpressionUtils'
+import AutocompleteOptionsList from './AutocompleteOptionsList'
 
 type TokenizedExpressionInputProps = {
   id: string
@@ -150,24 +151,12 @@ export default function TokenizedExpressionInput({
       />
 
       {shouldShowList && (
-        <ul className="autocomplete-list" role="listbox" aria-label="Formula token suggestions">
-          {filteredOptions.map((option, index) => (
-            <li key={option}>
-              <button
-                type="button"
-                className={index === highlightedIndex ? 'highlighted' : ''}
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                }}
-                onClick={() => {
-                  selectOption(option)
-                }}
-              >
-                {option}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <AutocompleteOptionsList
+          options={filteredOptions}
+          highlightedIndex={highlightedIndex}
+          ariaLabel="Formula token suggestions"
+          onSelect={selectOption}
+        />
       )}
     </div>
   )
