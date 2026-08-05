@@ -78,3 +78,12 @@
 ## Add your own rules below
 
 <!-- e.g. "prefer named exports", "no default exports", "max 200 lines per file" -->
+
+## CI-enforced subset
+
+- `npm run check:practices` runs in CI on every PR/push.
+- UI component files in `src/components/` and `src/features/reportBuilder/components/` must have matching sibling files:
+  - `<Component>.css`
+  - `<Component>.test.tsx`
+- UI component `.tsx` files (excluding tests) must stay at or below 220 lines.
+- `src/features/reportBuilder/ReportBuilderApp.tsx` must stay at or below 1000 lines until further split milestones lower the cap.
