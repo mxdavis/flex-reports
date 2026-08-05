@@ -113,8 +113,7 @@ function ReportBuilderApp({
         return DEFAULT_SHEET_NAME
       }
 
-      const trimmed = saved.trim()
-      return trimmed.length > 0 ? trimmed : DEFAULT_SHEET_NAME
+      return saved.trim().length > 0 ? saved : DEFAULT_SHEET_NAME
     } catch {
       return DEFAULT_SHEET_NAME
     }
@@ -868,7 +867,7 @@ function ReportBuilderApp({
       )}
 
       <SampleRowsSection
-        sheetName={sheetName.trim() || DEFAULT_SHEET_NAME}
+        sheetName={sheetName.trim().length > 0 ? sheetName : DEFAULT_SHEET_NAME}
         isTableFullscreen={isTableFullscreen}
         isHorizontalTable={isHorizontalTable}
         aggregateMode={aggregateMode}
