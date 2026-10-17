@@ -210,7 +210,7 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('button', { name: 'Add formula' })).toBeInTheDocument()
   })
 
-  it('turns grouping off when switching to vertical view', async () => {
+  it('disables grouping in vertical view and restores it in horizontal, without marking the report unsaved', async () => {
     const user = userEvent.setup()
     await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
@@ -224,7 +224,11 @@ describe('ReportBuilderApp', () => {
     expect(groupingButtonInVertical).toHaveAttribute('aria-pressed', 'false')
 
     await user.click(screen.getByRole('button', { name: 'Horizontal view' }))
-    expect(screen.getByRole('button', { name: 'Grouping' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: 'Grouping' })).toHaveAttribute('aria-pressed', 'true')
+
+    // Grouping on, then a round trip through vertical: only the grouping change is unsaved.
+    await user.click(screen.getByRole('button', { name: 'Grouping' }))
+    expect(screen.getByRole('button', { name: 'Save report' })).toBeDisabled()
   })
 
   it('prevents switching column edit when unsaved changes are not confirmed', async () => {

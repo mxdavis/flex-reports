@@ -80,11 +80,10 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
     // Leaving or entering edit mode closes any half-open add forms.
     case 'toggleEditMode':
       return { ...state, isEditMode: !state.isEditMode, isAddingFormula: false, newColumn: null }
-    // Grouping only exists horizontally, so turning vertical switches it off.
+    // Grouping and totals are kept as-is: they simply don't apply in vertical
+    // view, and come back when switching to horizontal.
     case 'toggleOrientation':
-      return state.tableOrientation === 'horizontal'
-        ? { ...state, tableOrientation: 'vertical', isGroupingEnabled: false }
-        : { ...state, tableOrientation: 'horizontal' }
+      return { ...state, tableOrientation: state.tableOrientation === 'horizontal' ? 'vertical' : 'horizontal' }
     case 'setExpandedLevels':
       return { ...state, expandedLevels: action.value, groupOverrides: {} }
     case 'setGroupExpanded':

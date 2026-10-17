@@ -33,11 +33,11 @@ describe('uiReducer', () => {
     expect(uiReducer(initial, { type: 'patchNewColumn', changes: { label: 'x' } })).toBe(initial)
   })
 
-  it('turns grouping off when switching to vertical', () => {
+  it('keeps the grouping setting across a switch to vertical and back', () => {
     const vertical = uiReducer(initial, { type: 'toggleOrientation' })
+    expect(vertical).toMatchObject({ tableOrientation: 'vertical', isGroupingEnabled: true })
 
-    expect(vertical).toMatchObject({ tableOrientation: 'vertical', isGroupingEnabled: false })
-    expect(uiReducer(vertical, { type: 'toggleOrientation' }).tableOrientation).toBe('horizontal')
+    expect(uiReducer(vertical, { type: 'toggleOrientation' })).toEqual(initial)
   })
 
   it('clears hand-toggled groups when the outline level changes', () => {
