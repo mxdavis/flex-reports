@@ -61,4 +61,11 @@ describe('EditModeToolbar', () => {
     expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled()
     expect(screen.getByRole('alert')).toHaveTextContent('Not allowed')
   })
+
+  it('explains why Save isn't offered', () => {
+    render(<EditModeToolbar isEditMode onToggle={() => undefined} saveBlockedReason="Saving is turned off here." />)
+
+    expect(screen.queryByRole('button', { name: 'Save report' })).toBeNull()
+    expect(screen.getByRole('note')).toHaveTextContent('Saving is turned off here.')
+  })
 })

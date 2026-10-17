@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { generateDefaultReportDefinition, normalizeReportDefinition } from './normalize'
+import { generateDefaultReportDefinition, isFromNewerVersion, normalizeReportDefinition } from './normalize'
 import type { SourceColumn } from './types'
 
 // Deliberately non-billing so defaults are proven schema-driven.
@@ -41,7 +41,7 @@ describe('normalizeReportDefinition', () => {
   it('returns defaults and logs for an unsupported version', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
-    const normalized = normalizeReportDefinition({ version: 99, fields: [] }, sourceColumns)
+    const normalized = normalizeReportDefinition({ version: 'two', fields: [] }, sourceColumns)
 
     expect(normalized).toEqual(generateDefaultReportDefinition(sourceColumns))
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Unsupported reportDefinition version'))
@@ -109,5 +109,26 @@ describe('normalizeReportDefinition', () => {
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"Price" is already a data field'))
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Dropped formula "long"'))
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('more than 25 formulas'))
+  })
+
+  it('reads a definition from a newer version best effort, with a warning', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const newer = { ...generateDefaultReportDefinition(sourceColumns), version: 2, sheetName: 'From v2', somethingNew: true }
+
+    const normalized = normalizeReportDefinition(newer, sourceColumns)
+
+    expect(normalized.sheetName).toBe('From v2')
+    expect(normalized.fields).toEqual(newer.fields)
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('newer than this version'))
+  })
+})
+
+describe('isFromNewerVersion', () => {
+  it('is true only for a whole version number above the current one', () => {
+    expect(isFromNewerVersion({ version: 2 })).toBe(true)
+    expect(isFromNewerVersion({ version: 1 })).toBe(false)
+    expect(isFromNewerVersion({ version: '2' })).toBe(false)
+    expect(isFromNewerVersion({ version: 1.5 })).toBe(false)
+    expect(isFromNewerVersion(undefined)).toBe(false)
   })
 })

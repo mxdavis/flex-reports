@@ -330,6 +330,20 @@ describe('ReportBuilderApp host mode', () => {
     expect(within(formulasSection).getByText('"Units" is already a data field. Pick a different formula label.')).toBeInTheDocument()
   })
 
+  it('opens a report from a newer version read-only, with Save turned off and a reason for editors', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const newer = { ...savedDefinition, version: 2 } as unknown as ReportDefinition
+    const { unmount } = render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={newer} onSave={vi.fn()} initialEditMode />)
+
+    expect(screen.getByRole('heading', { name: 'Inventory' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Save report' })).toBeNull()
+    expect(screen.getByRole('note')).toHaveTextContent('saved by a newer version of Flex Reports')
+    unmount()
+
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={newer} role="viewer" />)
+    expect(screen.queryByText(/newer version of Flex Reports/)).toBeNull()
+  })
+
   it('infers columns and logs when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     render(<ReportBuilderApp rows={rows} role="viewer" />)
