@@ -27,10 +27,11 @@ export const AGGREGATION_OPTIONS: Array<{ value: AggregationMode, label: string 
   { value: 'distinct', label: 'Distinct count' },
 ]
 
+// Sections the edit toolbar can jump to, by their element ID name (see useElementId).
 export const EDIT_MODE_JUMP_TARGETS = [
-  { id: 'fr-report-columns', label: 'Columns' },
-  { id: 'fr-report-formulas', label: 'Formulas' },
-  { id: 'fr-report-table', label: 'Table' },
+  { section: 'report-columns', label: 'Columns' },
+  { section: 'report-formulas', label: 'Formulas' },
+  { section: 'report-table', label: 'Table' },
 ]
 
 export function getAggregationLabel(aggregation: AggregationMode): string {

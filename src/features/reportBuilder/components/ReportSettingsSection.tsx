@@ -1,4 +1,5 @@
 import './ReportSettingsSection.css'
+import { useElementId } from '../../../shared/hooks/useElementId'
 import { CURRENCY_SYMBOL_OPTIONS } from '../../../utils/currencySymbols'
 import SectionTitleRow from '../../../shared/components/SectionTitleRow'
 import { DEFAULT_SHEET_NAME } from '../config'
@@ -20,22 +21,25 @@ function ReportSettingsSection({
   onSheetNameChange,
   onCurrencySymbolChange,
 }: ReportSettingsSectionProps) {
+  const globalCurrencySymbolId = useElementId('global-currency-symbol')
+  const reportSettingsContentId = useElementId('report-settings-content')
+  const sheetNameInputId = useElementId('sheet-name-input')
   return (
     <header className="fr-report-settings">
       <SectionTitleRow
         title="Report Settings"
         sectionName="settings"
-        contentId="fr-report-settings-content"
+        contentId={reportSettingsContentId}
         isCollapsed={isCollapsed}
         onToggleCollapsed={onToggleCollapsed}
       />
 
       {!isCollapsed && (
-        <div id="fr-report-settings-content" className="fr-report-settings-controls">
+        <div id={reportSettingsContentId} className="fr-report-settings-controls">
           <div className="fr-report-settings-sheet-name">
-            <label htmlFor="fr-sheet-name-input">Sheet name</label>
+            <label htmlFor={sheetNameInputId}>Sheet name</label>
             <input
-              id="fr-sheet-name-input"
+              id={sheetNameInputId}
               type="text"
               value={sheetName}
               onChange={(event) => {
@@ -46,9 +50,9 @@ function ReportSettingsSection({
           </div>
 
           <div className="fr-report-settings-currency-symbol">
-            <label htmlFor="fr-global-currency-symbol">Currency symbol</label>
+            <label htmlFor={globalCurrencySymbolId}>Currency symbol</label>
             <select
-              id="fr-global-currency-symbol"
+              id={globalCurrencySymbolId}
               value={currencySymbol}
               title="Used for all currency values in this report."
               onChange={(event) => {

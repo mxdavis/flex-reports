@@ -3,18 +3,19 @@ import type { EditModeToolbarProps } from '../../components/EditModeToolbar'
 import type { ReportTableSectionProps } from '../../components/ReportTableSection'
 import type { ReportSettingsSectionProps } from '../../components/ReportSettingsSection'
 import { DEFAULT_SHEET_NAME, EDIT_MODE_JUMP_TARGETS, MAX_VERTICAL_VIEW_ROWS } from '../../config'
+import { useElementIdPrefix } from '../../../../shared/hooks/useElementId'
 import { useReportBuilder } from '../useReportBuilder'
 import { countOutlineRows, getEffectiveExpandedLevels, getTreeLayout, type OutlineRowCounts } from './pivotLayout'
 
+// Only scrolls: the URL belongs to the host app (writing a #hash would clobber
+// its router's state).
 function jumpToSection(sectionId: string): void {
-  const section = document.getElementById(sectionId)
-  if (!section) return
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  window.history.replaceState(null, '', `#${sectionId}`)
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 export function useToolbarProps(): EditModeToolbarProps {
   const { state } = useReportBuilder()
+  const idPrefix = useElementIdPrefix()
   return {
     isEditMode: state.ui.isEditMode,
     canSave: state.canSave,
@@ -24,7 +25,7 @@ export function useToolbarProps(): EditModeToolbarProps {
     onSave: () => {
       void state.saveState.save()
     },
-    jumpTargets: EDIT_MODE_JUMP_TARGETS,
+    jumpTargets: EDIT_MODE_JUMP_TARGETS.map((target) => ({ id: `${idPrefix}-${target.section}`, label: target.label })),
     onJumpToSection: jumpToSection,
     onToggle: () => {
       state.dispatchUi({ type: 'toggleEditMode' })

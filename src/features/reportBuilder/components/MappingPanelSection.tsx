@@ -1,4 +1,5 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
+import { useElementId } from '../../../shared/hooks/useElementId'
 import MappingFieldCard from '../sections/MappingFieldCard'
 import type {
   AggregationMode,
@@ -82,17 +83,20 @@ function MappingPanelSection({
   isCollapsed = false,
   onToggleCollapsed,
 }: MappingPanelSectionProps) {
+  const addColumnPositionId = useElementId('add-column-position')
+  const reportColumnsId = useElementId('report-columns')
+  const reportColumnsContentId = useElementId('report-columns-content')
   return (
-    <section id="fr-report-columns" className="fr-mapping-panel fr-jump-target">
+    <section id={reportColumnsId} className="fr-mapping-panel fr-jump-target">
       <SectionTitleRow
         title="Column Mapping"
         sectionName="columns"
-        contentId="fr-report-columns-content"
+        contentId={reportColumnsContentId}
         isCollapsed={isCollapsed}
         onToggleCollapsed={onToggleCollapsed}
       />
       {!isCollapsed && (
-        <div id="fr-report-columns-content">
+        <div id={reportColumnsContentId}>
           <p className="fr-mapping-help">
             Build your report layout here. Choose what each column pulls from,
             rename the header users see, and drag cards to reorder the final output.
@@ -121,9 +125,9 @@ function MappingPanelSection({
           {newColumn && (
             <div className="fr-editor">
               <div className="fr-editor-grid">
-                <label htmlFor="fr-add-column-position">Column number</label>
+                <label htmlFor={addColumnPositionId}>Column number</label>
                 <select
-                  id="fr-add-column-position"
+                  id={addColumnPositionId}
                   value={newColumn.position}
                   title="Insert this new column at the selected position. Existing columns will shift right."
                   onChange={(event) => {

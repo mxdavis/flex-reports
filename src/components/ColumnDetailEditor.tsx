@@ -1,3 +1,4 @@
+import { useElementId } from '../shared/hooks/useElementId'
 import AutocompleteInput from '../shared/components/AutocompleteInput'
 import type {
   AggregationMode,
@@ -39,20 +40,24 @@ function ColumnDetailEditor({
   onDisplayTypeChange,
   onAggregationChange,
 }: ColumnDetailEditorProps) {
+  const sourceId = useElementId(`mapping-${field.id}`)
+  const labelId = useElementId(`label-${field.id}`)
+  const displayTypeId = useElementId(`display-type-${field.id}`)
+  const aggregationId = useElementId(`aggregation-${field.id}`)
   return (
     <div className="fr-column-detail-editor fr-drag-block">
-      <label htmlFor={`fr-mapping-${field.id}`}>{columnLabel}</label>
+      <label htmlFor={sourceId}>{columnLabel}</label>
       <AutocompleteInput
-        id={`fr-mapping-${field.id}`}
+        id={sourceId}
         value={field.sourceKey}
         options={sourceOptions}
         title="Type or choose which data endpoint fills this report column."
         onChange={onSourceChange}
       />
 
-      <label htmlFor={`fr-label-${field.id}`}>Display label</label>
+      <label htmlFor={labelId}>Display label</label>
       <input
-        id={`fr-label-${field.id}`}
+        id={labelId}
         type="text"
         value={field.label}
         title="Header text shown in the report output. You can override it."
@@ -61,9 +66,9 @@ function ColumnDetailEditor({
         }}
       />
 
-      <label htmlFor={`fr-display-type-${field.id}`}>Display type</label>
+      <label htmlFor={displayTypeId}>Display type</label>
       <select
-        id={`fr-display-type-${field.id}`}
+        id={displayTypeId}
         value={field.displayType}
         title="Choose how values in this column are formatted."
         onChange={(event) => {
@@ -78,13 +83,13 @@ function ColumnDetailEditor({
       </select>
 
       <label
-        htmlFor={`fr-aggregation-${field.id}`}
+        htmlFor={aggregationId}
         title="How this column is totalled in summary chips, group totals, and the grand total."
       >
         Total type
       </label>
       <select
-        id={`fr-aggregation-${field.id}`}
+        id={aggregationId}
         value={field.aggregation}
         title="How this column is totalled in summary chips, group totals, and the grand total."
         onChange={(event) => {

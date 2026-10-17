@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useElementId } from '../../../shared/hooks/useElementId'
 import SideArrowIcon from '../../../shared/icons/SideArrowIcon'
 import UpDownArrowIcon from '../../../shared/icons/UpDownArrowIcon'
 import HintedButton from '../../../shared/components/HintedButton'
@@ -46,6 +47,7 @@ function ReportTableSection({
   onToggleFullscreen,
   ...tableProps
 }: ReportTableSectionProps) {
+  const reportTableId = useElementId('report-table')
   const { isHorizontalTable, isGrouped, showTotals, fields } = tableProps
   // Outline levels, like Excel's 1/2/3 buttons: show groups down to a column.
   const groupLevelCount = getTreeLayout(fields).groupCount
@@ -79,7 +81,7 @@ function ReportTableSection({
 
   return (
     <section
-      id="fr-report-table"
+      id={reportTableId}
       className={isTableFullscreen ? 'fr-report-table fr-jump-target fr-fullscreen' : 'fr-report-table fr-jump-target'}
     >
       <div className="fr-report-table-header">

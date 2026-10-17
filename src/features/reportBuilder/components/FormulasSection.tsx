@@ -1,4 +1,5 @@
 import EditableCard from '../../../components/EditableCard'
+import { useElementId } from '../../../shared/hooks/useElementId'
 import FormulaDetailEditor from '../../../components/FormulaDetailEditor'
 import TokenizedExpressionInput from '../../../shared/components/TokenizedExpressionInput'
 import type { ReportFormula } from '../../../services/adapters'
@@ -54,17 +55,22 @@ function FormulasSection({
   isCollapsed = false,
   onToggleCollapsed,
 }: FormulasSectionProps) {
+  const editIdPrefix = useElementId('edit')
+  const newFormulaExpressionId = useElementId('new-formula-expression')
+  const newFormulaLabelId = useElementId('new-formula-label')
+  const reportFormulasId = useElementId('report-formulas')
+  const reportFormulasContentId = useElementId('report-formulas-content')
   return (
-    <section id="fr-report-formulas" className="fr-formulas-section fr-jump-target">
+    <section id={reportFormulasId} className="fr-formulas-section fr-jump-target">
       <SectionTitleRow
         title="Formulas"
         sectionName="formulas"
-        contentId="fr-report-formulas-content"
+        contentId={reportFormulasContentId}
         isCollapsed={isCollapsed}
         onToggleCollapsed={onToggleCollapsed}
       />
       {!isCollapsed && (
-        <div id="fr-report-formulas-content">
+        <div id={reportFormulasContentId}>
           <p
             className="fr-mapping-help fr-formula-help"
             title="Use {{fieldName}} for data fields and {{%Formula Label}} for formulas. Formula labels are case-insensitive."
@@ -89,9 +95,9 @@ function FormulasSection({
           {isAddingFormula && (
             <div className="fr-editor">
               <div className="fr-editor-grid">
-                <label htmlFor="fr-new-formula-label">Label</label>
+                <label htmlFor={newFormulaLabelId}>Label</label>
                 <input
-                  id="fr-new-formula-label"
+                  id={newFormulaLabelId}
                   type="text"
                   value={newFormula.label}
                   title="Formula label. You can reference it later as {{%Your Label}}."
@@ -100,9 +106,9 @@ function FormulasSection({
                   }}
                 />
 
-                <label htmlFor="fr-new-formula-expression">Expression</label>
+                <label htmlFor={newFormulaExpressionId}>Expression</label>
                 <TokenizedExpressionInput
-                  id="fr-new-formula-expression"
+                  id={newFormulaExpressionId}
                   value={newFormula.expression}
                   title="Type an expression. Enter {{ to see available fields and formulas. Formula refs use {{%Label}}."
                   options={formulaTokenOptions}
@@ -144,8 +150,8 @@ function FormulasSection({
                       <FormulaDetailEditor
                         formula={formulaDraft}
                         tokenOptions={formulaTokenOptions}
-                        labelInputId={`fr-edit-label-${formula.label}`}
-                        expressionInputId={`fr-edit-expression-${formula.label}`}
+                        labelInputId={`${editIdPrefix}-label-${formula.label}`}
+                        expressionInputId={`${editIdPrefix}-expression-${formula.label}`}
                         error={editingFormulaError}
                         onLabelChange={onSetEditingFormulaLabel}
                         onExpressionChange={onSetEditingFormulaExpression}
