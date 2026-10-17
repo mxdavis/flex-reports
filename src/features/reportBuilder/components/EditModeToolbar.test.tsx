@@ -7,7 +7,6 @@ describe('EditModeToolbar', () => {
     const onToggle = vi.fn()
     render(
       <EditModeToolbar
-        canEditReport
         isEditMode={false}
         onToggle={onToggle}
       />,
@@ -21,13 +20,12 @@ describe('EditModeToolbar', () => {
     const onJumpToSection = vi.fn()
     render(
       <EditModeToolbar
-        canEditReport
         isEditMode
         onToggle={() => undefined}
         jumpTargets={[
           { id: 'report-columns', label: 'Columns' },
           { id: 'report-formulas', label: 'Formulas' },
-          { id: 'report-chart', label: 'Chart' },
+          { id: 'report-table', label: 'Table' },
         ]}
         onJumpToSection={onJumpToSection}
       />,
@@ -35,5 +33,32 @@ describe('EditModeToolbar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Formulas' }))
     expect(onJumpToSection).toHaveBeenCalledWith('report-formulas')
+  })
+
+  it('hides Save when the user cannot save', () => {
+    render(<EditModeToolbar isEditMode onToggle={() => undefined} />)
+
+    expect(screen.queryByRole('button', { name: 'Save report' })).not.toBeInTheDocument()
+  })
+
+  it('enables Save only when there are unsaved changes', () => {
+    const onSave = vi.fn()
+    const { rerender } = render(
+      <EditModeToolbar isEditMode={false} onToggle={() => undefined} canSave onSave={onSave} />,
+    )
+    expect(screen.getByRole('button', { name: 'Save report' })).toBeDisabled()
+
+    rerender(<EditModeToolbar isEditMode={false} onToggle={() => undefined} canSave isDirty onSave={onSave} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save report' }))
+    expect(onSave).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows saving state and save errors', () => {
+    render(
+      <EditModeToolbar isEditMode onToggle={() => undefined} canSave isDirty isSaving saveError="Not allowed" />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled()
+    expect(screen.getByRole('alert')).toHaveTextContent('Not allowed')
   })
 })

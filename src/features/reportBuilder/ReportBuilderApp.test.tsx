@@ -1,39 +1,12 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { installMemoryStorage } from '../../test/memoryStorage'
 import ReportBuilderApp from './ReportBuilderApp'
-
-function createMemoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    clear() {
-      store.clear()
-    },
-    getItem(key: string) {
-      return store.has(key) ? store.get(key)! : null
-    },
-    key(index: number) {
-      return Array.from(store.keys())[index] ?? null
-    },
-    removeItem(key: string) {
-      store.delete(key)
-    },
-    setItem(key: string, value: string) {
-      store.set(key, value)
-    },
-  }
-}
 
 describe('ReportBuilderApp', () => {
   beforeEach(() => {
-    Object.defineProperty(window, 'localStorage', {
-      value: createMemoryStorage(),
-      configurable: true,
-    })
+    installMemoryStorage()
 
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       value: () => undefined,
@@ -44,35 +17,33 @@ describe('ReportBuilderApp', () => {
       value: () => undefined,
       configurable: true,
     })
-
-    window.localStorage.clear()
   })
 
-  it('renders sample rows section', () => {
+  it('renders the report table section', () => {
     render(<ReportBuilderApp />)
 
-    expect(screen.getByRole('heading', { name: 'Sample rows' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Report' })).toBeInTheDocument()
   })
 
-  it('shows summary chips above chart in view mode', () => {
+  it('shows summary chips above table in view mode', () => {
     const { container } = render(<ReportBuilderApp />)
 
     expect(screen.getByRole('heading', { name: 'Rate (sum)' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Hours (sum)' })).toBeInTheDocument()
 
     const stats = container.querySelector('.seed-stats')
-    const chart = container.querySelector('#report-chart')
+    const table = container.querySelector('#report-table')
     expect(stats).toBeTruthy()
-    expect(chart).toBeTruthy()
-    if (!stats || !chart) {
+    expect(table).toBeTruthy()
+    if (!stats || !table) {
       return
     }
 
-    const position = stats.compareDocumentPosition(chart)
+    const position = stats.compareDocumentPosition(table)
     expect((position & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true)
   })
 
-  it('updates chart/table heading when sheet name changes in header', async () => {
+  it('updates table heading when sheet name changes in header', async () => {
     const user = userEvent.setup()
     render(<ReportBuilderApp initialEditMode />)
 
@@ -83,13 +54,13 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('heading', { name: 'Client Utilization' })).toBeInTheDocument()
   })
 
-  it('shows aggregate modes including count and distinct count', () => {
+  it('turns table totals on and off with the Totals toggle', async () => {
+    const user = userEvent.setup()
     render(<ReportBuilderApp />)
 
-    const aggregateSelect = screen.getByLabelText('Aggregate mode')
-    const options = Array.from((aggregateSelect as HTMLSelectElement).options).map((option) => option.text)
-
-    expect(options).toEqual(['None', 'Sum', 'Average', 'Count', 'Distinct Count'])
+    expect(screen.queryByRole('rowheader', { name: 'Total' })).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Totals' }))
+    expect(screen.getByRole('rowheader', { name: 'Total' })).toBeInTheDocument()
   })
 
   it('syncs mapped column source when a formula label is renamed', async () => {

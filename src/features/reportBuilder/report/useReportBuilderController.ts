@@ -1,14 +1,6 @@
-import type { ReportBuilderAppProps } from '../types'
 import { useReportBuilderModel } from './useReportBuilderModel'
+import type { ReportBuilderStateArgs } from './model/useReportBuilderState'
 
-export function useReportBuilderController({
-  initialTableOrientation,
-  initialAggregateMode,
-  initialEditMode,
-}: Required<ReportBuilderAppProps>) {
-  return useReportBuilderModel({
-    initialTableOrientation,
-    initialAggregateMode,
-    initialEditMode,
-  })
+export function useReportBuilderController(args: ReportBuilderStateArgs) {
+  return useReportBuilderModel(args)
 }

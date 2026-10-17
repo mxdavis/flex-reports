@@ -1,142 +1,116 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import type { ReportFormula } from '../../../../services/adapters'
+import { generateDefaultFields, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
+import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
-  getBillingSeed,
-  getReportRows,
-  getSchema,
-} from '../../../../services/adapters'
-import type { SeedFormula } from '../../../../services/adapters'
-import {
-  loadFormulaData,
-  saveFormulaData,
-} from '../../../../services/reportDefinition/formulaStorage'
-import {
-  generateDefaultReportData,
-  loadReportData,
-  saveReportData,
-} from '../../../../services/reportDefinition/storage'
-import {
-  CURRENCY_SYMBOL_STORAGE_KEY,
-  DEFAULT_CURRENCY_SYMBOL,
-  DEFAULT_SHEET_NAME,
-  SHEET_NAME_STORAGE_KEY,
-} from '../../config'
-import {
-  createInitialUiState,
-  uiReducer,
-} from '../../state/uiState'
+  REPORT_DEFINITION_VERSION,
+  type AggregationMode,
+  type DisplayType,
+  type ReportDefinition,
+  type ReportField,
+  type SourceColumn,
+} from '../../../../services/reportDefinition/types'
+import { createInitialUiState, uiReducer } from '../../state/uiState'
 import type { ReportBuilderAppProps } from '../../types'
 import { getNextFormulaLabel, sortFormulasByLabel } from '../../../../utils/reportBuilder'
-import type { ChipAggregationMode, DisplayType, ReportData, SourceColumn } from '../../../../services/reportDefinition/types'
+import { resolveReportSource } from './resolveReportSource'
+import { useReportSave } from './useReportSave'
+
+export type ReportBuilderStateArgs = Omit<ReportBuilderAppProps, 'initialEditMode'> & {
+  initialEditMode: boolean
+}
 
 export function useReportBuilderState({
-  initialTableOrientation,
-  initialAggregateMode,
+  schema: hostSchema,
+  rows: hostRows,
+  reportDefinition,
+  role = 'editor',
+  onSave,
   initialEditMode,
-}: Required<ReportBuilderAppProps>) {
-  const seed = useMemo(() => getBillingSeed(), [])
-  const schema = useMemo(() => getSchema(), [])
-  const rows = useMemo(() => getReportRows(), [])
-  const canEditReport = import.meta.env.VITE_CAN_EDIT_REPORT !== 'false'
+}: ReportBuilderStateArgs) {
+  const source = useMemo(() => resolveReportSource(hostRows, hostSchema), [hostRows, hostSchema])
+  const { rows, isSandbox } = source
+  const sourceColumns = useMemo<SourceColumn[]>(() => source.schema.map((field) => ({ ...field })), [source.schema])
 
-  const sourceColumns = useMemo<SourceColumn[]>(() => {
-    return schema.map((field) => ({
-      id: field.id,
-      key: field.key,
-      label: field.label,
-      dataType: field.dataType,
-    }))
-  }, [schema])
+  const [initialDefinition] = useState<ReportDefinition>(() => (isSandbox
+    ? loadSandboxDefinition(sourceColumns, source.seedFormulas)
+    : normalizeReportDefinition(reportDefinition, sourceColumns)))
 
-  const [reportData, setReportData] = useState<ReportData>(() => loadReportData(sourceColumns))
-  const [formulas, setFormulas] = useState<SeedFormula[]>(() => sortFormulasByLabel(loadFormulaData(seed.formulas)))
-  const [newFormula, setNewFormula] = useState<SeedFormula>(() => ({
-    label: getNextFormulaLabel(seed.formulas.map((formula) => formula.label)),
-    expression: '{{hours}} * {{rate}}',
+  const [fields, setFields] = useState<ReportField[]>(initialDefinition.fields)
+  const [formulas, setFormulas] = useState<ReportFormula[]>(() => sortFormulasByLabel(initialDefinition.formulas))
+  const [sheetName, setSheetName] = useState(initialDefinition.sheetName)
+  const [currencySymbol, setCurrencySymbol] = useState(initialDefinition.currencySymbol)
+  const [newFormula, setNewFormula] = useState<ReportFormula>(() => ({
+    label: getNextFormulaLabel(initialDefinition.formulas.map((formula) => formula.label)),
+    expression: '',
   }))
   const [formulaError, setFormulaError] = useState('')
   const [editingFormulaError, setEditingFormulaError] = useState('')
   const [addColumnSourceKey, setAddColumnSourceKey] = useState('')
   const [addColumnLabel, setAddColumnLabel] = useState('')
   const [addColumnDisplayType, setAddColumnDisplayType] = useState<DisplayType>('string')
-  const [addColumnChipAggregation, setAddColumnChipAggregation] = useState<ChipAggregationMode>('count')
-  const [sheetName, setSheetName] = useState(() => {
-    if (typeof window === 'undefined') return DEFAULT_SHEET_NAME
-    try {
-      const saved = window.localStorage.getItem(SHEET_NAME_STORAGE_KEY)
-      if (!saved) return DEFAULT_SHEET_NAME
-      return saved.trim().length > 0 ? saved : DEFAULT_SHEET_NAME
-    } catch {
-      return DEFAULT_SHEET_NAME
-    }
-  })
-  const [currencySymbol, setCurrencySymbol] = useState(() => {
-    if (typeof window === 'undefined') return DEFAULT_CURRENCY_SYMBOL
-    try {
-      const saved = window.localStorage.getItem(CURRENCY_SYMBOL_STORAGE_KEY)
-      if (!saved || saved.trim().length === 0) return DEFAULT_CURRENCY_SYMBOL
-      return saved
-    } catch {
-      return DEFAULT_CURRENCY_SYMBOL
-    }
-  })
+  const [addColumnAggregation, setAddColumnAggregation] = useState<AggregationMode>('count')
 
   const [ui, dispatchUi] = useReducer(
     uiReducer,
-    { canEditReport, initialEditMode, initialTableOrientation, initialAggregateMode },
+    { initialEditMode, initialView: initialDefinition.view },
     createInitialUiState,
   )
 
+  const canSave = role === 'editor' && (isSandbox || onSave !== undefined)
+  // Authoring tips are for editors only; viewers can explore but never see them.
+  const showTips = role === 'editor'
+  const isMissingSchema = !isSandbox && hostSchema === undefined
+  useEffect(() => {
+    if (isMissingSchema) {
+      console.warn('[flex-reports] `rows` was passed without `schema`; inferring columns from the first row.')
+    }
+  }, [isMissingSchema])
+  useEffect(() => {
+    if (role === 'editor' && !isSandbox && !onSave) {
+      console.error('[flex-reports] role="editor" was passed without `onSave`; the Save button is hidden.')
+    }
+  }, [isSandbox, onSave, role])
+
+  const definition = useMemo<ReportDefinition>(() => ({
+    version: REPORT_DEFINITION_VERSION,
+    sheetName,
+    currencySymbol,
+    fields,
+    formulas,
+    view: {
+      orientation: ui.tableOrientation,
+      showTotals: ui.showTotals,
+      isGroupingEnabled: ui.isGroupingEnabled,
+      expandedLevels: ui.expandedLevels,
+    },
+  }), [currencySymbol, fields, formulas, sheetName, ui.expandedLevels, ui.isGroupingEnabled, ui.showTotals, ui.tableOrientation])
+
+  const saveState = useReportSave({ definition, initialDefinition, canSave, isSandbox, onSave })
+
   const tableScrollRef = useRef<HTMLDivElement | null>(null)
 
+  // Repoint fields whose source key no longer exists (removed column/formula).
   useEffect(() => {
-    setReportData((previous) => {
-      const defaults = generateDefaultReportData(sourceColumns)
-      const safeSourceKeys = new Set(
-        [...sourceColumns.map((column) => String(column.key)), ...formulas.map((formula) => formula.label)]
-          .map((key) => key.toLowerCase()),
-      )
-      const fields = previous.fields.map((field, index) => {
-        if (safeSourceKeys.has(field.sourceKey.toLowerCase())) return field
-        return {
-          ...field,
-          sourceKey: defaults.fields[index]?.sourceKey ?? defaults.fields[0].sourceKey,
-        }
+    const defaults = generateDefaultFields(sourceColumns)
+    const knownKeys = new Set(
+      [...sourceColumns.map((column) => column.key), ...formulas.map((formula) => formula.label)]
+        .map((key) => key.toLowerCase()),
+    )
+    setFields((previous) => {
+      if (previous.every((field) => knownKeys.has(field.sourceKey.toLowerCase()))) return previous
+      return previous.map((field, index) => {
+        if (knownKeys.has(field.sourceKey.toLowerCase())) return field
+        return { ...field, sourceKey: defaults[index]?.sourceKey ?? defaults[0]?.sourceKey ?? field.sourceKey }
       })
-      return { version: 4, fields }
     })
   }, [formulas, sourceColumns])
-
-  useEffect(() => {
-    saveReportData(reportData)
-  }, [reportData])
-
-  useEffect(() => {
-    saveFormulaData(formulas)
-  }, [formulas])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      window.localStorage.setItem(SHEET_NAME_STORAGE_KEY, sheetName)
-    } catch {
-      // Ignore storage write failures in private mode/full storage.
-    }
-  }, [sheetName])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      window.localStorage.setItem(CURRENCY_SYMBOL_STORAGE_KEY, currencySymbol)
-    } catch {
-      // Ignore storage write failures in private mode/full storage.
-    }
-  }, [currencySymbol])
 
   useEffect(() => {
     const tableScrollElement = tableScrollRef.current
     if (!tableScrollElement) return
     tableScrollElement.scrollTo({ left: tableScrollElement.scrollWidth, behavior: 'smooth' })
-  }, [reportData.fields.length])
+  }, [fields.length])
 
   useEffect(() => {
     if (!ui.isTableFullscreen) return
@@ -148,18 +122,18 @@ export function useReportBuilderState({
   }, [ui.isTableFullscreen])
 
   useEffect(() => {
-    const nextMax = reportData.fields.length + 1
+    const nextMax = fields.length + 1
     const nextPosition = Math.min(Math.max(ui.addColumnPosition, 1), nextMax)
     if (nextPosition !== ui.addColumnPosition) {
       dispatchUi({ type: 'setAddColumnPosition', value: nextPosition })
     }
-  }, [reportData.fields.length, ui.addColumnPosition])
+  }, [fields.length, ui.addColumnPosition])
 
   return {
     rows,
     sourceColumns,
-    reportData,
-    setReportData,
+    fields,
+    setFields,
     formulas,
     setFormulas,
     newFormula,
@@ -174,13 +148,15 @@ export function useReportBuilderState({
     setAddColumnLabel,
     addColumnDisplayType,
     setAddColumnDisplayType,
-    addColumnChipAggregation,
-    setAddColumnChipAggregation,
+    addColumnAggregation,
+    setAddColumnAggregation,
     sheetName,
     setSheetName,
     currencySymbol,
     setCurrencySymbol,
-    canEditReport,
+    canSave,
+    showTips,
+    saveState,
     ui,
     dispatchUi,
     tableScrollRef,
