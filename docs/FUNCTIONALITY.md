@@ -50,7 +50,7 @@ The same setting is used everywhere a total appears: group totals, the grand tot
 and the [summary chips](#summary-chips).
 
 Sums and averages keep the column's format (for example `$1,620.00`), while counts are
-plain numbers. If a formula can't be calculated, its total shows *Invalid formula*.
+plain numbers. If a formula can't be calculated, its cells and totals show *Invalid formula*.
 
 ## Grouping
 
