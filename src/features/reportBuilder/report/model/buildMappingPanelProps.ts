@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { AGGREGATION_OPTIONS, DISPLAY_TYPE_OPTIONS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS, getDefaultAggregation } from '../../config'
 import type { AggregationMode, DisplayType, ReportField } from '../../../../services/reportDefinition/types'
+import { getSourceChangePatch } from './columnDraft'
 
 type BuildMappingPanelPropsArgs = {
   showTips: boolean
@@ -99,7 +100,17 @@ export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
     },
     onSetDraggedFieldId: args.setDraggedFieldId,
     onSetDragOverFieldId: args.setDragOverFieldId,
-    onSetEditingFieldSourceKey: (value: string) => args.patchEditingFieldDraft({ sourceKey: value }),
+    onSetEditingFieldSourceKey: (value: string) => {
+      const original = args.reportFields.find((field) => field.id === args.editingFieldId)
+      if (!args.editingFieldDraft || !original) return
+      args.patchEditingFieldDraft(getSourceChangePatch({
+        draft: args.editingFieldDraft,
+        original,
+        nextSourceKey: value,
+        isKnownSource: (sourceKey) => args.sourceOptions.includes(sourceKey),
+        getPreferredDisplayType: args.getPreferredDisplayType,
+      }))
+    },
     onSetEditingFieldLabel: (value: string) => args.patchEditingFieldDraft({ label: value }),
     onSetEditingFieldDisplayType: (value: DisplayType) => args.patchEditingFieldDraft({ displayType: value }),
     onSetEditingFieldAggregation: (value: AggregationMode) => args.patchEditingFieldDraft({ aggregation: value }),

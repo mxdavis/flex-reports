@@ -114,7 +114,6 @@ export function useReportBuilderModel(args: ReportBuilderStateArgs) {
     setFormulas: state.setFormulas,
     newFormula: state.newFormula,
     setNewFormula: setNewFormulaValue,
-    getPreferredDisplayType,
     setFormulaError: state.setFormulaError,
     setEditingFormulaError: state.setEditingFormulaError,
     clearEditingFormulaError,

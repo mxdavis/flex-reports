@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReportRow, SchemaField } from '../../services/adapters'
@@ -195,6 +195,36 @@ describe('ReportBuilderApp host mode', () => {
     render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={staleDefinition} role="viewer" initialEditMode />)
     expect(screen.getByRole('columnheader', { name: 'Old metric' })).toBeInTheDocument()
     expect(screen.queryByText(/isn't in the data or formulas/)).not.toBeInTheDocument()
+  })
+
+  it('shows new type defaults in the column form when the source type changes', async () => {
+    const user = userEvent.setup()
+    const textSchema: SchemaField[] = [
+      ...schema,
+      { id: 'city', key: 'city', label: 'City', dataType: 'string' },
+    ]
+    const definition: ReportDefinition = {
+      ...generateDefaultReportDefinition(textSchema),
+      fields: generateDefaultReportDefinition(textSchema).fields.map((field) => (
+        field.sourceKey === 'warehouse' ? { ...field, aggregation: 'none' } : field
+      )),
+    }
+    const onSave = vi.fn()
+    render(<ReportBuilderApp schema={textSchema} rows={rows} reportDefinition={definition} onSave={onSave} initialEditMode />)
+
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
+    // Same type (text → text): the customized Total type stays.
+    fireEvent.change(screen.getByLabelText('COLUMN 1'), { target: { value: 'city' } })
+    expect(screen.getByLabelText('Total type')).toHaveValue('none')
+
+    // Different type (text → number): the form switches to number defaults.
+    fireEvent.change(screen.getByLabelText('COLUMN 1'), { target: { value: 'units' } })
+    expect(screen.getByLabelText('Display type')).toHaveValue('decimal')
+    expect(screen.getByLabelText('Total type')).toHaveValue('sum')
+
+    await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
+    await user.click(getSaveButton())
+    expect(onSave.mock.calls[0][0].fields[0]).toMatchObject({ sourceKey: 'units', displayType: 'decimal', aggregation: 'sum' })
   })
 
   it('infers columns and logs when rows come without a schema', () => {

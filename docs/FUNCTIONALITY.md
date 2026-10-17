@@ -144,6 +144,11 @@ Reports have 1 to 15 columns. You can:
   - **Display type:** currency, number, decimal number, percent, date, or string.
   - **Total type:** sum, average, count, distinct count, or none (see [Totals](#totals)).
 
+When you change a column's source to one of a **different type** (for example text to
+currency), Display type and Total type switch to that type's defaults right away in the
+form. A source of the **same type** keeps the column's current settings. Nothing changes
+until you click **Save** on the column.
+
 Editors also see a **Tip** here explaining how column order drives grouping.
 
 ## Formulas

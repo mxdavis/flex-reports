@@ -1,6 +1,6 @@
 import type { ReportFormula } from '../../../../services/adapters'
-import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
-import { DEFAULT_CURRENCY_SYMBOL, getDefaultAggregation, MAX_FORMULAS } from '../../config'
+import type { ReportField } from '../../../../services/reportDefinition/types'
+import { DEFAULT_CURRENCY_SYMBOL, MAX_FORMULAS } from '../../config'
 import { getNextFormulaLabel, sortFormulasByLabel, validateFormulaInput } from '../../../../utils/reportBuilder'
 import type { UiAction } from '../../state/uiState'
 
@@ -17,7 +17,6 @@ type HandlerArgs = {
   setFormulas: (updater: (previous: ReportFormula[]) => ReportFormula[]) => void
   newFormula: ReportFormula
   setNewFormula: (value: ReportFormula) => void
-  getPreferredDisplayType: (sourceKey: string) => DisplayType
   setFormulaError: (value: string) => void
   setEditingFormulaError: (value: string) => void
   clearEditingFormulaError: () => void
@@ -33,7 +32,6 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
     setFormulas,
     newFormula,
     setNewFormula,
-    getPreferredDisplayType,
     setFormulaError,
     setEditingFormulaError,
     clearEditingFormulaError,
@@ -68,36 +66,19 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
     if (!ui.editingFieldDraft || ui.editingFieldDraft.id !== fieldId) return
     const fieldDraft = ui.editingFieldDraft
 
+    // The draft already reflects any source-driven defaults (see
+    // getSourceChangePatch), so it is saved as shown.
     setReportFields((previous) => previous.map((currentField) => {
       if (currentField.id !== fieldId) return currentField
-      const nextSourceKey = fieldDraft.sourceKey.trim() || currentField.sourceKey
-      const nextLabelInput = fieldDraft.label.trim()
-      const nextLabel = nextLabelInput || currentField.label
-      const currentDefaultDisplayType = getPreferredDisplayType(currentField.sourceKey)
-      const didUserChangeDisplayType = fieldDraft.displayType !== currentField.displayType
-      const shouldSyncDisplayType = currentField.displayType === currentDefaultDisplayType
-      const nextDisplayType = didUserChangeDisplayType
-        ? fieldDraft.displayType
-        : (shouldSyncDisplayType
-          ? getPreferredDisplayType(nextSourceKey)
-          : currentField.displayType)
-      const currentDefaultAggregation = getDefaultAggregation(currentField.displayType)
-      const didUserChangeAggregation = fieldDraft.aggregation !== currentField.aggregation
-      const shouldSyncAggregation = currentField.aggregation === currentDefaultAggregation
-      const nextAggregation = fieldDraft.aggregation ?? getDefaultAggregation(nextDisplayType)
-      const nextCurrencySymbol = nextDisplayType === 'currency'
-        ? (fieldDraft.currencySymbol || currentField.currencySymbol || DEFAULT_CURRENCY_SYMBOL)
-        : ''
-
       return {
         ...currentField,
-        sourceKey: nextSourceKey,
-        label: nextLabel,
-        displayType: nextDisplayType,
-        aggregation: !didUserChangeAggregation && shouldSyncAggregation
-          ? getDefaultAggregation(nextDisplayType)
-          : nextAggregation,
-        currencySymbol: nextCurrencySymbol,
+        sourceKey: fieldDraft.sourceKey.trim() || currentField.sourceKey,
+        label: fieldDraft.label.trim() || currentField.label,
+        displayType: fieldDraft.displayType,
+        aggregation: fieldDraft.aggregation,
+        currencySymbol: fieldDraft.displayType === 'currency'
+          ? (fieldDraft.currencySymbol || currentField.currencySymbol || DEFAULT_CURRENCY_SYMBOL)
+          : '',
       }
     }))
 
