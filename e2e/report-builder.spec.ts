@@ -130,7 +130,8 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
   })
   await formulasSection.getByRole('button', { name: 'Edit' }).first().click()
 
-  const formulaLabelInput = page.locator('#fr-edit-label-grossFees')
+  // The open formula editor is the only Label field in the Formulas section.
+  const formulaLabelInput = formulasSection.getByLabel('Label', { exact: true })
   await formulaLabelInput.fill('Gross Renamed')
   await formulasSection.getByRole('button', { name: 'Save', exact: true }).click()
 

@@ -298,6 +298,23 @@ describe('ReportBuilderApp host mode', () => {
     expect(getSaveButton()).toBeEnabled()
   })
 
+  it('gives two builders on one page their own element IDs', () => {
+    render(
+      <>
+        <ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />
+        <ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />
+      </>,
+    )
+
+    const ids = Array.from(document.querySelectorAll('[id]'), (element) => element.id)
+    expect(ids.length).toBeGreaterThan(4)
+    expect(new Set(ids).size).toBe(ids.length)
+    // Each label still points at its own builder's input.
+    const sheetNameInputs = screen.getAllByLabelText('Sheet name')
+    expect(sheetNameInputs).toHaveLength(2)
+    expect(sheetNameInputs[0]).not.toBe(sheetNameInputs[1])
+  })
+
   it('infers columns and logs when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     render(<ReportBuilderApp rows={rows} role="viewer" />)

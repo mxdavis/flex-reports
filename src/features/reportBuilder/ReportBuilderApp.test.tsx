@@ -33,7 +33,7 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('heading', { name: 'Hours (sum)' })).toBeInTheDocument()
 
     const stats = container.querySelector('.fr-summary-chips')
-    const table = container.querySelector('#fr-report-table')
+    const table = container.querySelector('.fr-report-table')
     expect(stats).toBeTruthy()
     expect(table).toBeTruthy()
     if (!stats || !table) {
@@ -169,11 +169,12 @@ describe('ReportBuilderApp', () => {
     expect(columnThreeSource.value).toBe(originalColumnTwoSource)
   })
 
-  it('shows sticky jump links in edit mode and scrolls to anchor sections', async () => {
+  it('shows sticky jump links in edit mode and scrolls to sections without touching the URL', async () => {
     const user = userEvent.setup()
     await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    const urlBefore = window.location.href
 
-    const formulasSection = document.getElementById('fr-report-formulas')
+    const formulasSection = screen.getByRole('heading', { name: 'Formulas' }).closest('section')
     expect(formulasSection).toBeTruthy()
     if (!formulasSection) {
       return
@@ -183,8 +184,9 @@ describe('ReportBuilderApp', () => {
 
     await user.click(screen.getByRole('button', { name: 'Formulas' }))
 
-    expect(scrollSpy).toHaveBeenCalled()
-    expect(window.location.hash).toBe('#fr-report-formulas')
+    expect(scrollSpy.mock.contexts).toContain(formulasSection)
+    // The URL belongs to the host app.
+    expect(window.location.href).toBe(urlBefore)
     scrollSpy.mockRestore()
   })
 
