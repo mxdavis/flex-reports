@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { filterOptions, useOptionsList } from '../hooks/useOptionsList'
 import './TokenizedExpressionInput.css'
-import { filterTokenOptions, getTriggerState } from './tokenizedExpressionUtils'
+import { getTriggerState } from './tokenizedExpressionUtils'
 import AutocompleteOptionsList from './AutocompleteOptionsList'
 
 type TokenizedExpressionInputProps = {
@@ -8,7 +9,6 @@ type TokenizedExpressionInputProps = {
   value: string
   options: string[]
   onChange: (nextValue: string) => void
-  placeholder?: string
   title?: string
 }
 
@@ -17,16 +17,12 @@ export default function TokenizedExpressionInput({
   value,
   options,
   onChange,
-  placeholder,
   title,
 }: TokenizedExpressionInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const wrapperRef = useRef<HTMLDivElement | null>(null)
   const pendingCursorRef = useRef<number | null>(null)
 
-  const [isOpen, setIsOpen] = useState(false)
   const [cursorPosition, setCursorPosition] = useState(value.length)
-  const [highlightedIndex, setHighlightedIndex] = useState(0)
 
   const triggerState = useMemo(() => {
     return getTriggerState(value, cursorPosition)
@@ -37,36 +33,16 @@ export default function TokenizedExpressionInput({
       return []
     }
 
-    return filterTokenOptions(options, triggerState.query)
+    return filterOptions(options, triggerState.query)
   }, [options, triggerState])
 
+  const list = useOptionsList(filteredOptions, selectOption)
+  const { setIsOpen } = list
+
+  // The list opens while the cursor is inside a {{ token and closes outside it.
   useEffect(() => {
-    if (!triggerState) {
-      setIsOpen(false)
-      return
-    }
-
-    setIsOpen(true)
-  }, [triggerState])
-
-  useEffect(() => {
-    if (highlightedIndex >= filteredOptions.length) {
-      setHighlightedIndex(0)
-    }
-  }, [filteredOptions.length, highlightedIndex])
-
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent): void {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    window.addEventListener('mousedown', handlePointerDown)
-    return () => {
-      window.removeEventListener('mousedown', handlePointerDown)
-    }
-  }, [])
+    setIsOpen(triggerState !== null)
+  }, [setIsOpen, triggerState])
 
   useEffect(() => {
     if (pendingCursorRef.current === null || !inputRef.current) {
@@ -93,19 +69,18 @@ export default function TokenizedExpressionInput({
     pendingCursorRef.current = nextCursor
     onChange(nextValue)
     setCursorPosition(nextCursor)
-    setIsOpen(false)
+    list.setIsOpen(false)
   }
 
-  const shouldShowList = isOpen && triggerState && filteredOptions.length > 0
+  const shouldShowList = list.isOpen && triggerState && filteredOptions.length > 0
 
   return (
-    <div className="fr-tokenized-expression" ref={wrapperRef}>
+    <div className="fr-tokenized-expression" ref={list.containerRef}>
       <input
         id={id}
         ref={inputRef}
         type="text"
         value={value}
-        placeholder={placeholder}
         title={title}
         autoComplete="off"
         onChange={(event) => {
@@ -120,40 +95,13 @@ export default function TokenizedExpressionInput({
         onKeyUp={(event) => {
           setCursorPosition((event.currentTarget as HTMLInputElement).selectionStart ?? value.length)
         }}
-        onKeyDown={(event) => {
-          if (!shouldShowList) {
-            return
-          }
-
-          if (event.key === 'ArrowDown') {
-            event.preventDefault()
-            setHighlightedIndex((previous) => Math.min(previous + 1, filteredOptions.length - 1))
-            return
-          }
-
-          if (event.key === 'ArrowUp') {
-            event.preventDefault()
-            setHighlightedIndex((previous) => Math.max(previous - 1, 0))
-            return
-          }
-
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            selectOption(filteredOptions[highlightedIndex] ?? filteredOptions[0])
-            return
-          }
-
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            setIsOpen(false)
-          }
-        }}
+        onKeyDown={list.handleKeyDown}
       />
 
       {shouldShowList && (
         <AutocompleteOptionsList
           options={filteredOptions}
-          highlightedIndex={highlightedIndex}
+          highlightedIndex={list.highlightedIndex}
           ariaLabel="Formula token suggestions"
           onSelect={selectOption}
         />

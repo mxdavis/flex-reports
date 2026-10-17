@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
+import { filterOptions, useOptionsList } from '../hooks/useOptionsList'
 import AutocompleteOptionsList from './AutocompleteOptionsList'
 import './AutocompleteInput.css'
 
@@ -7,144 +8,67 @@ type AutocompleteInputProps = {
   value: string
   options: string[]
   onChange: (nextValue: string) => void
-  placeholder?: string
   title?: string
-  query?: string
-  disabled?: boolean
-  onSelectOption?: (option: string, currentValue: string) => string
 }
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase()
-}
+export default function AutocompleteInput({ id, value, options, onChange, title }: AutocompleteInputProps) {
+  const sortedOptions = useMemo(
+    () => [...options].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' })),
+    [options],
+  )
+  const filteredOptions = useMemo(() => filterOptions(sortedOptions, value), [sortedOptions, value])
 
-export default function AutocompleteInput({
-  id,
-  value,
-  options,
-  onChange,
-  placeholder,
-  title,
-  query,
-  disabled,
-  onSelectOption,
-}: AutocompleteInputProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const [isOpen, setIsOpen] = useState(false)
-  const [highlightedIndex, setHighlightedIndex] = useState(0)
-
-  const activeQuery = query ?? value
-  const filteredOptions = useMemo(() => {
-    const normalizedQuery = normalize(activeQuery)
-    const unique = Array.from(new Set(options))
-      .sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }))
-
-    if (!normalizedQuery) {
-      return unique
-    }
-
-    return unique.filter((option) => normalize(option).includes(normalizedQuery))
-  }, [activeQuery, options])
-
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent): void {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    window.addEventListener('mousedown', handlePointerDown)
-    return () => {
-      window.removeEventListener('mousedown', handlePointerDown)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (highlightedIndex >= filteredOptions.length) {
-      setHighlightedIndex(0)
-    }
-  }, [filteredOptions.length, highlightedIndex])
-
-  function selectOption(option: string): void {
-    const nextValue = onSelectOption ? onSelectOption(option, value) : option
-    onChange(nextValue)
-    setIsOpen(false)
-  }
+  const list = useOptionsList(filteredOptions, (option) => {
+    onChange(option)
+    list.setIsOpen(false)
+  })
 
   return (
-    <div className="fr-autocomplete" ref={containerRef}>
+    <div className="fr-autocomplete" ref={list.containerRef}>
       <div className="fr-autocomplete-row">
         <input
           id={id}
           type="text"
           value={value}
-          placeholder={placeholder}
           title={title}
-          disabled={disabled}
           autoComplete="off"
-          onFocus={() => {
-            setIsOpen(true)
-          }}
+          onFocus={() => list.setIsOpen(true)}
           onChange={(event) => {
             onChange(event.target.value)
-            setIsOpen(true)
-            setHighlightedIndex(0)
+            list.setIsOpen(true)
+            list.resetHighlight()
           }}
           onKeyDown={(event) => {
-            if (!isOpen) {
-              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-                event.preventDefault()
-                setIsOpen(true)
-              }
+            // Arrow keys open a closed list; otherwise the list handles keys.
+            if (!list.isOpen && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+              event.preventDefault()
+              list.setIsOpen(true)
               return
             }
-
-            if (event.key === 'ArrowDown') {
-              event.preventDefault()
-              setHighlightedIndex((previous) => {
-                if (filteredOptions.length === 0) {
-                  return 0
-                }
-                return Math.min(previous + 1, filteredOptions.length - 1)
-              })
-            }
-
-            if (event.key === 'ArrowUp') {
-              event.preventDefault()
-              setHighlightedIndex((previous) => Math.max(previous - 1, 0))
-            }
-
-            if (event.key === 'Enter' && filteredOptions.length > 0) {
-              event.preventDefault()
-              selectOption(filteredOptions[highlightedIndex] ?? filteredOptions[0])
-            }
-
-            if (event.key === 'Escape') {
-              setIsOpen(false)
-            }
+            list.handleKeyDown(event)
           }}
         />
         <button
           type="button"
           className="fr-autocomplete-toggle"
           title="Show options"
-          aria-label={isOpen ? 'Hide options' : 'Show options'}
-          aria-expanded={isOpen}
-          disabled={disabled}
-          onClick={() => {
-            setIsOpen((previous) => !previous)
-          }}
+          aria-label={list.isOpen ? 'Hide options' : 'Show options'}
+          aria-expanded={list.isOpen}
+          onClick={() => list.setIsOpen(!list.isOpen)}
         >
           v
         </button>
       </div>
 
-      {isOpen && filteredOptions.length > 0 && (
+      {list.isOpen && filteredOptions.length > 0 && (
         <AutocompleteOptionsList
           options={filteredOptions}
-          highlightedIndex={highlightedIndex}
+          highlightedIndex={list.highlightedIndex}
           ariaLabel="Suggestions"
-          onSelect={selectOption}
+          onSelect={(option) => {
+            onChange(option)
+            list.setIsOpen(false)
+          }}
         />
       )}
     </div>
