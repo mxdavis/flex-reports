@@ -1,12 +1,12 @@
-import type { ChipAggregationMode, DisplayType } from '../../services/reportDefinition/types'
+import type { AggregationMode, DisplayType } from '../../services/reportDefinition/types'
 
-export const MAX_REPORT_COLUMNS = 15
-export const MIN_REPORT_COLUMNS = 1
-export const MAX_FORMULAS = 25
-export const DEFAULT_SHEET_NAME = 'Sample rows'
-export const SHEET_NAME_STORAGE_KEY = 'flex-reports.sheet-name.v1'
-export const CURRENCY_SYMBOL_STORAGE_KEY = 'flex-reports.currency-symbol.v1'
-export const DEFAULT_CURRENCY_SYMBOL = '$'
+export { DEFAULT_CURRENCY_SYMBOL, getDefaultAggregation } from '../../services/reportDefinition/displayType'
+export { DEFAULT_SHEET_NAME } from '../../services/reportDefinition/normalize'
+
+export { MAX_FORMULAS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS } from '../../services/reportDefinition/rules'
+export const DEFAULT_MAX_VISIBLE_ROWS = 1000
+// Vertical view turns each row into a column, so past this it stops being readable.
+export const MAX_VERTICAL_VIEW_ROWS = 100
 
 export const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'currency', label: 'Currency' },
@@ -17,26 +17,22 @@ export const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> 
   { value: 'string', label: 'String' },
 ]
 
-export const CHIP_AGGREGATION_OPTIONS: Array<{ value: ChipAggregationMode, label: string }> = [
+export const AGGREGATION_OPTIONS: Array<{ value: AggregationMode, label: string }> = [
   { value: 'none', label: 'None' },
   { value: 'sum', label: 'Sum' },
   { value: 'avg', label: 'Average' },
-  { value: 'count', label: 'Count (unique values)' },
+  { value: 'count', label: 'Count' },
+  { value: 'distinct', label: 'Distinct count' },
 ]
 
+// Sections the edit toolbar can jump to, by their element ID name (see useElementId).
 export const EDIT_MODE_JUMP_TARGETS = [
-  { id: 'report-columns', label: 'Columns' },
-  { id: 'report-formulas', label: 'Formulas' },
-  { id: 'report-chart', label: 'Chart' },
+  { section: 'report-columns', label: 'Columns' },
+  { section: 'report-formulas', label: 'Formulas' },
+  { section: 'report-table', label: 'Table' },
 ]
 
-export function getDefaultChipAggregation(displayType: DisplayType): ChipAggregationMode {
-  return displayType === 'string' || displayType === 'date' ? 'count' : 'sum'
-}
-
-export function getChipAggregationLabel(
-  chipAggregation: ChipAggregationMode,
-  _displayType: DisplayType,
-): string {
-  return chipAggregation
+export function getAggregationLabel(aggregation: AggregationMode): string {
+  if (aggregation === 'distinct') return 'distinct count'
+  return aggregation
 }

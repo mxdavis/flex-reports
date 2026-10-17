@@ -1,8 +1,8 @@
-.autocomplete {
+.fr-autocomplete {
   position: relative;
 }
 
-.autocomplete-row {
+.fr-autocomplete-row {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0;
@@ -12,7 +12,7 @@
   overflow: hidden;
 }
 
-.autocomplete-row input {
+.fr-autocomplete-row input {
   width: 100%;
   border: 0;
   outline: none;
@@ -20,7 +20,7 @@
   background: transparent;
 }
 
-.autocomplete-toggle {
+.fr-autocomplete-toggle {
   border: 0;
   border-left: 1px solid #d0d5dd;
   border-radius: 0;
@@ -31,7 +31,7 @@
   color: #475467;
 }
 
-.autocomplete:focus-within .autocomplete-row {
+.fr-autocomplete:focus-within .fr-autocomplete-row {
   border-color: #7f56d9;
   box-shadow: 0 0 0 2px rgba(127, 86, 217, 0.14);
 }

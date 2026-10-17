@@ -1,0 +1,39 @@
+.fr-report-table .fr-tree-row th {
+  font-size: inherit;
+  text-transform: none;
+  color: inherit;
+  font-weight: 400;
+  background: #ffffff;
+}
+
+.fr-report-table .fr-tree-row-group th,
+.fr-report-table .fr-tree-row-group td {
+  background: #f9fafb;
+}
+
+.fr-tree-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px -4px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fr-tree-toggle:hover,
+.fr-tree-toggle:focus-visible {
+  background: #eaecf0;
+}
+
+.fr-tree-toggle svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: #667085;
+}

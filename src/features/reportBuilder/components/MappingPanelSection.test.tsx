@@ -9,23 +9,19 @@ const fields: ReportField[] = [
     label: 'workDate',
     sourceKey: 'workDate',
     displayType: 'date',
-    chipAggregation: 'count',
-    currencySymbol: '',
+    aggregation: 'count',
   },
 ]
 
 describe('MappingPanelSection', () => {
-  it('renders section with report-columns id', () => {
+  it('renders section with fr-report-columns id', () => {
     render(
       <MappingPanelSection
         fields={fields}
-        isAddingColumn={false}
-        addColumnPosition={1}
-        addColumnSourceKey="workDate"
-        addColumnLabel="workDate"
-        addColumnDisplayType="date"
-        addColumnChipAggregation="count"
+        newColumn={null}
         maxColumns={15}
+        getFieldWarning={() => null}
+        showTips
         minColumns={1}
         draggedFieldId={null}
         dragOverFieldId={null}
@@ -33,14 +29,14 @@ describe('MappingPanelSection', () => {
         editingFieldDraft={null}
         sourceOptions={['workDate']}
         displayTypeOptions={[{ value: 'date', label: 'Date' }]}
-        chipAggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
+        aggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
         onStartAddColumn={() => undefined}
         onCancelAddColumn={() => undefined}
         onAddColumnPositionChange={() => undefined}
         onAddColumnSourceKeyChange={() => undefined}
         onAddColumnLabelChange={() => undefined}
         onAddColumnDisplayTypeChange={() => undefined}
-        onAddColumnChipAggregationChange={() => undefined}
+        onAddColumnAggregationChange={() => undefined}
         onSaveNewColumn={() => undefined}
         onMoveField={() => undefined}
         onStartEditField={() => undefined}
@@ -52,13 +48,14 @@ describe('MappingPanelSection', () => {
         onSetEditingFieldSourceKey={() => undefined}
         onSetEditingFieldLabel={() => undefined}
         onSetEditingFieldDisplayType={() => undefined}
-        onSetEditingFieldChipAggregation={() => undefined}
+        onSetEditingFieldAggregation={() => undefined}
       />,
     )
 
     const heading = screen.getByRole('heading', { name: 'Column Mapping' })
     const section = heading.closest('section')
-    expect(section?.id).toBe('report-columns')
+    expect(section?.id).toBe('fr-report-columns')
+    expect(screen.getByText(/the column that names each row/)).toBeInTheDocument()
   })
 
   it('forwards add column intent', () => {
@@ -66,13 +63,10 @@ describe('MappingPanelSection', () => {
     const { container } = render(
       <MappingPanelSection
         fields={fields}
-        isAddingColumn={false}
-        addColumnPosition={1}
-        addColumnSourceKey="workDate"
-        addColumnLabel="workDate"
-        addColumnDisplayType="date"
-        addColumnChipAggregation="count"
+        newColumn={null}
         maxColumns={15}
+        getFieldWarning={() => null}
+        showTips={false}
         minColumns={1}
         draggedFieldId={null}
         dragOverFieldId={null}
@@ -80,14 +74,14 @@ describe('MappingPanelSection', () => {
         editingFieldDraft={null}
         sourceOptions={['workDate']}
         displayTypeOptions={[{ value: 'date', label: 'Date' }]}
-        chipAggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
+        aggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
         onStartAddColumn={onStartAddColumn}
         onCancelAddColumn={() => undefined}
         onAddColumnPositionChange={() => undefined}
         onAddColumnSourceKeyChange={() => undefined}
         onAddColumnLabelChange={() => undefined}
         onAddColumnDisplayTypeChange={() => undefined}
-        onAddColumnChipAggregationChange={() => undefined}
+        onAddColumnAggregationChange={() => undefined}
         onSaveNewColumn={() => undefined}
         onMoveField={() => undefined}
         onStartEditField={() => undefined}
@@ -99,11 +93,11 @@ describe('MappingPanelSection', () => {
         onSetEditingFieldSourceKey={() => undefined}
         onSetEditingFieldLabel={() => undefined}
         onSetEditingFieldDisplayType={() => undefined}
-        onSetEditingFieldChipAggregation={() => undefined}
+        onSetEditingFieldAggregation={() => undefined}
       />,
     )
 
-    const section = container.querySelector('#report-columns')
+    const section = container.querySelector('#fr-report-columns')
     expect(section).toBeTruthy()
     if (!(section instanceof HTMLElement)) {
       return
@@ -111,5 +105,7 @@ describe('MappingPanelSection', () => {
 
     fireEvent.click(within(section).getByRole('button', { name: 'Add column' }))
     expect(onStartAddColumn).toHaveBeenCalledTimes(1)
+    // Tips are editor-only.
+    expect(screen.queryByText(/the column that names each row/)).toBeNull()
   })
 })

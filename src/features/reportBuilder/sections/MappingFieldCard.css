@@ -1,0 +1,12 @@
+
+.fr-mapping-field-summary {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fr-mapping-field-warning {
+  color: #b54708;
+  font-size: 12px;
+  font-weight: 400;
+}

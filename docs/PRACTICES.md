@@ -46,7 +46,8 @@
 ## Process
 
 - Work on branches; open PRs; never push to `main` without review.
-- Stop and ask when unsure rather than guessing.
+- **Stop and ask** whenever any question or clarification comes up, at any point in
+  the work. Don't guess or pick a default on the user's behalf.
 - Use latest Node / React / Vite (and keep deps permissively licensed).
 - When PR feedback reveals coding-style preferences, record them in this file
     before continuing so future work follows the updated style.
@@ -56,19 +57,22 @@
     instructions in the PR description:
     - run command (for example `npm run dev`)
     - local URL (for example `http://localhost:5173`)
-- Merge rule: lint + test + build CI checks must be green before merging.
+- Merge rule: practices + lint + test + build + e2e CI checks must be green before merging.
+- While iterating on MVP behavior, it is OK to skip running local lint/test/practices checks, but do not merge until all CI checks are green.
 
 ## Data sources
 
-- Flex Reports never owns data. Access it through a `DataSource` seam
-  (`src/services/adapters/`), selected by a factory + `VITE_DATA_SOURCE` env toggle.
+- Flex Reports never owns data. The host passes `schema`, `rows`, `reportDefinition`,
+  `role`, and `onSave` as props (see README → "Add it to your app").
+- **Generic first:** code must work with any row shape the host sends. Never hardcode
+  domain keys, labels, or formulas (hours, rate, client, etc.) outside `src/seeds/`.
 - Seed data is just mock data that mimics a host app plugging in rows, so we can
   build and test the flow. It must never leak hardcoded customer values into code.
-- Seed/test mode must always stay runnable for debugging and repro workflows,
-  independent of host-app integrations, so local development can validate report behavior quickly.
-- Local browser storage (`localStorage`) is prototype-only for report definition drafts;
-  production persistence must be host-app backed (for example DB/service API),
-  shared across users, and auditable.
+- Sandbox mode (the `sandbox` prop → seed data) must always stay runnable for debugging and
+  repro workflows, independent of host-app integrations.
+- `localStorage` is used **only in sandbox mode**. In host mode nothing is written to the
+  browser; the definition goes out through `onSave`, and the host persists it and
+  enforces permissions.
 
 ## Toolchain
 

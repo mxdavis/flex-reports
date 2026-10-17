@@ -1,39 +1,13 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { installMemoryStorage } from '../../test/memoryStorage'
 import ReportBuilderApp from './ReportBuilderApp'
-
-function createMemoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    clear() {
-      store.clear()
-    },
-    getItem(key: string) {
-      return store.has(key) ? store.get(key)! : null
-    },
-    key(index: number) {
-      return Array.from(store.keys())[index] ?? null
-    },
-    removeItem(key: string) {
-      store.delete(key)
-    },
-    setItem(key: string, value: string) {
-      store.set(key, value)
-    },
-  }
-}
+import { renderSandboxApp } from '../../test/renderSandboxApp'
 
 describe('ReportBuilderApp', () => {
   beforeEach(() => {
-    Object.defineProperty(window, 'localStorage', {
-      value: createMemoryStorage(),
-      configurable: true,
-    })
+    installMemoryStorage()
 
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       value: () => undefined,
@@ -44,37 +18,35 @@ describe('ReportBuilderApp', () => {
       value: () => undefined,
       configurable: true,
     })
-
-    window.localStorage.clear()
   })
 
-  it('renders sample rows section', () => {
-    render(<ReportBuilderApp />)
+  it('renders the report table section', async () => {
+    await renderSandboxApp(<ReportBuilderApp sandbox />)
 
-    expect(screen.getByRole('heading', { name: 'Sample rows' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Report' })).toBeInTheDocument()
   })
 
-  it('shows summary chips above chart in view mode', () => {
-    const { container } = render(<ReportBuilderApp />)
+  it('shows summary chips above table in view mode', async () => {
+    const { container } = await renderSandboxApp(<ReportBuilderApp sandbox />)
 
     expect(screen.getByRole('heading', { name: 'Rate (sum)' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Hours (sum)' })).toBeInTheDocument()
 
-    const stats = container.querySelector('.seed-stats')
-    const chart = container.querySelector('#report-chart')
+    const stats = container.querySelector('.fr-summary-chips')
+    const table = container.querySelector('.fr-report-table')
     expect(stats).toBeTruthy()
-    expect(chart).toBeTruthy()
-    if (!stats || !chart) {
+    expect(table).toBeTruthy()
+    if (!stats || !table) {
       return
     }
 
-    const position = stats.compareDocumentPosition(chart)
+    const position = stats.compareDocumentPosition(table)
     expect((position & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true)
   })
 
-  it('updates chart/table heading when sheet name changes in header', async () => {
+  it('updates table heading when sheet name changes in header', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     const sheetNameInput = screen.getByLabelText('Sheet name') as HTMLInputElement
     await user.clear(sheetNameInput)
@@ -83,18 +55,18 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('heading', { name: 'Client Utilization' })).toBeInTheDocument()
   })
 
-  it('shows aggregate modes without count', () => {
-    render(<ReportBuilderApp />)
+  it('turns table totals on and off with the Totals toggle', async () => {
+    const user = userEvent.setup()
+    await renderSandboxApp(<ReportBuilderApp sandbox />)
 
-    const aggregateSelect = screen.getByLabelText('Aggregate')
-    const options = Array.from((aggregateSelect as HTMLSelectElement).options).map((option) => option.text)
-
-    expect(options).toEqual(['None', 'Sum', 'Average'])
+    expect(screen.queryByRole('rowheader', { name: 'Total' })).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Totals' }))
+    expect(screen.getByRole('rowheader', { name: 'Total' })).toBeInTheDocument()
   })
 
   it('syncs mapped column source when a formula label is renamed', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     let columnOneSource = screen.getByLabelText('COLUMN 1') as HTMLInputElement
@@ -116,7 +88,7 @@ describe('ReportBuilderApp', () => {
 
   it('reverts blank column edits on save', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     const sourceInput = screen.getByLabelText('COLUMN 1') as HTMLInputElement
@@ -134,7 +106,7 @@ describe('ReportBuilderApp', () => {
 
   it('sorts autocomplete suggestions alphabetically', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     await user.click(screen.getByTitle('Show options'))
@@ -150,9 +122,9 @@ describe('ReportBuilderApp', () => {
 
   it('re-sorts formulas alphabetically after saving an edited label', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
-    const formulasSection = screen.getByRole('heading', { name: 'Seeded formulas' }).closest('section')
+    const formulasSection = screen.getByRole('heading', { name: 'Formulas' }).closest('section')
     expect(formulasSection).toBeTruthy()
     if (!formulasSection) {
       return
@@ -171,7 +143,7 @@ describe('ReportBuilderApp', () => {
     await user.type(formulaLabelInput, 'AaaFormula')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
-    const labels = Array.from(formulasSection.querySelectorAll('.formula-card-list .editable-card-summary strong'))
+    const labels = Array.from(formulasSection.querySelectorAll('.fr-formula-card-list .fr-editable-card-summary strong'))
       .map((node) => node.textContent?.trim() ?? '')
       .filter(Boolean)
 
@@ -181,7 +153,7 @@ describe('ReportBuilderApp', () => {
 
   it('inserts a new column at selected position and shifts following columns', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
     const columnTwoSource = screen.getByLabelText('COLUMN 2') as HTMLInputElement
@@ -197,11 +169,12 @@ describe('ReportBuilderApp', () => {
     expect(columnThreeSource.value).toBe(originalColumnTwoSource)
   })
 
-  it('shows sticky jump links in edit mode and scrolls to anchor sections', async () => {
+  it('shows sticky jump links in edit mode and scrolls to sections without touching the URL', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    const urlBefore = window.location.href
 
-    const formulasSection = document.getElementById('report-formulas')
+    const formulasSection = screen.getByRole('heading', { name: 'Formulas' }).closest('section')
     expect(formulasSection).toBeTruthy()
     if (!formulasSection) {
       return
@@ -211,15 +184,57 @@ describe('ReportBuilderApp', () => {
 
     await user.click(screen.getByRole('button', { name: 'Formulas' }))
 
-    expect(scrollSpy).toHaveBeenCalled()
-    expect(window.location.hash).toBe('#report-formulas')
+    expect(scrollSpy.mock.contexts).toContain(formulasSection)
+    // The URL belongs to the host app.
+    expect(window.location.href).toBe(urlBefore)
     scrollSpy.mockRestore()
+  })
+
+  it('collapses and expands settings, columns, and formulas in edit mode', async () => {
+    const user = userEvent.setup()
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+
+    await user.click(screen.getByRole('button', { name: 'Collapse settings' }))
+    expect(screen.queryByLabelText('Sheet name')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Expand settings' }))
+    expect(screen.getByLabelText('Sheet name')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Collapse columns' }))
+    expect(screen.queryByRole('button', { name: 'Add column' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Expand columns' }))
+    expect(screen.getByRole('button', { name: 'Add column' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Collapse formulas' }))
+    expect(screen.queryByRole('button', { name: 'Add formula' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Expand formulas' }))
+    expect(screen.getByRole('button', { name: 'Add formula' })).toBeInTheDocument()
+  })
+
+  it('disables grouping in vertical view and restores it in horizontal, without marking the report unsaved', async () => {
+    const user = userEvent.setup()
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+
+    const groupingButton = screen.getByRole('button', { name: 'Grouping' })
+    await user.click(groupingButton)
+    expect(groupingButton).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Vertical view' }))
+    const groupingButtonInVertical = screen.getByRole('button', { name: 'Grouping' })
+    expect(groupingButtonInVertical).toBeDisabled()
+    expect(groupingButtonInVertical).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(screen.getByRole('button', { name: 'Horizontal view' }))
+    expect(screen.getByRole('button', { name: 'Grouping' })).toHaveAttribute('aria-pressed', 'true')
+
+    // Grouping on, then a round trip through vertical: only the grouping change is unsaved.
+    await user.click(screen.getByRole('button', { name: 'Grouping' }))
+    expect(screen.getByRole('button', { name: 'Save report' })).toBeDisabled()
   })
 
   it('prevents switching column edit when unsaved changes are not confirmed', async () => {
     const user = userEvent.setup()
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Changed Label' } })
@@ -236,7 +251,7 @@ describe('ReportBuilderApp', () => {
   it('saves current column before switching when confirm is accepted', async () => {
     const user = userEvent.setup()
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Saved Label' } })

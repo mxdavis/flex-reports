@@ -1,43 +1,68 @@
+import { useState } from 'react'
 import EditModeToolbar from '../components/EditModeToolbar'
 import MappingPanelSection from '../components/MappingPanelSection'
-import SampleRowsSection from '../components/SampleRowsSection'
-import SeedFormulasSection from '../components/SeedFormulasSection'
-import SeedHeader from '../components/SeedHeader'
-import SeedStats from '../components/SeedStats'
-import type { useReportBuilderController } from './useReportBuilderController'
+import ReportTableSection from '../components/ReportTableSection'
+import FormulasSection from '../components/FormulasSection'
+import ReportSettingsSection from '../components/ReportSettingsSection'
+import SummaryChips from '../components/SummaryChips'
+import { useFormulasPanelProps } from './model/useFormulasPanelProps'
+import { useMappingPanelProps } from './model/useMappingPanelProps'
+import { useReportSettingsProps, useTableSectionProps, useToolbarProps } from './model/useSectionProps'
+import { useReportBuilder } from './useReportBuilder'
 
-type ReportBuilderViewProps = ReturnType<typeof useReportBuilderController>
+function ReportBuilderView() {
+  const { state, computed } = useReportBuilder()
+  const editModeToolbarProps = useToolbarProps()
+  const reportSettingsProps = useReportSettingsProps()
+  const mappingPanelProps = useMappingPanelProps()
+  const formulasProps = useFormulasPanelProps()
+  const tableSectionProps = useTableSectionProps()
+  const { summaryItems } = computed
+  const showAuthoring = state.ui.isEditMode
+  const isTableFullscreen = state.ui.isTableFullscreen
+  const [isSettingsCollapsed, setIsSettingsCollapsed] = useState(false)
+  const [isColumnsCollapsed, setIsColumnsCollapsed] = useState(false)
+  const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
 
-function ReportBuilderView({
-  showAuthoring,
-  summaryItems,
-  editModeToolbarProps,
-  seedHeaderProps,
-  mappingPanelProps,
-  seedFormulasProps,
-  sampleRowsProps,
-}: ReportBuilderViewProps) {
   return (
-    <div className="seed-page">
-      <EditModeToolbar {...editModeToolbarProps} />
+    <div className="fr-report-builder">
+      {!isTableFullscreen && <EditModeToolbar {...editModeToolbarProps} />}
 
-      {showAuthoring && (
-        <SeedHeader {...seedHeaderProps} />
+      {!isTableFullscreen && showAuthoring && (
+        <ReportSettingsSection
+          {...reportSettingsProps}
+          isCollapsed={isSettingsCollapsed}
+          onToggleCollapsed={() => {
+            setIsSettingsCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
-      {showAuthoring && (
-        <MappingPanelSection {...mappingPanelProps} />
+      {!isTableFullscreen && showAuthoring && (
+        <MappingPanelSection
+          {...mappingPanelProps}
+          isCollapsed={isColumnsCollapsed}
+          onToggleCollapsed={() => {
+            setIsColumnsCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
-      {showAuthoring && (
-        <SeedFormulasSection {...seedFormulasProps} />
+      {!isTableFullscreen && showAuthoring && (
+        <FormulasSection
+          {...formulasProps}
+          isCollapsed={isFormulasCollapsed}
+          onToggleCollapsed={() => {
+            setIsFormulasCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
-      {summaryItems.length > 0 && (
-        <SeedStats items={summaryItems} />
+      {!isTableFullscreen && summaryItems.length > 0 && (
+        <SummaryChips items={summaryItems} />
       )}
 
-      <SampleRowsSection {...sampleRowsProps} />
+      <ReportTableSection {...tableSectionProps} />
     </div>
   )
 }

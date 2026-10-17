@@ -3,30 +3,37 @@ import ViewIcon from '../../../shared/icons/ViewIcon'
 import './EditModeToolbar.css'
 
 export type EditModeToolbarProps = {
-  canEditReport: boolean
   isEditMode: boolean
   onToggle: () => void
   jumpTargets?: Array<{ id: string, label: string }>
   onJumpToSection?: (id: string) => void
+  canSave?: boolean
+  isDirty?: boolean
+  isSaving?: boolean
+  saveError?: string
+  // Why Save isn't offered, shown to editors (e.g. a report from a newer version).
+  saveBlockedReason?: string
+  onSave?: () => void
 }
 
 function EditModeToolbar({
-  canEditReport,
   isEditMode,
   onToggle,
   jumpTargets = [],
   onJumpToSection,
+  canSave = false,
+  isDirty = false,
+  isSaving = false,
+  saveError = '',
+  saveBlockedReason = '',
+  onSave,
 }: EditModeToolbarProps) {
-  if (!canEditReport) {
-    return null
-  }
-
   return (
-    <div className="workspace-toolbar">
-      <div className="workspace-toolbar-group">
+    <div className="fr-workspace-toolbar">
+      <div className="fr-workspace-toolbar-group">
         <button
           type="button"
-          className="workspace-toolbar-button"
+          className="fr-workspace-toolbar-button"
           onClick={onToggle}
           title={isEditMode ? 'Switch to view mode' : 'Switch to edit mode'}
         >
@@ -34,12 +41,12 @@ function EditModeToolbar({
           <span>{isEditMode ? 'View mode' : 'Edit mode'}</span>
         </button>
         {isEditMode && jumpTargets.length > 0 && (
-          <nav className="workspace-toolbar-nav" aria-label="Edit section navigation">
+          <nav className="fr-workspace-toolbar-nav" aria-label="Edit section navigation">
             {jumpTargets.map((target) => (
               <button
                 key={target.id}
                 type="button"
-                className="workspace-toolbar-button workspace-toolbar-jump"
+                className="fr-workspace-toolbar-button fr-workspace-toolbar-jump"
                 onClick={() => {
                   onJumpToSection?.(target.id)
                 }}
@@ -49,6 +56,19 @@ function EditModeToolbar({
             ))}
           </nav>
         )}
+        {canSave && (
+          <button
+            type="button"
+            className="fr-workspace-toolbar-button fr-workspace-toolbar-save"
+            onClick={onSave}
+            disabled={!isDirty || isSaving}
+            title={isDirty ? 'Save this report as the default view for everyone.' : 'No unsaved changes.'}
+          >
+            {isSaving ? 'Saving…' : 'Save report'}
+          </button>
+        )}
+        {saveError && <span className="fr-workspace-toolbar-error" role="alert">{saveError}</span>}
+        {saveBlockedReason && <span className="fr-workspace-toolbar-notice" role="note">{saveBlockedReason}</span>}
       </div>
     </div>
   )

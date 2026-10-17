@@ -1,0 +1,17 @@
+.fr-jump-target {
+  scroll-margin-top: 84px;
+}
+
+.fr-report-table td.fr-numeric-cell {
+  text-align: right;
+}
+
+.fr-outline-note {
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f5f8ff;
+  border: 1px solid #d8e3f8;
+  color: #344054;
+  font-size: 13px;
+}

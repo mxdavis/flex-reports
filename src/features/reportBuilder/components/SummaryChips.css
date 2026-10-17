@@ -1,0 +1,33 @@
+.fr-summary-chips {
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.fr-summary-chips article {
+  background: #f8fafc;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.fr-summary-chips h2 {
+  font-size: 12px;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.fr-summary-chips strong {
+  font-size: 22px;
+}
+
+@media (max-width: 900px) {
+  .fr-summary-chips {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}

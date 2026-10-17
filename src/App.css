@@ -1,4 +1,4 @@
-.seed-page {
+.fr-report-builder {
   width: min(1100px, 96%);
   margin: 24px auto;
   display: grid;
@@ -6,29 +6,29 @@
   overflow-x: clip;
 }
 
-.mapping-panel,
-.seed-formulas,
-.seed-table {
+.fr-mapping-panel,
+.fr-formulas-section,
+.fr-report-table {
   background: #ffffff;
   border: 1px solid #e4e7ec;
   border-radius: 12px;
 }
 
-.mapping-panel {
+.fr-mapping-panel {
   padding: 16px;
 }
 
-.mapping-panel h2 {
+.fr-mapping-panel h2 {
   margin: 0 0 8px;
   font-size: 20px;
 }
 
-.mapping-panel p {
+.fr-mapping-panel p {
   margin: 0 0 12px;
   color: #475467;
 }
 
-.mapping-help {
+.fr-mapping-help {
   margin-top: -2px;
   padding: 8px 10px;
   border-radius: 8px;
@@ -38,13 +38,13 @@
   font-size: 13px;
 }
 
-.mapping-grid {
+.fr-mapping-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
 }
 
-.mapping-grid article {
+.fr-mapping-grid article {
   border: 1px solid #e4e7ec;
   border-radius: 10px;
   padding: 10px;
@@ -55,48 +55,48 @@
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 
-.mapping-grid article.dragging {
+.fr-mapping-grid article.fr-dragging {
   opacity: 0.62;
   transform: scale(0.98) rotate(0.2deg);
   box-shadow: 0 10px 22px rgba(16, 24, 40, 0.12);
 }
 
-.mapping-grid article.drag-over {
+.fr-mapping-grid article.fr-drag-over {
   border-color: #7f56d9;
   box-shadow: 0 0 0 2px rgba(127, 86, 217, 0.16);
   transform: translateY(-1px);
 }
 
-.drag-block {
+.fr-drag-block {
   display: grid;
   gap: 6px;
 }
 
-.mapping-grid small {
+.fr-mapping-grid small {
   color: #475467;
 }
 
-.field-hint {
+.fr-field-hint {
   font-size: 12px;
 }
 
-.seed-formulas {
+.fr-formulas-section {
   padding: 16px;
 }
 
-.seed-formulas h2,
-.seed-table h2 {
+.fr-formulas-section h2,
+.fr-report-table h2 {
   margin: 0 0 12px;
   font-size: 20px;
 }
 
-.formula-help {
+.fr-formula-help {
   margin: 0 0 12px;
   color: #475467;
   font-size: 13px;
 }
 
-.formula-editor {
+.fr-editor {
   border: 1px solid #e4e7ec;
   border-radius: 10px;
   background: #f8fafc;
@@ -106,7 +106,7 @@
   gap: 8px;
 }
 
-.formula-add-card {
+.fr-add-card {
   border: 1px solid #e4e7ec;
   border-radius: 10px;
   background: #f8fafc;
@@ -118,7 +118,7 @@
   gap: 10px;
 }
 
-.formula-add-card button {
+.fr-add-card button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -127,25 +127,25 @@
   cursor: pointer;
 }
 
-.formula-add-card button:disabled {
+.fr-add-card button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
 
-.formula-editor-grid {
+.fr-editor-grid {
   display: grid;
   grid-template-columns: 110px 1fr;
   gap: 8px;
   align-items: center;
 }
 
-.formula-editor-grid label {
+.fr-editor-grid label {
   font-size: 12px;
   color: #344054;
   font-weight: 600;
 }
 
-.formula-editor-grid input {
+.fr-editor-grid input {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   padding: 7px 9px;
@@ -153,7 +153,7 @@
   background: #ffffff;
 }
 
-.formula-editor-grid select {
+.fr-editor-grid select {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   padding: 7px 9px;
@@ -161,14 +161,14 @@
   background: #ffffff;
 }
 
-.formula-editor-actions {
+.fr-editor-actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.formula-editor-actions button,
-.editable-card-actions button {
+.fr-editor-actions button,
+.fr-editable-card-actions button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -177,23 +177,23 @@
   cursor: pointer;
 }
 
-.formula-editor-actions button:disabled {
+.fr-editor-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
 
-.formula-error {
+.fr-formula-error {
   margin: 0;
   color: #b42318;
   font-size: 13px;
 }
 
-.formula-card-list {
+.fr-formula-card-list {
   display: grid;
   gap: 8px;
 }
 
-.formula-card-list .editable-card {
+.fr-formula-card-list .fr-editable-card {
   display: grid;
   gap: 8px;
   border: 1px solid #e4e7ec;
@@ -201,7 +201,7 @@
   padding: 8px 10px;
 }
 
-.seed-formulas code {
+.fr-formulas-section code {
   background: #f2f4f7;
   border-radius: 6px;
   padding: 3px 8px;
@@ -210,12 +210,12 @@
 }
 
 
-.seed-table {
+.fr-report-table {
   padding: 16px;
   overflow-x: hidden;
 }
 
-.seed-table-header {
+.fr-report-table-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -223,24 +223,18 @@
   margin-bottom: 10px;
 }
 
-.seed-table-header h2 {
+.fr-report-table-header h2 {
   margin: 0;
 }
 
-.seed-table-actions {
+.fr-report-table-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.seed-table-mode {
-  font-size: 12px;
-  color: #475467;
-  padding: 0 6px;
-}
-
-.seed-table-header button {
+.fr-report-table-header button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -252,7 +246,13 @@
   gap: 8px;
 }
 
-.seed-table-actions select {
+.fr-report-table-header button[aria-pressed='true'] {
+  background: #ecfdf3;
+  border-color: #12b76a;
+  color: #027a48;
+}
+
+.fr-report-table-actions select {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -260,9 +260,10 @@
   font: inherit;
 }
 
-.seed-table-scroll {
-  overflow-x: auto;
-  overflow-y: hidden;
+.fr-report-table-scroll {
+  /* The table scrolls inside its own box so only visible rows are drawn. */
+  overflow: auto;
+  max-height: 70vh;
   max-width: 100%;
   border: 1px solid #eaecf0;
   border-radius: 10px;
@@ -271,14 +272,14 @@
   scroll-behavior: smooth;
 }
 
-.seed-table table {
+.fr-report-table table {
   width: max-content;
   min-width: 100%;
   border-collapse: collapse;
 }
 
-.seed-table th,
-.seed-table td {
+.fr-report-table th,
+.fr-report-table td {
   text-align: left;
   border-bottom: 1px solid #eaecf0;
   padding: 8px 10px;
@@ -286,17 +287,33 @@
   white-space: nowrap;
 }
 
-.seed-table th {
+.fr-report-table th {
   color: #475467;
   font-size: 12px;
   text-transform: uppercase;
   background: #fcfcfd;
+}
+
+.fr-report-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
-.seed-table.fullscreen {
+.fr-report-table tfoot th,
+.fr-report-table tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: #fcfcfd;
+  border-top: 1px solid #eaecf0;
+}
+
+body.fr-fullscreen-lock {
+  overflow: hidden;
+}
+
+.fr-report-table.fr-fullscreen {
   position: fixed;
   inset: 16px;
   z-index: 30;
@@ -306,22 +323,28 @@
   flex-direction: column;
 }
 
-.seed-table.fullscreen .seed-table-scroll {
+.fr-report-table.fr-fullscreen .fr-report-table-scroll {
   flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+.fr-report-table.fr-fullscreen .fr-report-table-header h2 {
+  display: none;
 }
 
 @media (max-width: 900px) {
-  .formula-editor-grid {
+  .fr-editor-grid {
     grid-template-columns: 1fr;
     gap: 4px;
   }
 
-  .seed-table.fullscreen {
+  .fr-report-table.fr-fullscreen {
     inset: 8px;
   }
 
-  .seed-table th,
-  .seed-table td {
+  .fr-report-table th,
+  .fr-report-table td {
     min-width: 130px;
   }
 }

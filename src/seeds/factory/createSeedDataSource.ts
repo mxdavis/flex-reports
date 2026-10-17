@@ -1,14 +1,12 @@
 import defaultSeed from '../billing.seed.json'
-import type {
-  BillingSeed,
-  DataSource,
-  ReportRow,
-  SchemaField,
-} from '../../services/adapters/types'
+import type { ReportRow, SchemaField } from '../../services/adapters/types'
+import type { BillingSeed } from '../types'
 
-// A DataSource backed by static seed JSON. It stands in for a real host adapter
-// so the rest of the app can be built and tested against realistic rows.
-export interface SeedDataSource extends DataSource {
+// Replays static seed JSON as if a host app had passed in schema + rows, so
+// sandbox mode can exercise the full report flow without a backend.
+export type SeedDataSource = {
+  getReportRows(): ReportRow[]
+  getSchema(): SchemaField[]
   getSeed(): BillingSeed
 }
 

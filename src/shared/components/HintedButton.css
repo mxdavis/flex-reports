@@ -1,0 +1,11 @@
+.fr-hinted-button {
+  display: inline-flex;
+}
+
+.fr-hinted-button[title] {
+  cursor: not-allowed;
+}
+
+.fr-hinted-button button:disabled {
+  pointer-events: none;
+}

@@ -7,7 +7,7 @@ describe('ColumnDetailEditor', () => {
     const onSourceChange = vi.fn()
     const onLabelChange = vi.fn()
     const onDisplayTypeChange = vi.fn()
-    const onChipAggregationChange = vi.fn()
+    const onAggregationChange = vi.fn()
 
     render(
       <ColumnDetailEditor
@@ -16,8 +16,7 @@ describe('ColumnDetailEditor', () => {
           sourceKey: 'workDate',
           label: 'Date',
           displayType: 'date',
-          chipAggregation: 'count',
-          currencySymbol: '',
+          aggregation: 'count',
         }}
         columnLabel="COLUMN 1"
         sourceOptions={['workDate', 'hours']}
@@ -25,7 +24,7 @@ describe('ColumnDetailEditor', () => {
           { value: 'date', label: 'Date' },
           { value: 'decimal', label: 'Decimal' },
         ]}
-        chipAggregationOptions={[
+        aggregationOptions={[
           { value: 'none', label: 'None' },
           { value: 'sum', label: 'Sum' },
           { value: 'avg', label: 'Average' },
@@ -34,7 +33,7 @@ describe('ColumnDetailEditor', () => {
         onSourceChange={onSourceChange}
         onLabelChange={onLabelChange}
         onDisplayTypeChange={onDisplayTypeChange}
-        onChipAggregationChange={onChipAggregationChange}
+        onAggregationChange={onAggregationChange}
       />,
     )
 
@@ -47,7 +46,7 @@ describe('ColumnDetailEditor', () => {
     fireEvent.change(screen.getByLabelText('Display type'), { target: { value: 'decimal' } })
     expect(onDisplayTypeChange).toHaveBeenCalledWith('decimal')
 
-    fireEvent.change(screen.getByLabelText('Chip type'), { target: { value: 'avg' } })
-    expect(onChipAggregationChange).toHaveBeenCalledWith('avg')
+    fireEvent.change(screen.getByLabelText('Total type'), { target: { value: 'avg' } })
+    expect(onAggregationChange).toHaveBeenCalledWith('avg')
   })
 })
