@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { SeedFormula } from '../../../services/adapters'
+import type { ReportFormula } from '../../../services/adapters'
 import SeedFormulasSection from './SeedFormulasSection'
 
-const formulas: SeedFormula[] = [
+const formulas: ReportFormula[] = [
   { label: 'grossFees', expression: '{{hours}} * {{rate}}' },
 ]
 

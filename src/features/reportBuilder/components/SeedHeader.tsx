@@ -1,6 +1,6 @@
 import './SeedHeader.css'
 import { CURRENCY_SYMBOL_OPTIONS } from '../../../utils/currencySymbols'
-import ChevronToggleIcon from '../../../shared/icons/ChevronToggleIcon'
+import SectionTitleRow from '../../../shared/components/SectionTitleRow'
 
 export type SeedHeaderProps = {
   sheetName: string
@@ -21,22 +21,13 @@ function SeedHeader({
 }: SeedHeaderProps) {
   return (
     <header className="seed-header">
-      <div className="section-title-row">
-        <h2>Report Settings</h2>
-        {onToggleCollapsed && (
-          <button
-            type="button"
-            className="collapse-toggle-button"
-            onClick={onToggleCollapsed}
-            aria-label={isCollapsed ? 'Expand settings' : 'Collapse settings'}
-            aria-expanded={!isCollapsed}
-            aria-controls="report-settings-content"
-            title={isCollapsed ? 'Expand settings' : 'Collapse settings'}
-          >
-            <ChevronToggleIcon direction={isCollapsed ? 'down' : 'up'} />
-          </button>
-        )}
-      </div>
+      <SectionTitleRow
+        title="Report Settings"
+        sectionName="settings"
+        contentId="report-settings-content"
+        isCollapsed={isCollapsed}
+        onToggleCollapsed={onToggleCollapsed}
+      />
 
       {!isCollapsed && (
         <div id="report-settings-content" className="seed-header-controls">
@@ -49,7 +40,7 @@ function SeedHeader({
               onChange={(event) => {
                 onSheetNameChange(event.target.value)
               }}
-              placeholder="Sample rows"
+              placeholder="Report"
             />
           </div>
 

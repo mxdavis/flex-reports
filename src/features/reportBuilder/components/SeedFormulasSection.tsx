@@ -1,18 +1,18 @@
 import EditableCard from '../../../components/EditableCard'
 import FormulaDetailEditor from '../../../components/FormulaDetailEditor'
 import TokenizedExpressionInput from '../../../shared/components/TokenizedExpressionInput'
-import type { SeedFormula } from '../../../services/adapters'
-import ChevronToggleIcon from '../../../shared/icons/ChevronToggleIcon'
+import type { ReportFormula } from '../../../services/adapters'
+import SectionTitleRow from '../../../shared/components/SectionTitleRow'
 import './SeedFormulasSection.css'
 
 export type SeedFormulasSectionProps = {
-  formulas: SeedFormula[]
+  formulas: ReportFormula[]
   isAddingFormula: boolean
   maxFormulas: number
-  newFormula: SeedFormula
+  newFormula: ReportFormula
   formulaError: string
   editingFormulaLabel: string | null
-  editingFormula: SeedFormula | null
+  editingFormula: ReportFormula | null
   editingFormulaError: string
   formulaTokenOptions: string[]
   onStartAddFormula: () => void
@@ -20,7 +20,7 @@ export type SeedFormulasSectionProps = {
   onSetNewFormulaLabel: (value: string) => void
   onSetNewFormulaExpression: (value: string) => void
   onAddFormula: () => void
-  onStartEditFormula: (formula: SeedFormula) => void
+  onStartEditFormula: (formula: ReportFormula) => void
   onCancelEditFormula: () => void
   onSaveEditFormula: (label: string) => void
   onRemoveFormula: (label: string) => void
@@ -56,22 +56,13 @@ function SeedFormulasSection({
 }: SeedFormulasSectionProps) {
   return (
     <section id="report-formulas" className="seed-formulas jump-target">
-      <div className="section-title-row">
-        <h2>Formulas</h2>
-        {onToggleCollapsed && (
-          <button
-            type="button"
-            className="collapse-toggle-button"
-            onClick={onToggleCollapsed}
-            aria-label={isCollapsed ? 'Expand formulas' : 'Collapse formulas'}
-            aria-expanded={!isCollapsed}
-            aria-controls="report-formulas-content"
-            title={isCollapsed ? 'Expand formulas' : 'Collapse formulas'}
-          >
-            <ChevronToggleIcon direction={isCollapsed ? 'down' : 'up'} />
-          </button>
-        )}
-      </div>
+      <SectionTitleRow
+        title="Formulas"
+        sectionName="formulas"
+        contentId="report-formulas-content"
+        isCollapsed={isCollapsed}
+        onToggleCollapsed={onToggleCollapsed}
+      />
       {!isCollapsed && (
         <div id="report-formulas-content">
           <p
