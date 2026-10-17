@@ -56,12 +56,14 @@ error. See README → "Report definition".
 ### 3.4 Aggregation / grouping (headless)
 - Aggregates: sum, average, count, distinct count, or none, set **per column**, so a rate
   can average while hours sum.
-- Grouping nests left to right and stops at the first number column; columns from there
-  on are per-row values. With no number columns, every column but the last is a group.
-- When totals are on, every group gets a total row (even a single-row group), plus a
-  grand total. Groups sort by underlying values, not formatted text.
-- Groups collapse to a single row showing their totals. The outline level ("show down to
-  Person / Person › Client / All rows") is saved; groups toggled by hand are session-only.
+- Grouping uses the leading text columns up to the first number column: the last of them
+  names each row, the ones before it nest as groups, and number columns are values.
+  With no number columns, the last column names each row.
+- The grouped table is a flat list of tree rows (group rows carrying their totals, then
+  indented detail rows), so it can be windowed. Groups sort by underlying values.
+- Groups collapse to their group row. The outline level ("Person / Person › Client /
+  All rows") is saved; groups toggled by hand are session-only.
+- Only the rows in the table's scroll box are drawn (fixed-height row windowing).
 - Pure functions, unit-tested.
 
 ## 4. UI
@@ -102,7 +104,7 @@ Included:
 - Host mode via props: schema, rows, report definition, role, onSave.
 - Edit mode: field/formula columns with live preview.
 - Formula engine: `+ - / * % ( )`, `{{refs}}`, per-row, cycle detection.
-- View mode: aggregates, grouping with subtotals, orientation toggle, filters (todo).
+- View mode: aggregates, grouping with group totals, orientation toggle, filters (todo).
 - Explicit save; localStorage only in sandbox mode.
 - CSV export (todo).
 - Tests for formula, aggregation, definition, and UI behavior.

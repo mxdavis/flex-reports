@@ -45,7 +45,7 @@ export function useTableSectionProps(): ReportTableSectionProps {
     fields: state.fields,
     rows: computed.rows,
     verticalColumns: computed.verticalColumns,
-    tableScrollRef: state.tableScrollRef,
+    scrollContainerRef: state.tableScrollRef,
     onToggleTotals: actions.toggleTotals,
     onToggleGrouping: actions.toggleGrouping,
     onExpandedLevelsChange: actions.setExpandedLevels,

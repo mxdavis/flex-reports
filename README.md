@@ -10,6 +10,9 @@ a small JSON **report definition** for your app to save.
 **[How it works →](docs/FUNCTIONALITY.md)**: a full guide to grouping, totals,
 collapsing, formulas, saving, and roles.
 
+Large reports stay fast: only the rows in view are drawn, so tens of thousands of rows
+scroll and regroup smoothly.
+
 ---
 
 ## Run it locally

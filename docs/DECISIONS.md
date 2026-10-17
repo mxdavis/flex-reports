@@ -33,11 +33,21 @@ Newest at top. Each entry: what we decided and why.
   error, never silently.
 - **No data migrations yet.** The product has never shipped, so stored shapes change
   freely. The `version` field is there for when that stops being true.
-- **Grouping nests left to right and stops at the first number column.** Number columns
-  are measures, so they stay per-row values; grouping by them produced a total row for
-  every distinct rate or hour value. With no number columns, every column but the last
-  is a group. A **Tip** in Column Mapping and the Grouping tooltip explain that column
-  order matters (editors only; viewers never see authoring tips). Groups sort by underlying values (numbers, dates), not formatted text.
+- **Grouping uses the leading text columns, up to the first number column.** The last of
+  them names each row and the ones before it nest as groups. Number columns are measures,
+  so they stay values; grouping by them produced a total row for every distinct rate or
+  hour value. A **Tip** in Column Mapping and the Grouping tooltip explain that column
+  order matters (editors only; viewers never see authoring tips). Groups sort by
+  underlying values (numbers, dates), not formatted text.
+- **Tree rows instead of merged cells.** Each group is its own row carrying its totals,
+  with indented rows under it (Excel's compact pivot form). Merged cells can't be split
+  across a windowed table, and separate "X Total" rows multiplied the row count on deep
+  groupings (10k data rows became 22k table rows).
+- **Only visible rows are drawn.** The table scrolls in its own box with pinned headers
+  and total, and draws the rows in view plus a buffer. Measured in Chromium on a
+  production build: 50k rows went from 5–9.5 s to render (11.5 s to toggle grouping) to
+  under 0.3 s for every interaction. A hand-rolled windowing hook (rows are fixed height)
+  avoids a new dependency.
 - **Namespaced CSS classes and IDs (`fr-`).** The builder renders inside host pages, so
   unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
   CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.
@@ -51,8 +61,6 @@ Newest at top. Each entry: what we decided and why.
 - **Columns with a missing source stay put.** They render blank, with a warning for
   editors and in the console, instead of being silently pointed at another field (which
   changed the report behind the user's back and made it look unsaved on open).
-- **Every group gets a total row** when totals are on, including single-row groups, so
-  the layout stays consistent and every group can collapse to its total.
 - **Each column totals by its own aggregation** (the column's "Total type", which also
   drives its summary chip). The old table-wide Sum/Avg/Count dropdown is now a Totals
   on/off toggle, because one mode for every column gave meaningless totals (summed rates).

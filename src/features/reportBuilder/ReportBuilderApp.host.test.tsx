@@ -18,6 +18,16 @@ const rows: ReportRow[] = [
   { id: 'r1', warehouse: 'Austin', units: 12 },
   { id: 'r2', warehouse: 'Boston', units: 30 },
 ]
+// Region groups, Warehouse names each row, Units is a value.
+const groupedSchema: SchemaField[] = [
+  { id: 'region', key: 'region', label: 'Region', dataType: 'string' },
+  ...schema,
+]
+const groupedRows: ReportRow[] = [
+  { id: 'r1', region: 'East', warehouse: 'Austin', units: 12 },
+  { id: 'r2', region: 'East', warehouse: 'Boston', units: 30 },
+  { id: 'r3', region: 'West', warehouse: 'Denver', units: 5 },
+]
 const savedDefinition: ReportDefinition = {
   ...generateDefaultReportDefinition(schema),
   sheetName: 'Inventory',
@@ -112,15 +122,6 @@ describe('ReportBuilderApp host mode', () => {
 
   it('opens collapsed to the saved outline level and lets anyone open a single group', async () => {
     const user = userEvent.setup()
-    const groupedSchema: SchemaField[] = [
-      { id: 'region', key: 'region', label: 'Region', dataType: 'string' },
-      ...schema,
-    ]
-    const groupedRows: ReportRow[] = [
-      { id: 'r1', region: 'East', warehouse: 'Austin', units: 12 },
-      { id: 'r2', region: 'East', warehouse: 'Boston', units: 30 },
-      { id: 'r3', region: 'West', warehouse: 'Denver', units: 5 },
-    ]
     const outlineDefinition: ReportDefinition = {
       ...generateDefaultReportDefinition(groupedSchema),
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: 0 },
@@ -141,12 +142,12 @@ describe('ReportBuilderApp host mode', () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
     const groupedDefinition: ReportDefinition = {
-      ...savedDefinition,
+      ...generateDefaultReportDefinition(groupedSchema),
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: null },
     }
-    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={groupedDefinition} onSave={onSave} />)
+    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={groupedDefinition} onSave={onSave} />)
 
-    await user.click(screen.getByRole('button', { name: 'Austin' }))
+    await user.click(screen.getByRole('button', { name: 'East' }))
     expect(getSaveButton()).toBeDisabled()
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Show rows' }), '0')

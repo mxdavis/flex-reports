@@ -107,9 +107,9 @@ function MappingPanelSection({
           </p>
           {showTips && (
             <p className="fr-mapping-tip">
-              <strong>Tip:</strong> Grouping nests by each column from the left and stops at the
-              first number column. Put the columns you group by first, then your numbers. To
-              choose how a column adds up in group totals, edit the column and set
+              <strong>Tip:</strong> Grouping nests by each column from the left. Put the columns you
+              group by first, then the column that names each row, then your numbers. To choose how
+              a column adds up in group totals, edit the column and set
               its <strong>Total type</strong> (for example Sum for hours, Average for a rate).
             </p>
           )}

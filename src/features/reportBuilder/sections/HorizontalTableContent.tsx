@@ -1,9 +1,11 @@
+import { useMemo, type RefObject } from 'react'
 import type { ReportRow } from '../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
 import { isNumericDisplayType, isNumericTotal } from '../report/model/fieldTotals'
-import { buildPivotRenderRows, getGroupLevelCount } from '../report/model/pivotLayout'
+import { buildTreeRows, getTreeLayout } from '../report/model/pivotLayout'
 import ColumnHeaderLabel from './ColumnHeaderLabel'
-import PivotTableBody from './PivotTableBody'
+import TreeTableRow from './TreeTableRow'
+import VirtualTableBody from './VirtualTableBody'
 import './HorizontalTableContent.css'
 
 export type HorizontalTableContentProps = {
@@ -11,6 +13,7 @@ export type HorizontalTableContentProps = {
   isGroupingEnabled: boolean
   fields: ReportField[]
   rows: ReportRow[]
+  scrollContainerRef: RefObject<HTMLDivElement | null>
   getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, currencySymbol?: string) => string
   getRawValue: (row: ReportRow, sourceKey: string) => unknown
   formatFieldTotal: (rows: ReportRow[], field: ReportField) => string
@@ -24,6 +27,7 @@ export function HorizontalTableContent({
   isGroupingEnabled,
   fields,
   rows,
+  scrollContainerRef,
   getMappedValue,
   getRawValue,
   formatFieldTotal,
@@ -31,12 +35,27 @@ export function HorizontalTableContent({
   isGroupExpanded,
   onToggleGroup,
 }: HorizontalTableContentProps) {
-  const isGrouped = isGroupingEnabled && getGroupLevelCount(fields) > 0
+  const layout = getTreeLayout(fields)
+  const isGrouped = isGroupingEnabled && layout.groupCount > 0
+
+  const treeRows = useMemo(() => (isGrouped
+    ? buildTreeRows({ rows, fields, showTotals, getMappedValue, getRawValue, formatFieldTotal, isGroupExpanded })
+    : []), [fields, formatFieldTotal, getMappedValue, getRawValue, isGroupExpanded, isGrouped, rows, showTotals])
+
+  // Grouped: one label column (the group columns plus the row label, nested),
+  // then the value columns. Ungrouped: every column as-is.
+  const labelFields = isGrouped ? fields.slice(0, layout.labelIndex + 1) : fields.slice(0, 1)
+  const valueFields = fields.slice(labelFields.length)
+  const labelWarnings = labelFields.map(getFieldWarning).filter(Boolean)
+  const labelHeaderField = { ...labelFields[0], label: labelFields.map((field) => field.label).join(' › ') }
 
   const header = (
     <thead>
       <tr>
-        {fields.map((field) => <ColumnHeaderLabel key={field.id} field={field} warning={getFieldWarning(field)} />)}
+        {isGrouped
+          ? <ColumnHeaderLabel field={labelHeaderField} warning={labelWarnings.join(' ') || null} />
+          : fields.map((field) => <ColumnHeaderLabel key={field.id} field={field} warning={getFieldWarning(field)} />)}
+        {isGrouped && valueFields.map((field) => <ColumnHeaderLabel key={field.id} field={field} warning={getFieldWarning(field)} />)}
       </tr>
     </thead>
   )
@@ -49,7 +68,7 @@ export function HorizontalTableContent({
         <th scope="row">
           <strong>{isGrouped ? 'Grand total' : 'Total'}</strong>
         </th>
-        {fields.slice(1).map((field) => (
+        {valueFields.map((field) => (
           <td key={`total-${field.id}`} className={isNumericTotal(field) ? 'fr-numeric-cell' : undefined}>
             <strong>{formatFieldTotal(rows, field)}</strong>
           </td>
@@ -58,43 +77,39 @@ export function HorizontalTableContent({
     </tfoot>
   )
 
-  if (isGrouped) {
-    const pivotRows = buildPivotRenderRows({
-      rows,
-      fields,
-      showTotals,
-      getMappedValue,
-      getRawValue,
-      formatFieldTotal,
-      isGroupExpanded,
-    })
-
-    return (
-      <>
-        {header}
-        <PivotTableBody pivotRows={pivotRows} onToggleGroup={onToggleGroup} />
-        {footer}
-      </>
-    )
-  }
+  const body = isGrouped ? (
+    <VirtualTableBody
+      rowCount={treeRows.length}
+      columnCount={valueFields.length + 1}
+      scrollContainerRef={scrollContainerRef}
+      renderRow={(index, measureRef) => (
+        <TreeTableRow key={treeRows[index].key} row={treeRows[index]} measureRef={measureRef} onToggleGroup={onToggleGroup} />
+      )}
+    />
+  ) : (
+    <VirtualTableBody
+      rowCount={rows.length}
+      columnCount={fields.length}
+      scrollContainerRef={scrollContainerRef}
+      renderRow={(index, measureRef) => (
+        <tr key={rows[index].id} ref={measureRef}>
+          {fields.map((field) => (
+            <td
+              key={field.id}
+              className={isNumericDisplayType(field.displayType) ? 'fr-numeric-cell' : undefined}
+            >
+              {getMappedValue(rows[index], field.sourceKey, field.displayType, field.currencySymbol)}
+            </td>
+          ))}
+        </tr>
+      )}
+    />
+  )
 
   return (
     <>
       {header}
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.id}>
-            {fields.map((field) => (
-              <td
-                key={`${row.id}-${field.id}`}
-                className={isNumericDisplayType(field.displayType) ? 'fr-numeric-cell' : undefined}
-              >
-                {getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
+      {body}
       {footer}
     </>
   )

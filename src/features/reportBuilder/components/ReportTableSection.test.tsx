@@ -25,7 +25,7 @@ function renderSection(overrides: Partial<ReportTableSectionProps> = {}) {
     fields,
     rows: rows,
     verticalColumns: [],
-    tableScrollRef: { current: null },
+    scrollContainerRef: { current: null },
     onToggleTotals: () => undefined,
     onToggleGrouping: () => undefined,
     onExpandedLevelsChange: () => undefined,
@@ -80,7 +80,8 @@ describe('ReportTableSection', () => {
     rerenderWith({ isGroupingEnabled: true })
     const outline = screen.getByRole('combobox', { name: 'Show rows' })
     const options = Array.from(outline.querySelectorAll('option')).map((option) => option.textContent)
-    expect(options).toEqual(['Region', 'Region › Store', 'All rows'])
+    // Region groups; Store names each row, so it isn't an outline level.
+    expect(options).toEqual(['Region', 'All rows'])
     expect(outline).toHaveValue('all')
 
     fireEvent.change(outline, { target: { value: '0' } })

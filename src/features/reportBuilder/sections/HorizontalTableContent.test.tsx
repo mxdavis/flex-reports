@@ -7,16 +7,15 @@ import { HorizontalTableContent } from './HorizontalTableContent'
 
 const fields: ReportField[] = [
   { id: 'region', label: 'Region', sourceKey: 'region', displayType: 'string', aggregation: 'none', currencySymbol: '' },
+  { id: 'store', label: 'Store', sourceKey: 'store', displayType: 'string', aggregation: 'none', currencySymbol: '' },
   { id: 'units', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum', currencySymbol: '' },
 ]
 
-const rows: ReportRow[] = [
-  { id: '1', region: 'North', units: 3 },
-  { id: '2', region: 'North', units: 4 },
-  { id: '3', region: 'South', units: 5 },
-]
+function makeRows(count: number): ReportRow[] {
+  return Array.from({ length: count }, (_, index) => ({ id: `r${index}`, region: index % 2 ? 'North' : 'South', store: `Store ${index}`, units: 1 }))
+}
 
-function renderTable(isGroupingEnabled: boolean) {
+function renderTable(isGroupingEnabled: boolean, rows: ReportRow[] = makeRows(3)) {
   return render(
     <table>
       <HorizontalTableContent
@@ -24,6 +23,7 @@ function renderTable(isGroupingEnabled: boolean) {
         isGroupingEnabled={isGroupingEnabled}
         fields={fields}
         rows={rows}
+        scrollContainerRef={{ current: null }}
         getMappedValue={plainMappedValue}
         getRawValue={rawValue}
         formatFieldTotal={simpleFieldTotal}
@@ -40,17 +40,25 @@ describe('HorizontalTableContent', () => {
     const { container } = renderTable(false)
 
     expect(container.querySelectorAll('tbody tr')).toHaveLength(3)
-    expect(within(container.querySelector('tfoot')!).getByText('12')).toBeInTheDocument()
+    expect(within(container.querySelector('tfoot')!).getByText('3')).toBeInTheDocument()
   })
 
-  it('renders each group value once as a toggle, with a total row per group', () => {
+  it('renders each group once as a toggle row carrying its total', () => {
     renderTable(true)
 
     expect(screen.getAllByText('North')).toHaveLength(1)
     expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText('North Total')).toBeInTheDocument()
-    expect(screen.getByText('South Total')).toBeInTheDocument()
-    expect(screen.getByText('7')).toBeInTheDocument()
     expect(screen.getByText('Grand total')).toBeInTheDocument()
+  })
+
+  it('draws only the rows near the viewport for large reports', () => {
+    const { container } = renderTable(false, makeRows(5000))
+
+    const drawnRows = container.querySelectorAll('tbody tr:not(.fr-spacer-row)')
+    expect(drawnRows.length).toBeGreaterThan(0)
+    expect(drawnRows.length).toBeLessThan(100)
+    expect(container.querySelector('tbody .fr-spacer-row')).toBeInTheDocument()
+    // Totals still cover every row, not just the drawn ones.
+    expect(within(container.querySelector('tfoot')!).getByText('5000')).toBeInTheDocument()
   })
 })

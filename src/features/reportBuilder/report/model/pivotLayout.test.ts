@@ -2,22 +2,34 @@ import { describe, expect, it } from 'vitest'
 import type { ReportRow } from '../../../../services/adapters'
 import type { ReportField } from '../../../../services/reportDefinition/types'
 import { rawValue, simpleFieldTotal } from '../../../../test/simpleFieldTotal'
-import { buildPivotRenderRows, compareRawValues, getGroupKey, getGroupLevelCount } from './pivotLayout'
+import { buildTreeRows, compareRawValues, getGroupKey, getTreeLayout, type TreeRow } from './pivotLayout'
 
 function field(sourceKey: string, displayType: ReportField['displayType'], aggregation: ReportField['aggregation'] = 'none'): ReportField {
   return { id: sourceKey, label: sourceKey, sourceKey, displayType, aggregation, currencySymbol: '$' }
 }
 
-function build(rows: ReportRow[], fields: ReportField[], options: { showTotals?: boolean, collapsed?: string[] } = {}) {
-  return buildPivotRenderRows({
-    rows: rows,
-    fields,
-    showTotals: options.showTotals ?? false,
+const teamFields = [field('team', 'string'), field('member', 'string'), field('task', 'string'), field('hours', 'number', 'sum')]
+const teamRows: ReportRow[] = [
+  { id: 'a', team: 'Red', member: 'Ann', task: 'Review', hours: 1 },
+  { id: 'b', team: 'Red', member: 'Ann', task: 'Draft', hours: 2 },
+  { id: 'c', team: 'Red', member: 'Bo', task: 'Draft', hours: 3 },
+  { id: 'd', team: 'Blue', member: 'Cy', task: 'Draft', hours: 4 },
+]
+
+function build(options: { showTotals?: boolean, collapsed?: string[], rows?: ReportRow[], fields?: ReportField[] } = {}) {
+  return buildTreeRows({
+    rows: options.rows ?? teamRows,
+    fields: options.fields ?? teamFields,
+    showTotals: options.showTotals ?? true,
     getMappedValue: (row, sourceKey) => String(row[sourceKey]),
     getRawValue: rawValue,
     formatFieldTotal: simpleFieldTotal,
     isGroupExpanded: (_level, groupKey) => !(options.collapsed ?? []).includes(groupKey),
   })
+}
+
+function outline(rows: TreeRow[]): string[] {
+  return rows.map((row) => `${'  '.repeat(row.level)}${row.kind === 'group' ? (row.isExpanded ? '▾ ' : '▸ ') : ''}${row.label} ${row.values.map((cell) => cell.value).join(' ')}`.trimEnd())
 }
 
 describe('compareRawValues', () => {
@@ -29,41 +41,58 @@ describe('compareRawValues', () => {
   })
 })
 
-describe('getGroupLevelCount', () => {
-  it('groups the leading columns up to the first number column', () => {
-    expect(getGroupLevelCount([field('a', 'string'), field('b', 'date'), field('c', 'number'), field('d', 'string')])).toBe(2)
-    expect(getGroupLevelCount([field('a', 'currency'), field('b', 'string')])).toBe(0)
+describe('getTreeLayout', () => {
+  it('nests the leading text columns, with the last one naming each row', () => {
+    expect(getTreeLayout(teamFields)).toEqual({ groupCount: 2, labelIndex: 2 })
+    expect(getTreeLayout([field('a', 'string'), field('b', 'number'), field('c', 'string')])).toEqual({ groupCount: 0, labelIndex: 0 })
   })
 
-  it('groups every column but the last when there are no number columns', () => {
-    expect(getGroupLevelCount([field('a', 'string'), field('b', 'string'), field('c', 'date')])).toBe(2)
-    expect(getGroupLevelCount([field('a', 'string')])).toBe(0)
+  it('uses the last column as the row name when there are no number columns', () => {
+    expect(getTreeLayout([field('a', 'string'), field('b', 'string'), field('c', 'date')])).toEqual({ groupCount: 2, labelIndex: 2 })
+  })
+
+  it('has nothing to group when the first column is a number', () => {
+    expect(getTreeLayout([field('a', 'currency'), field('b', 'string')])).toEqual({ groupCount: 0, labelIndex: -1 })
   })
 })
 
-describe('buildPivotRenderRows', () => {
-  it('shows number columns as per-row values, never as groups', () => {
-    const rows: ReportRow[] = [
-      { id: 'a', team: 'Red', hours: 2, rate: 10 },
-      { id: 'b', team: 'Red', hours: 2, rate: 10 },
-    ]
-    const pivotRows = build(rows, [field('team', 'string'), field('hours', 'number', 'sum'), field('rate', 'number', 'avg')], { showTotals: true })
+describe('buildTreeRows', () => {
+  it('builds group rows with their totals, and named detail rows under the deepest group', () => {
+    expect(outline(build())).toEqual([
+      '▾ Blue 4',
+      '  ▾ Cy 4',
+      '    Draft 4',
+      '▾ Red 6',
+      '  ▾ Ann 3',
+      '    Draft 2',
+      '    Review 1',
+      '  ▾ Bo 3',
+      '    Draft 3',
+    ])
+  })
 
-    expect(pivotRows.map((row) => row.kind)).toEqual(['detail', 'detail', 'subtotal'])
-    expect(pivotRows[1].cells.map((cell) => cell.value)).toEqual(['2', '10'])
-    expect(pivotRows[2].cells.map((cell) => cell.value)).toEqual(['Red Total', '4', '10'])
+  it('leaves expanded group totals blank when totals are off, but always totals a collapsed group', () => {
+    const rows = build({ showTotals: false, collapsed: [getGroupKey(['Red', 'Ann'])] })
+
+    expect(outline(rows)).toEqual(['▾ Blue', '  ▾ Cy', '    Draft 4', '▾ Red', '  ▸ Ann 3', '  ▾ Bo', '    Draft 3'])
+  })
+
+  it('hides everything under a collapsed group', () => {
+    expect(outline(build({ collapsed: [getGroupKey(['Red'])] }))).toEqual(['▾ Blue 4', '  ▾ Cy 4', '    Draft 4', '▸ Red 6'])
+  })
+
+  it('keys nested groups by their full path', () => {
+    const rows = build({ rows: [...teamRows, { id: 'e', team: 'Blue', member: 'Ann', task: 'Plan', hours: 5 }] })
+    const annGroups = rows.filter((row) => row.kind === 'group' && row.label === 'Ann')
+
+    expect(annGroups.map((row) => row.kind === 'group' && row.groupKey)).toEqual([getGroupKey(['Blue', 'Ann']), getGroupKey(['Red', 'Ann'])])
   })
 
   it('groups by underlying values instead of formatted text', () => {
     // A text column holding numbers: grouped, but sorted by the raw number.
-    const rows: ReportRow[] = [
-      { id: 'a', price: 1000, region: 'North' },
-      { id: 'b', price: 240, region: 'South' },
-    ]
-
-    const pivotRows = buildPivotRenderRows({
-      rows: rows,
-      fields: [field('price', 'string'), field('region', 'string')],
+    const rows = buildTreeRows({
+      rows: [{ id: 'a', price: 1000, region: 'North', units: 1 }, { id: 'b', price: 240, region: 'South', units: 2 }],
+      fields: [field('price', 'string'), field('region', 'string'), field('units', 'number')],
       showTotals: false,
       getMappedValue: (row, sourceKey) => (sourceKey === 'price' ? `$${Number(row.price).toLocaleString('en-US')}.00` : String(row[sourceKey])),
       getRawValue: rawValue,
@@ -71,38 +100,10 @@ describe('buildPivotRenderRows', () => {
       isGroupExpanded: () => true,
     })
 
-    const groupLabels = pivotRows.map((row) => row.cells.find((cell) => cell.columnIndex === 0)?.value)
-    expect(groupLabels).toEqual(['$240.00', '$1,000.00'])
+    expect(rows.filter((row) => row.kind === 'group').map((row) => row.label)).toEqual(['$240.00', '$1,000.00'])
   })
 
-  it('emits a total row for every group, even a single-row one', () => {
-    const rows: ReportRow[] = [
-      { id: 'a', team: 'Red', member: 'Ann', score: 1 },
-      { id: 'b', team: 'Red', member: 'Ann', score: 2 },
-      { id: 'c', team: 'Red', member: 'Bo', score: 3 },
-    ]
-    const pivotRows = build(rows, [field('team', 'string'), field('member', 'string'), field('score', 'number', 'sum')], { showTotals: true })
-
-    const subtotals = pivotRows.filter((row) => row.kind === 'subtotal').map((row) => row.cells[0].value)
-    expect(subtotals).toEqual(['Ann Total', 'Bo Total', 'Red Total'])
-  })
-
-  it('collapses a group to a single row and shrinks its parent span', () => {
-    const rows: ReportRow[] = [
-      { id: 'a', team: 'Red', member: 'Ann', score: 1 },
-      { id: 'b', team: 'Red', member: 'Ann', score: 2 },
-      { id: 'c', team: 'Red', member: 'Bo', score: 3 },
-    ]
-    const pivotRows = build(
-      rows,
-      [field('team', 'string'), field('member', 'string'), field('score', 'number', 'sum')],
-      { collapsed: [getGroupKey(['Red', 'Ann'])] },
-    )
-
-    expect(pivotRows.map((row) => row.kind)).toEqual(['collapsed', 'detail'])
-    const teamCell = pivotRows[0].cells[0]
-    expect(teamCell).toMatchObject({ value: 'Red', rowSpan: 2, toggle: { isExpanded: true } })
-    expect(pivotRows[0].cells[1]).toMatchObject({ value: 'Ann', toggle: { isExpanded: false } })
-    expect(pivotRows[0].cells[2]).toMatchObject({ value: '3', emphasis: true })
+  it('returns nothing when there is no column to group by', () => {
+    expect(build({ fields: [field('task', 'string'), field('hours', 'number', 'sum')] })).toEqual([])
   })
 })

@@ -61,7 +61,7 @@ describe('MappingPanelSection', () => {
     const heading = screen.getByRole('heading', { name: 'Column Mapping' })
     const section = heading.closest('section')
     expect(section?.id).toBe('fr-report-columns')
-    expect(screen.getByText(/stops at the\s+first number column/)).toBeInTheDocument()
+    expect(screen.getByText(/the column that names each row/)).toBeInTheDocument()
   })
 
   it('forwards add column intent', () => {
@@ -117,6 +117,6 @@ describe('MappingPanelSection', () => {
     fireEvent.click(within(section).getByRole('button', { name: 'Add column' }))
     expect(onStartAddColumn).toHaveBeenCalledTimes(1)
     // Tips are editor-only.
-    expect(screen.queryByText(/first number column/)).toBeNull()
+    expect(screen.queryByText(/the column that names each row/)).toBeNull()
   })
 })

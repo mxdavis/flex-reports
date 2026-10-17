@@ -20,11 +20,13 @@ For running and integrating the package, see the [README](../README.md).
 ## The report table
 
 The table shows one row per data row, with the columns set up in [edit mode](#edit-mode).
+It scrolls inside its own box, with the column headers pinned at the top and the total
+pinned at the bottom. Only the rows in view are drawn, so large reports stay fast.
 The toolbar above it has:
 
 | Control | What it does |
 |---|---|
-| **Totals** | Shows total rows: a grand total, plus a total under every group when grouping is on. |
+| **Totals** | Shows a total row, plus each group's totals on its group row when grouping is on. |
 | **Grouping** | Nests rows into groups. Horizontal view only. |
 | **Show rows** | Appears while grouping is on. Picks how far groups open. |
 | **Vertical view** / **Horizontal view** | Switches the table's orientation. |
@@ -52,47 +54,52 @@ plain numbers. If a formula can't be calculated, its total shows *Invalid formul
 
 ## Grouping
 
-Turn on **Grouping** to nest rows, spreadsheet-style. Grouping goes left to right
-through your columns and **stops at the first number column**:
+Turn on **Grouping** to nest rows. Grouping uses your leading text columns, left to
+right, up to the first number column:
 
-- The columns before it are **groups**. Each value shows once, spanning its rows.
-- The number column and everything after it are **values**, shown on every row.
-- If the report has no number columns, every column except the last is a group.
+- The **last** of those text columns **names each row**.
+- The text columns before it are **groups**, nested from broadest to most detailed.
+- The number column and everything after it are **values**.
+- If the report has no number columns, the last column names each row and the others
+  are groups.
+
+The group columns and the row-naming column share one nested column, headed with their
+names joined (for example *Person › Client › Task*). Each group gets its own row with an
+arrow and the group's totals; the rows under it are indented.
 
 Example with the columns `Person | Client | Task | Hours | Rate | Total`:
 
 ```
-PERSON          CLIENT           TASK          HOURS   RATE      TOTAL
-▾ Alex Rivera   ▾ Delta Freight  ▾ Research    3.25    $240.00   $780.00
-                                 RESEARCH TOTAL 3.25   $240.00   $780.00
-                                 ▾ Review      2.25    $240.00   $540.00
-                                 REVIEW TOTAL  2.25    $240.00   $540.00
-                DELTA FREIGHT TOTAL            5.50    $240.00   $1,320.00
-                ▸ Northwind Manufacturing      4.00    $240.00   $960.00
-                …
-ALEX RIVERA TOTAL                              17.50   $240.00   $4,200.00
-…
+PERSON › CLIENT › TASK          HOURS   RATE      TOTAL
+▾ Alex Rivera                   17.50   $240.00   $4,200.00
+   ▾ Delta Freight               6.75   $240.00   $1,620.00
+       Conference                1.25   $240.00     $300.00
+       Research                  3.25   $240.00     $780.00
+       Review                    2.25   $240.00     $540.00
+   ▸ Northwind Manufacturing     4.00   $240.00     $960.00
+▸ Jordan Lee                    12.75   $218.57   $2,737.50
+GRAND TOTAL                     62.50   $239.63  $15,000.00
 ```
 
-Here Person › Client › Task are groups, and Hours, Rate, and Total are values. Rate's
-Total type is *Average*; the others are *Sum*. Northwind Manufacturing is collapsed.
+Here Person and Client are groups, Task names each row, and Hours, Rate, and Total are
+values. Rate's Total type is *Average*; the others are *Sum*. Northwind Manufacturing
+and Jordan Lee are collapsed.
 
 **Column order matters.** Put the columns you group by first, from broadest to most
-detailed, then your numbers. A text column placed after a number column is shown as a
-value, not a group.
+detailed, then the column that names each row, then your numbers. A text column placed
+after a number column is shown as a value.
 
-When **Totals** is on, every group gets a total row, even a group with a single row.
-Groups are sorted by their underlying values, so `$240` comes before `$1,000` and dates
-sort by date.
+Group rows show their totals when **Totals** is on. Groups are sorted by their
+underlying values, so `$240` comes before `$1,000` and dates sort by date.
 
 ## Collapsing groups
 
 Each group value has an arrow:
 
-- **▾ expanded:** click to collapse the group into a single row showing its totals.
-- **▸ collapsed:** click to expand it again.
+- **▾ expanded:** click to hide the rows under it.
+- **▸ collapsed:** click to show them again.
 
-A collapsed row always shows the group's totals, even when **Totals** is off.
+A collapsed group always shows its totals, even when **Totals** is off.
 
 **Show rows** sets how far every group opens at once, like an outline:
 
@@ -100,8 +107,7 @@ A collapsed row always shows the group's totals, even when **Totals** is off.
 |---|---|
 | *Person* | One row per person, with their totals. |
 | *Person › Client* | People expanded, with one row per client. |
-| *Person › Client › Task* | Expanded down to one row per task. |
-| *All rows* | Everything expanded. |
+| *All rows* | Everything expanded, down to each task row. |
 
 The options are named after your own group columns. Changing **Show rows** resets any
 groups you opened or closed by hand.
@@ -113,7 +119,7 @@ its first-column value, and each remaining column becomes a row. With **Totals**
 **Total** column is added on the right. Grouping isn't available in vertical view.
 
 **Full screen** expands the table to fill the window and hides the rest of the page,
-keeping the toolbar and column headers. Press `Esc` or click **Exit full screen** to
+keeping the toolbar, column headers, and total. Press `Esc` or click **Exit full screen** to
 return.
 
 ## Summary chips

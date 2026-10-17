@@ -52,7 +52,9 @@ Status tags used in each item:
 - [x] (in-pr) PR #10: total row for every group (including single-row groups); per-column aggregation drives chips, group totals, and grand total; Totals on/off toggle replaces the aggregate dropdown
 - [x] (in-pr) PR #10: collapsible groups + saved outline level (`view.expandedLevels`); hand-toggled groups are session-only
 - [ ] (todo) PDF/XLSX export reflects collapsed groups (XLSX via native row outlines); CSV exports every row
-- [ ] (todo) Large data: virtualize table rendering and memoize grouping so tens of thousands of rows stay fast
+- [x] (in-pr) Large data: cache formatting, memoize the table, tree-row layout, and draw only visible rows (50k rows: every interaction under 0.3 s)
+- [ ] (todo) Vertical view with very large data (one column per row isn't windowed)
+- [ ] (todo) Beyond ~100k rows: group off the main thread (Web Worker) or accept pre-aggregated data from the host
 - [ ] (todo) Per-instance element IDs (React `useId`) so two builders can share a page
 - [x] (in-pr) PR #10: host props API (`schema`, `rows`, `reportDefinition`, `role`, `onSave`); sandbox mode on seed data when `rows` is omitted
 - [x] (in-pr) PR #10: explicit "Save report" button + leave-page warning (no autosave)

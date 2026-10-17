@@ -1,7 +1,7 @@
-import { useEffect, type RefObject } from 'react'
+import { useEffect } from 'react'
 import SideArrowIcon from '../../../shared/icons/SideArrowIcon'
 import UpDownArrowIcon from '../../../shared/icons/UpDownArrowIcon'
-import { getGroupLevelCount } from '../report/model/pivotLayout'
+import { getTreeLayout } from '../report/model/pivotLayout'
 import ReportTableContent, { type ReportTableContentProps } from '../sections/ReportTableContent'
 import './ReportTableSection.css'
 
@@ -10,7 +10,6 @@ export type ReportTableSectionProps = ReportTableContentProps & {
   isTableFullscreen: boolean
   expandedLevels: number | null
   showTips: boolean
-  tableScrollRef: RefObject<HTMLDivElement | null>
   onToggleTotals: () => void
   onToggleGrouping: () => void
   onExpandedLevelsChange: (value: number | null) => void
@@ -25,7 +24,6 @@ function ReportTableSection({
   isTableFullscreen,
   expandedLevels,
   showTips,
-  tableScrollRef,
   onToggleTotals,
   onToggleGrouping,
   onExpandedLevelsChange,
@@ -37,14 +35,14 @@ function ReportTableSection({
   const isGroupingUnavailable = !isHorizontalTable
   const isGroupingActive = isHorizontalTable && isGroupingEnabled
   // Outline levels, like Excel's 1/2/3 buttons: show groups down to a column.
-  const groupLevelCount = getGroupLevelCount(fields)
+  const groupLevelCount = getTreeLayout(fields).groupCount
   const outlineOptions = Array.from({ length: groupLevelCount }, (_, level) => ({
     value: String(level),
     label: fields.slice(0, level + 1).map((field) => field.label).join(' › '),
   }))
   const groupingTitle = showTips
-    ? 'Tip: groups by each column from the left, stopping at the first number column. '
-      + 'To choose how a column adds up in group totals, set its Total type in edit mode.'
+    ? 'Tip: groups by each column from the left. The last text column before your numbers names each row, '
+      + 'and number columns are values. Set a column\'s Total type in edit mode to choose how it adds up.'
     : 'Group rows, with totals for each group.'
   const outlineValue = expandedLevels === null || expandedLevels >= groupLevelCount ? ALL_ROWS : String(expandedLevels)
 
@@ -127,7 +125,7 @@ function ReportTableSection({
         className="fr-report-table-scroll"
         role="region"
         aria-label="Report table"
-        ref={tableScrollRef}
+        ref={tableProps.scrollContainerRef}
       >
         <table>
           <ReportTableContent {...tableProps} />
