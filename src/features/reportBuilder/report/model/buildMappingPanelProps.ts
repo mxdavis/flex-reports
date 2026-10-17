@@ -1,15 +1,16 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { CHIP_AGGREGATION_OPTIONS, DISPLAY_TYPE_OPTIONS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS, getDefaultChipAggregation } from '../../config'
-import type { ChipAggregationMode, DisplayType, ReportData, ReportField } from '../../../../services/reportDefinition/types'
+import { AGGREGATION_OPTIONS, DISPLAY_TYPE_OPTIONS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS, getDefaultAggregation } from '../../config'
+import type { AggregationMode, DisplayType, ReportField } from '../../../../services/reportDefinition/types'
 
 type BuildMappingPanelPropsArgs = {
+  showTips: boolean
   reportFields: ReportField[]
   isAddingColumn: boolean
   addColumnPosition: number
   addColumnSourceKey: string
   addColumnLabel: string
   addColumnDisplayType: DisplayType
-  addColumnChipAggregation: ChipAggregationMode
+  addColumnAggregation: AggregationMode
   draggedFieldId: string | null
   dragOverFieldId: string | null
   editingFieldId: string | null
@@ -18,7 +19,7 @@ type BuildMappingPanelPropsArgs = {
   setAddColumnSourceKey: (value: string) => void
   setAddColumnLabel: (value: string) => void
   setAddColumnDisplayType: (value: DisplayType) => void
-  setAddColumnChipAggregation: (value: ChipAggregationMode) => void
+  setAddColumnAggregation: (value: AggregationMode) => void
   setAddColumnPosition: (value: number) => void
   setIsAddingColumn: (value: boolean) => void
   setDraggedFieldId: (value: string | null) => void
@@ -30,7 +31,7 @@ type BuildMappingPanelPropsArgs = {
   handleStartEditField: (field: ReportField) => void
   handleCancelEditField: () => void
   handleSaveEditField: (fieldId: string) => void
-  setReportData: Dispatch<SetStateAction<ReportData>>
+  setFields: Dispatch<SetStateAction<ReportField[]>>
 }
 
 export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
@@ -41,8 +42,9 @@ export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
     addColumnSourceKey: args.addColumnSourceKey,
     addColumnLabel: args.addColumnLabel,
     addColumnDisplayType: args.addColumnDisplayType,
-    addColumnChipAggregation: args.addColumnChipAggregation,
+    addColumnAggregation: args.addColumnAggregation,
     maxColumns: MAX_REPORT_COLUMNS,
+    showTips: args.showTips,
     minColumns: MIN_REPORT_COLUMNS,
     draggedFieldId: args.draggedFieldId,
     dragOverFieldId: args.dragOverFieldId,
@@ -50,14 +52,14 @@ export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
     editingFieldDraft: args.editingFieldDraft,
     sourceOptions: args.sourceOptions,
     displayTypeOptions: DISPLAY_TYPE_OPTIONS,
-    chipAggregationOptions: CHIP_AGGREGATION_OPTIONS,
+    aggregationOptions: AGGREGATION_OPTIONS,
     onStartAddColumn: () => {
-      const defaultSourceKey = args.sourceOptions[0] ?? 'workDate'
+      const defaultSourceKey = args.sourceOptions[0] ?? ''
       const defaultDisplayType = args.getPreferredDisplayType(defaultSourceKey)
       args.setAddColumnSourceKey(defaultSourceKey)
       args.setAddColumnLabel(defaultSourceKey)
       args.setAddColumnDisplayType(defaultDisplayType)
-      args.setAddColumnChipAggregation(getDefaultChipAggregation(defaultDisplayType))
+      args.setAddColumnAggregation(getDefaultAggregation(defaultDisplayType))
       args.setAddColumnPosition(args.reportFields.length + 1)
       args.setIsAddingColumn(true)
     },
@@ -68,14 +70,14 @@ export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
       args.setAddColumnSourceKey(value)
       args.setAddColumnLabel(value)
       args.setAddColumnDisplayType(nextDisplayType)
-      args.setAddColumnChipAggregation(getDefaultChipAggregation(nextDisplayType))
+      args.setAddColumnAggregation(getDefaultAggregation(nextDisplayType))
     },
     onAddColumnLabelChange: args.setAddColumnLabel,
     onAddColumnDisplayTypeChange: (value: DisplayType) => {
       args.setAddColumnDisplayType(value)
-      args.setAddColumnChipAggregation(getDefaultChipAggregation(value))
+      args.setAddColumnAggregation(getDefaultAggregation(value))
     },
-    onAddColumnChipAggregationChange: args.setAddColumnChipAggregation,
+    onAddColumnAggregationChange: args.setAddColumnAggregation,
     onSaveNewColumn: () => {
       args.handleAddColumnAtPosition()
       args.setIsAddingColumn(false)
@@ -85,9 +87,9 @@ export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
     onCancelEditField: args.handleCancelEditField,
     onSaveEditField: args.handleSaveEditField,
     onRemoveField: (fieldId: string) => {
-      args.setReportData((previous) => {
-        if (previous.fields.length <= MIN_REPORT_COLUMNS) return previous
-        return { ...previous, fields: previous.fields.filter((current) => current.id !== fieldId) }
+      args.setFields((previous) => {
+        if (previous.length <= MIN_REPORT_COLUMNS) return previous
+        return previous.filter((current) => current.id !== fieldId)
       })
       if (args.editingFieldId === fieldId) {
         args.handleCancelEditField()
@@ -98,6 +100,6 @@ export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
     onSetEditingFieldSourceKey: (value: string) => args.patchEditingFieldDraft({ sourceKey: value }),
     onSetEditingFieldLabel: (value: string) => args.patchEditingFieldDraft({ label: value }),
     onSetEditingFieldDisplayType: (value: DisplayType) => args.patchEditingFieldDraft({ displayType: value }),
-    onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => args.patchEditingFieldDraft({ chipAggregation: value }),
+    onSetEditingFieldAggregation: (value: AggregationMode) => args.patchEditingFieldDraft({ aggregation: value }),
   }
 }

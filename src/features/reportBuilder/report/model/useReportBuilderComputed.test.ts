@@ -18,7 +18,7 @@ const reportFields: ReportField[] = [
     label: 'Work Date',
     sourceKey: 'workDate',
     displayType: 'date',
-    chipAggregation: 'count',
+    aggregation: 'count',
     currencySymbol: '',
   },
   {
@@ -26,7 +26,7 @@ const reportFields: ReportField[] = [
     label: 'Client',
     sourceKey: 'clientName',
     displayType: 'string',
-    chipAggregation: 'count',
+    aggregation: 'count',
     currencySymbol: '',
   },
   {
@@ -34,7 +34,7 @@ const reportFields: ReportField[] = [
     label: 'Originating Person',
     sourceKey: 'originatingPersonId',
     displayType: 'string',
-    chipAggregation: 'count',
+    aggregation: 'count',
     currencySymbol: '',
   },
   {
@@ -42,7 +42,7 @@ const reportFields: ReportField[] = [
     label: 'Rate',
     sourceKey: 'rate',
     displayType: 'currency',
-    chipAggregation: 'sum',
+    aggregation: 'sum',
     currencySymbol: '$',
   },
 ]
@@ -76,9 +76,14 @@ const repeatedValueRows: ReportRow[] = [
   },
 ]
 
+function fieldWith(sourceKey: string, aggregation: ReportField['aggregation']): ReportField {
+  const base = reportFields.find((field) => field.sourceKey === sourceKey)!
+  return { ...base, aggregation }
+}
+
 describe('useReportBuilderComputed', () => {
-  it('count returns row count and distinct returns unique value count per column', () => {
-    const { result } = renderHook(() =>
+  function renderComputed() {
+    return renderHook(() =>
       useReportBuilderComputed({
         rows: repeatedValueRows,
         sourceColumns,
@@ -86,18 +91,41 @@ describe('useReportBuilderComputed', () => {
         formulas: [],
         currencySymbol: '$',
         tableOrientation: 'horizontal',
-        aggregateMode: 'count',
       }),
-    )
+    ).result
+  }
+
+  it('count returns row count and distinct returns unique value count per column', () => {
+    const result = renderComputed()
+    const total = result.current.formatFieldTotal
 
     // Count is raw row count regardless of column.
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'originatingPersonId', 'count')).toBe(2)
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'rate', 'count')).toBe(2)
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'personName', 'count')).toBe(2)
+    expect(total(repeatedValueRows, fieldWith('originatingPersonId', 'count'))).toBe('2')
+    expect(total(repeatedValueRows, fieldWith('rate', 'count'))).toBe('2')
 
     // Distinct count is per-column unique values.
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'originatingPersonId', 'distinct')).toBe(1)
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'rate', 'distinct')).toBe(1)
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'personName', 'distinct')).toBe(2)
+    expect(total(repeatedValueRows, fieldWith('originatingPersonId', 'distinct'))).toBe('1')
+    expect(total(repeatedValueRows, fieldWith('rate', 'distinct'))).toBe('1')
+    expect(total(repeatedValueRows, fieldWith('clientName', 'distinct'))).toBe('1')
+  })
+
+  it('sums and averages in the column format, and leaves none blank', () => {
+    const result = renderComputed()
+    const total = result.current.formatFieldTotal
+
+    expect(total(repeatedValueRows, fieldWith('rate', 'sum'))).toBe('$480.00')
+    expect(total(repeatedValueRows, fieldWith('rate', 'avg'))).toBe('$240.00')
+    expect(total(repeatedValueRows, fieldWith('rate', 'none'))).toBe('')
+  })
+
+  it('builds summary chips from each column aggregation, skipping none', () => {
+    const result = renderComputed()
+
+    expect(result.current.summaryItems).toEqual([
+      { label: 'Work Date (count)', value: '2' },
+      { label: 'Client (count)', value: '2' },
+      { label: 'Originating Person (count)', value: '2' },
+      { label: 'Rate (sum)', value: '$480.00' },
+    ])
   })
 })

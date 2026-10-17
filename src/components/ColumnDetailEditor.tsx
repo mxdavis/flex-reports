@@ -1,6 +1,6 @@
 import AutocompleteInput from '../shared/components/AutocompleteInput'
 import type {
-  ChipAggregationMode,
+  AggregationMode,
   DisplayType,
   ReportField,
 } from '../services/reportDefinition/types'
@@ -11,8 +11,8 @@ type DisplayTypeOption = {
   label: string
 }
 
-type ChipAggregationOption = {
-  value: ChipAggregationMode
+type AggregationOption = {
+  value: AggregationMode
   label: string
 }
 
@@ -21,11 +21,11 @@ type ColumnDetailEditorProps = {
   columnLabel: string
   sourceOptions: string[]
   displayTypeOptions: DisplayTypeOption[]
-  chipAggregationOptions: ChipAggregationOption[]
+  aggregationOptions: AggregationOption[]
   onSourceChange: (nextValue: string) => void
   onLabelChange: (nextValue: string) => void
   onDisplayTypeChange: (nextValue: DisplayType) => void
-  onChipAggregationChange: (nextValue: ChipAggregationMode) => void
+  onAggregationChange: (nextValue: AggregationMode) => void
 }
 
 function ColumnDetailEditor({
@@ -33,11 +33,11 @@ function ColumnDetailEditor({
   columnLabel,
   sourceOptions,
   displayTypeOptions,
-  chipAggregationOptions,
+  aggregationOptions,
   onSourceChange,
   onLabelChange,
   onDisplayTypeChange,
-  onChipAggregationChange,
+  onAggregationChange,
 }: ColumnDetailEditorProps) {
   return (
     <div className="column-detail-editor drag-block">
@@ -78,22 +78,22 @@ function ColumnDetailEditor({
       </select>
 
       <label
-        htmlFor={`chip-aggregation-${field.id}`}
-        title="Controls how this column appears in summary chips above the chart."
+        htmlFor={`aggregation-${field.id}`}
+        title="How this column is totalled in summary chips, group totals, and the grand total."
       >
-        Chip type
+        Total type
       </label>
       <select
-        id={`chip-aggregation-${field.id}`}
-        value={field.chipAggregation}
-        title="Controls how this column appears in summary chips above the chart."
+        id={`aggregation-${field.id}`}
+        value={field.aggregation}
+        title="How this column is totalled in summary chips, group totals, and the grand total."
         onChange={(event) => {
-          onChipAggregationChange(event.target.value as ChipAggregationMode)
+          onAggregationChange(event.target.value as AggregationMode)
         }}
       >
-        {chipAggregationOptions.map((chipAggregationOption) => (
-          <option key={chipAggregationOption.value} value={chipAggregationOption.value}>
-            {chipAggregationOption.label}
+        {aggregationOptions.map((aggregationOption) => (
+          <option key={aggregationOption.value} value={aggregationOption.value}>
+            {aggregationOption.label}
           </option>
         ))}
       </select>

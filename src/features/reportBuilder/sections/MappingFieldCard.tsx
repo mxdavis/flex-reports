@@ -1,7 +1,7 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
 import EditableCard from '../../../components/EditableCard'
 import type {
-  ChipAggregationMode,
+  AggregationMode,
   DisplayType,
   ReportField,
 } from '../../../services/reportDefinition/types'
@@ -17,7 +17,7 @@ type MappingFieldCardProps = {
   editingFieldDraft: ReportField | null
   sourceOptions: string[]
   displayTypeOptions: Array<{ value: DisplayType, label: string }>
-  chipAggregationOptions: Array<{ value: ChipAggregationMode, label: string }>
+  aggregationOptions: Array<{ value: AggregationMode, label: string }>
   minColumns: number
   onMoveField: (sourceId: string, targetId: string) => void
   onStartEditField: (field: ReportField) => void
@@ -29,7 +29,7 @@ type MappingFieldCardProps = {
   onSetEditingFieldSourceKey: (value: string) => void
   onSetEditingFieldLabel: (value: string) => void
   onSetEditingFieldDisplayType: (value: DisplayType) => void
-  onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => void
+  onSetEditingFieldAggregation: (value: AggregationMode) => void
 }
 
 function MappingFieldCard({
@@ -42,7 +42,7 @@ function MappingFieldCard({
   editingFieldDraft,
   sourceOptions,
   displayTypeOptions,
-  chipAggregationOptions,
+  aggregationOptions,
   minColumns,
   onMoveField,
   onStartEditField,
@@ -54,7 +54,7 @@ function MappingFieldCard({
   onSetEditingFieldSourceKey,
   onSetEditingFieldLabel,
   onSetEditingFieldDisplayType,
-  onSetEditingFieldChipAggregation,
+  onSetEditingFieldAggregation,
 }: MappingFieldCardProps) {
   return (
     <EditableCard
@@ -105,11 +105,11 @@ function MappingFieldCard({
           columnLabel={`COLUMN ${index + 1}`}
           sourceOptions={sourceOptions}
           displayTypeOptions={displayTypeOptions}
-          chipAggregationOptions={chipAggregationOptions}
+          aggregationOptions={aggregationOptions}
           onSourceChange={onSetEditingFieldSourceKey}
           onLabelChange={onSetEditingFieldLabel}
           onDisplayTypeChange={onSetEditingFieldDisplayType}
-          onChipAggregationChange={onSetEditingFieldChipAggregation}
+          onAggregationChange={onSetEditingFieldAggregation}
         />
       ) : null}
       actions={
