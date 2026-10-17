@@ -34,7 +34,7 @@ export function useReportBuilderState({
     [hostRows, hostSchema, sandboxData],
   )
   const { rows, isSandbox } = source
-  const sourceColumns = useMemo<SourceColumn[]>(() => source.schema.map((field) => ({ ...field })), [source.schema])
+  const sourceColumns: SourceColumn[] = source.schema
 
   const [initialDefinition] = useState<ReportDefinition>(() => (isSandbox
     ? loadSandboxDefinition(sourceColumns, source.seedFormulas)

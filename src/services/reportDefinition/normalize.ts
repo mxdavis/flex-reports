@@ -31,7 +31,7 @@ function asNonEmptyString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value : null
 }
 
-export function generateDefaultFields(sourceColumns: SourceColumn[]): ReportField[] {
+function generateDefaultFields(sourceColumns: SourceColumn[]): ReportField[] {
   return sourceColumns.map((column) => {
     const displayType = getDefaultDisplayType(column)
     return {
@@ -68,7 +68,7 @@ function normalizeField(raw: unknown, sourceByKey: Map<string, SourceColumn>): R
 
   const displayType = DISPLAY_TYPES.includes(raw.displayType as DisplayType)
     ? raw.displayType as DisplayType
-    : getDefaultDisplayType(sourceByKey.get(sourceKey) ?? { dataType: 'string' })
+    : getDefaultDisplayType(sourceByKey.get(sourceKey))
   const aggregation = AGGREGATION_MODES.includes(raw.aggregation as AggregationMode)
     ? raw.aggregation as AggregationMode
     : getDefaultAggregation(displayType)

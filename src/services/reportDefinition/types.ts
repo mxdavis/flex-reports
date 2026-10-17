@@ -1,11 +1,7 @@
-import type { ReportFormula, SchemaDataType } from '../adapters'
+import type { ReportFormula, SchemaField } from '../adapters'
 
-export type SourceColumn = {
-  id: string
-  key: string
-  label: string
-  dataType: SchemaDataType
-}
+// A field the host's rows have (the schema), as the report sees it.
+export type SourceColumn = SchemaField
 
 export const DISPLAY_TYPES = ['currency', 'number', 'decimal', 'percent', 'date', 'string'] as const
 export type DisplayType = typeof DISPLAY_TYPES[number]

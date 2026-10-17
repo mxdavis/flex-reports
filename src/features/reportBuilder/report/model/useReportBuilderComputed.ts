@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
 import { getDefaultDisplayType } from '../../../../services/reportDefinition/displayType'
 import type { ReportRow, ReportFormula } from '../../../../services/adapters'
-import type { AggregationMode, DisplayType, ReportField, SourceColumn } from '../../../../services/reportDefinition/types'
+import type { AggregationMode, DisplayType, ReportField, SourceColumn, TableOrientation } from '../../../../services/reportDefinition/types'
 import { DEFAULT_CURRENCY_SYMBOL } from '../../config'
 import { formatCellValue } from '../../../../utils/reportBuilder'
 import { buildSummaryItems } from '../../summaryItems'
@@ -30,7 +30,7 @@ type UseReportBuilderComputedArgs = {
   reportFields: ReportField[]
   formulas: ReportFormula[]
   currencySymbol: string
-  tableOrientation: 'horizontal' | 'vertical'
+  tableOrientation: TableOrientation
   showTips: boolean
 }
 
@@ -91,7 +91,7 @@ export function useReportBuilderComputed({
   function getPreferredDisplayType(sourceKey: string): DisplayType {
     if (formulasByLabel.has(sourceKey.toLowerCase().trim())) return 'decimal'
     const schemaField = sourceColumnByKey.get(sourceKey)
-    return getDefaultDisplayType(schemaField ?? { dataType: 'string' })
+    return getDefaultDisplayType(schemaField)
   }
 
   const getFormulaValue = useCallback(function getFormulaValue(

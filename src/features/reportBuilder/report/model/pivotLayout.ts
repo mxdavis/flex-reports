@@ -14,7 +14,7 @@ export type TreeRow =
   | { kind: 'group', key: string, level: number, label: string, groupKey: string, isExpanded: boolean, values: TreeCell[] }
   | { kind: 'detail', key: string, level: number, label: string, values: TreeCell[] }
 
-export type TreeLayout = {
+type TreeLayout = {
   // Leading columns that nest as groups.
   groupCount: number
   // The column that names each detail row, or -1 when the first column is a number.

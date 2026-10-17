@@ -14,7 +14,7 @@ function inferDataType(value: unknown): SchemaDataType {
   return 'string'
 }
 
-export function inferSchema(rows: ReportRow[]): SchemaField[] {
+function inferSchema(rows: ReportRow[]): SchemaField[] {
   const first = rows[0]
   if (!first) return []
   return Object.keys(first)
