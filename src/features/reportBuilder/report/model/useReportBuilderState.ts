@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { ReportFormula, SandboxData } from '../../../../services/adapters'
-import { normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
+import { isFromNewerVersion, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
 import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
   REPORT_DEFINITION_VERSION,
@@ -57,7 +57,13 @@ export function useReportBuilderState({
     createInitialUiState,
   )
 
-  const canSave = role === 'editor' && (isSandbox || onSave !== undefined)
+  // A report saved by a newer Flex Reports is shown read-only, so saving from
+  // this older version can't overwrite fields it doesn't understand.
+  const [isNewerVersion] = useState(() => !isSandbox && isFromNewerVersion(reportDefinition))
+  const canSave = role === 'editor' && !isNewerVersion && (isSandbox || onSave !== undefined)
+  const saveBlockedReason = role === 'editor' && isNewerVersion
+    ? 'This report was saved by a newer version of Flex Reports, so saving is turned off here to keep it from being overwritten.'
+    : ''
   // Authoring tips are for editors only; viewers can explore but never see them.
   const showTips = role === 'editor'
   const isMissingSchema = !isSandbox && hostSchema === undefined
@@ -123,6 +129,7 @@ export function useReportBuilderState({
     currencySymbol,
     setCurrencySymbol,
     canSave,
+    saveBlockedReason,
     showTips,
     saveState,
     ui,

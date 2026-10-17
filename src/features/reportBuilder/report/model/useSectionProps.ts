@@ -22,6 +22,7 @@ export function useToolbarProps(): EditModeToolbarProps {
     isDirty: state.saveState.isDirty,
     isSaving: state.saveState.isSaving,
     saveError: state.saveState.saveError,
+    saveBlockedReason: state.saveBlockedReason,
     onSave: () => {
       void state.saveState.save()
     },

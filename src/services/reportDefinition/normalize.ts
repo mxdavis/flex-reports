@@ -141,6 +141,12 @@ function normalizeView(raw: unknown): ReportView {
   }
 }
 
+// True for a definition saved by a newer version of Flex Reports than this one.
+export function isFromNewerVersion(raw: unknown): boolean {
+  return isRecord(raw) && typeof raw.version === 'number' && Number.isInteger(raw.version)
+    && raw.version > REPORT_DEFINITION_VERSION
+}
+
 // Accepts anything (a host DB blob, parsed localStorage) and returns a valid
 // definition. Invalid parts fall back to schema-driven defaults, with a log.
 export function normalizeReportDefinition(
@@ -156,7 +162,14 @@ export function normalizeReportDefinition(
     return defaults
   }
 
-  if (raw.version !== REPORT_DEFINITION_VERSION) {
+  if (isFromNewerVersion(raw)) {
+    // Saved by a newer Flex Reports: read what this version understands. The
+    // builder turns Save off for these so the newer report isn't overwritten.
+    console.warn(
+      `[flex-reports] reportDefinition version ${String(raw.version)} is newer than this version of `
+      + `Flex Reports (${REPORT_DEFINITION_VERSION}); showing it read-only.`,
+    )
+  } else if (raw.version !== REPORT_DEFINITION_VERSION) {
     console.error(
       `[flex-reports] Unsupported reportDefinition version "${String(raw.version)}" `
       + `(expected ${REPORT_DEFINITION_VERSION}); using defaults.`,

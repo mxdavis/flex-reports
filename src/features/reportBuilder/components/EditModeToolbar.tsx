@@ -11,6 +11,8 @@ export type EditModeToolbarProps = {
   isDirty?: boolean
   isSaving?: boolean
   saveError?: string
+  // Why Save isn't offered, shown to editors (e.g. a report from a newer version).
+  saveBlockedReason?: string
   onSave?: () => void
 }
 
@@ -23,6 +25,7 @@ function EditModeToolbar({
   isDirty = false,
   isSaving = false,
   saveError = '',
+  saveBlockedReason = '',
   onSave,
 }: EditModeToolbarProps) {
   return (
@@ -65,6 +68,7 @@ function EditModeToolbar({
           </button>
         )}
         {saveError && <span className="fr-workspace-toolbar-error" role="alert">{saveError}</span>}
+        {saveBlockedReason && <span className="fr-workspace-toolbar-notice" role="note">{saveBlockedReason}</span>}
       </div>
     </div>
   )
