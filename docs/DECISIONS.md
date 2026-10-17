@@ -38,6 +38,9 @@ Newest at top. Each entry: what we decided and why.
   every distinct rate or hour value. With no number columns, every column but the last
   is a group. A **Tip** in Column Mapping and the Grouping tooltip explain that column
   order matters (editors only; viewers never see authoring tips). Groups sort by underlying values (numbers, dates), not formatted text.
+- **Sandbox seeds load lazily.** A dynamic `import()` keeps the sample data in its own
+  chunk, fetched only when no `rows` are passed, so host bundles don't include it.
+  Sandbox mode shows a short loading state while it arrives.
 - **Builder state lives in React context**, not props threaded through builder
   functions. React Query was considered and rejected: it manages server fetching and
   caching, and the host owns fetching here. Section components stay presentational.

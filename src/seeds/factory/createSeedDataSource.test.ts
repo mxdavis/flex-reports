@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getSandboxData } from '../../services/adapters'
+import { loadSandboxData } from '../../services/adapters'
 import { createSeedDataSource } from './createSeedDataSource'
 
 type SeedRow = { personId: string, workDate: string, clientId: string, hours: number, rate: number, total: number }
@@ -61,9 +61,10 @@ describe('createSeedDataSource', () => {
     expect(schema.find((field) => field.key === 'total')?.dataType).toBe('currency')
   })
 
-  it('exposes the seed as sandbox data', () => {
-    const sandbox = getSandboxData()
+  it('loads the seed as sandbox data, once', async () => {
+    const sandbox = await loadSandboxData()
 
+    expect(await loadSandboxData()).toBe(sandbox)
     expect(sandbox.rows.length).toBe(rows.length)
     expect(sandbox.schema).toEqual(source.getSchema())
     expect(sandbox.formulas).toEqual(source.getSeed().formulas)

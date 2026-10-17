@@ -1,4 +1,3 @@
-import { createSeedDataSource } from '../../seeds/factory/createSeedDataSource'
 import type { ReportFormula, ReportRow, SchemaField } from './types'
 
 export type { ReportFormula, ReportRow, SchemaDataType, SchemaField } from './types'
@@ -9,18 +8,19 @@ export type SandboxData = {
   formulas: ReportFormula[]
 }
 
-let sandboxData: SandboxData | null = null
+let sandboxDataPromise: Promise<SandboxData> | null = null
 
-// Sandbox mode only: mock data used when the host passes no rows, so the
-// report flow stays runnable for local development and repro.
-export function getSandboxData(): SandboxData {
-  if (!sandboxData) {
+// Sandbox mode only: mock data used when the host passes no rows. It's loaded
+// with a dynamic import, so the seeds ship as a separate chunk that host apps
+// passing their own rows never download.
+export function loadSandboxData(): Promise<SandboxData> {
+  sandboxDataPromise ??= import('../../seeds/factory/createSeedDataSource').then(({ createSeedDataSource }) => {
     const source = createSeedDataSource()
-    sandboxData = {
+    return {
       schema: source.getSchema(),
       rows: source.getReportRows(),
       formulas: source.getSeed().formulas,
     }
-  }
-  return sandboxData
+  })
+  return sandboxDataPromise
 }

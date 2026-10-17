@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { ReportFormula } from '../../../../services/adapters'
+import type { ReportFormula, SandboxData } from '../../../../services/adapters'
 import { normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
 import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
@@ -18,6 +18,8 @@ import { useReportSave } from './useReportSave'
 
 export type ReportBuilderStateArgs = Omit<ReportBuilderAppProps, 'initialEditMode'> & {
   initialEditMode: boolean
+  // Required in sandbox mode (no rows); see useSandboxData.
+  sandboxData?: SandboxData
 }
 
 export function useReportBuilderState({
@@ -27,8 +29,12 @@ export function useReportBuilderState({
   role = 'editor',
   onSave,
   initialEditMode,
+  sandboxData,
 }: ReportBuilderStateArgs) {
-  const source = useMemo(() => resolveReportSource(hostRows, hostSchema), [hostRows, hostSchema])
+  const source = useMemo(
+    () => resolveReportSource(hostRows, hostSchema, sandboxData),
+    [hostRows, hostSchema, sandboxData],
+  )
   const { rows, isSandbox } = source
   const sourceColumns = useMemo<SourceColumn[]>(() => source.schema.map((field) => ({ ...field })), [source.schema])
 

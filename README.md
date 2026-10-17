@@ -171,6 +171,9 @@ If you don't pass `rows`, Flex Reports loads sample data from `src/seeds/`, and 
 report** stores the definition in your browser's `localStorage`. Use it for local
 development and demos. When you pass `rows`, nothing is written to the browser.
 
+The sample data is a separate file that's only downloaded in sandbox mode, so apps that
+pass their own `rows` don't carry it.
+
 - Try the viewer role by changing `src/App.tsx` to `<ReportBuilderApp role="viewer" />`.
 - Start fresh by clearing the `flex-reports.sandbox.reportDefinition.v1` key in
   localStorage.

@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { installMemoryStorage } from '../../test/memoryStorage'
 import ReportBuilderApp from './ReportBuilderApp'
+import { renderSandboxApp } from '../../test/renderSandboxApp'
 
 describe('ReportBuilderApp', () => {
   beforeEach(() => {
@@ -19,14 +20,14 @@ describe('ReportBuilderApp', () => {
     })
   })
 
-  it('renders the report table section', () => {
-    render(<ReportBuilderApp />)
+  it('renders the report table section', async () => {
+    await renderSandboxApp(<ReportBuilderApp />)
 
     expect(screen.getByRole('heading', { name: 'Report' })).toBeInTheDocument()
   })
 
-  it('shows summary chips above table in view mode', () => {
-    const { container } = render(<ReportBuilderApp />)
+  it('shows summary chips above table in view mode', async () => {
+    const { container } = await renderSandboxApp(<ReportBuilderApp />)
 
     expect(screen.getByRole('heading', { name: 'Rate (sum)' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Hours (sum)' })).toBeInTheDocument()
@@ -45,7 +46,7 @@ describe('ReportBuilderApp', () => {
 
   it('updates table heading when sheet name changes in header', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     const sheetNameInput = screen.getByLabelText('Sheet name') as HTMLInputElement
     await user.clear(sheetNameInput)
@@ -56,7 +57,7 @@ describe('ReportBuilderApp', () => {
 
   it('turns table totals on and off with the Totals toggle', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp />)
+    await renderSandboxApp(<ReportBuilderApp />)
 
     expect(screen.queryByRole('rowheader', { name: 'Total' })).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Totals' }))
@@ -65,7 +66,7 @@ describe('ReportBuilderApp', () => {
 
   it('syncs mapped column source when a formula label is renamed', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     let columnOneSource = screen.getByLabelText('COLUMN 1') as HTMLInputElement
@@ -87,7 +88,7 @@ describe('ReportBuilderApp', () => {
 
   it('reverts blank column edits on save', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     const sourceInput = screen.getByLabelText('COLUMN 1') as HTMLInputElement
@@ -105,7 +106,7 @@ describe('ReportBuilderApp', () => {
 
   it('sorts autocomplete suggestions alphabetically', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     await user.click(screen.getByTitle('Show options'))
@@ -121,7 +122,7 @@ describe('ReportBuilderApp', () => {
 
   it('re-sorts formulas alphabetically after saving an edited label', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     const formulasSection = screen.getByRole('heading', { name: 'Formulas' }).closest('section')
     expect(formulasSection).toBeTruthy()
@@ -152,7 +153,7 @@ describe('ReportBuilderApp', () => {
 
   it('inserts a new column at selected position and shifts following columns', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
     const columnTwoSource = screen.getByLabelText('COLUMN 2') as HTMLInputElement
@@ -170,7 +171,7 @@ describe('ReportBuilderApp', () => {
 
   it('shows sticky jump links in edit mode and scrolls to anchor sections', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     const formulasSection = document.getElementById('report-formulas')
     expect(formulasSection).toBeTruthy()
@@ -189,7 +190,7 @@ describe('ReportBuilderApp', () => {
 
   it('collapses and expands settings, columns, and formulas in edit mode', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Collapse settings' }))
     expect(screen.queryByLabelText('Sheet name')).not.toBeInTheDocument()
@@ -209,7 +210,7 @@ describe('ReportBuilderApp', () => {
 
   it('turns grouping off when switching to vertical view', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     const groupingButton = screen.getByRole('button', { name: 'Grouping' })
     await user.click(groupingButton)
@@ -227,7 +228,7 @@ describe('ReportBuilderApp', () => {
   it('prevents switching column edit when unsaved changes are not confirmed', async () => {
     const user = userEvent.setup()
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Changed Label' } })
@@ -244,7 +245,7 @@ describe('ReportBuilderApp', () => {
   it('saves current column before switching when confirm is accepted', async () => {
     const user = userEvent.setup()
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Saved Label' } })

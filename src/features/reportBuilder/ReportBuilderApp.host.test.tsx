@@ -6,6 +6,7 @@ import { generateDefaultReportDefinition } from '../../services/reportDefinition
 import { SANDBOX_DEFINITION_STORAGE_KEY } from '../../services/reportDefinition/storage'
 import type { ReportDefinition } from '../../services/reportDefinition/types'
 import { installMemoryStorage } from '../../test/memoryStorage'
+import { renderSandboxApp } from '../../test/renderSandboxApp'
 import ReportBuilderApp from './ReportBuilderApp'
 
 // A non-billing dataset: the builder must work with whatever the host sends.
@@ -250,9 +251,17 @@ describe('ReportBuilderApp sandbox mode', () => {
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
+  it('shows a loading state until the sample data arrives', async () => {
+    render(<ReportBuilderApp />)
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading sample data…')
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
   it('does not autosave; Save writes the definition to localStorage', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
     await renameSheet(user, 'Sandbox report')
     expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
@@ -265,7 +274,7 @@ describe('ReportBuilderApp sandbox mode', () => {
 
   it('never writes to localStorage for a sandbox viewer', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp role="viewer" initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp role="viewer" initialEditMode />)
 
     await renameSheet(user, 'Viewer edit')
 

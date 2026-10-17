@@ -1,4 +1,4 @@
-import { getSandboxData, type ReportFormula, type ReportRow, type SchemaDataType, type SchemaField } from '../../../../services/adapters'
+import type { ReportFormula, ReportRow, SandboxData, SchemaDataType, SchemaField } from '../../../../services/adapters'
 
 export type ReportSource = {
   isSandbox: boolean
@@ -22,11 +22,11 @@ export function inferSchema(rows: ReportRow[]): SchemaField[] {
     .map((key) => ({ id: key, key, label: key, dataType: inferDataType(first[key]) }))
 }
 
-// No rows → sandbox mode on seed data. Rows without a schema still render by
-// inferring columns from the first row.
-export function resolveReportSource(rows?: ReportRow[], schema?: SchemaField[]): ReportSource {
+// No rows → sandbox mode on seed data (loaded before the builder renders).
+// Rows without a schema still render by inferring columns from the first row.
+export function resolveReportSource(rows?: ReportRow[], schema?: SchemaField[], sandbox?: SandboxData): ReportSource {
   if (rows === undefined) {
-    const sandbox = getSandboxData()
+    if (!sandbox) throw new Error('[flex-reports] Sandbox mode needs sample data loaded first.')
     return { isSandbox: true, schema: sandbox.schema, rows: sandbox.rows, seedFormulas: sandbox.formulas }
   }
 
