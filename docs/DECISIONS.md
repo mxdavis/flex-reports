@@ -63,6 +63,10 @@ Newest at top. Each entry: what we decided and why.
   unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
   CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.
   CSS modules were the alternative; the prefix keeps plain CSS and readable class names.
+- **Sandbox mode is an explicit `sandbox` prop.** It used to switch on whenever `rows` was
+  undefined, which is also how hosts look while loading (`rows={data?.rows}`): the builder
+  then built its report from the sample data and kept it after the real rows arrived, so
+  the next Save could overwrite the host's report. Now undefined rows show "Loading report…".
 - **Sandbox seeds load lazily.** A dynamic `import()` keeps the sample data in its own
   chunk, fetched only when no `rows` are passed, so host bundles don't include it.
   Sandbox mode shows a short loading state while it arrives.

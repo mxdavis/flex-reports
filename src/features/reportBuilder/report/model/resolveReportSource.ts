@@ -22,13 +22,11 @@ function inferSchema(rows: ReportRow[]): SchemaField[] {
     .map((key) => ({ id: key, key, label: key, dataType: inferDataType(first[key]) }))
 }
 
-// No rows → sandbox mode on seed data (loaded before the builder renders).
+// Sandbox mode runs on the loaded sample data; otherwise the host's rows.
 // Rows without a schema still render by inferring columns from the first row.
-export function resolveReportSource(rows?: ReportRow[], schema?: SchemaField[], sandbox?: SandboxData): ReportSource {
-  if (rows === undefined) {
-    if (!sandbox) throw new Error('[flex-reports] Sandbox mode needs sample data loaded first.')
+export function resolveReportSource(rows: ReportRow[] = [], schema?: SchemaField[], sandbox?: SandboxData): ReportSource {
+  if (sandbox) {
     return { isSandbox: true, schema: sandbox.schema, rows: sandbox.rows, seedFormulas: sandbox.formulas }
   }
-
   return { isSandbox: false, rows, schema: schema ?? inferSchema(rows), seedFormulas: [] }
 }

@@ -24,7 +24,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:6060**. With no data passed in, the app runs in
+Open **http://localhost:6060**. The local app runs the builder in
 [sandbox mode](#sandbox-mode) on built-in sample data, so you can try every feature right away.
 
 ---
@@ -120,12 +120,13 @@ Viewers can try anything without risk, and they don't see authoring tips.
 
 | Prop | Type | Default | Notes |
 |---|---|---|---|
-| `rows` | `Array<{ id: string, [key: string]: unknown }>` | — | Your data. Omit to run in [sandbox mode](#sandbox-mode). |
+| `rows` | `Array<{ id: string, [key: string]: unknown }>` | — | Your data. While it's `undefined` (still loading), the builder shows "Loading report…". Once rows have arrived, a refetch that briefly clears them keeps the current report and edits. |
 | `schema` | `Array<{ id, key, label, dataType }>` | Inferred | The fields available on `rows`. |
 | `reportDefinition` | `ReportDefinition` | Generated | The saved report to open. |
 | `role` | `'editor' \| 'viewer'` | `'editor'` | Controls the Save button and tips. |
 | `onSave` | `(definition) => void \| Promise<void>` | — | Required for editors. Without it the Save button is hidden and an error is logged. |
 | `initialEditMode` | `boolean` | `false` | Open straight into edit mode. |
+| `sandbox` | `boolean` | `false` | Run on built-in sample data for local development and demos (see [Sandbox mode](#sandbox-mode)). Host apps don't set this. |
 | `maxVisibleRows` | `number` | `1000` | Grouped reports that would show more rows than this fully expanded open at the deepest **Show rows** level that fits. Ungrouped tables aren't capped. |
 
 ### Report definition
@@ -171,14 +172,16 @@ More examples: [docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENC
 
 ## Sandbox mode
 
-If you don't pass `rows`, Flex Reports loads sample data from `src/seeds/`, and **Save
+With the `sandbox` prop, Flex Reports loads sample data from `src/seeds/`, and **Save
 report** stores the definition in your browser's `localStorage`. Use it for local
-development and demos. When you pass `rows`, nothing is written to the browser.
+development and demos; the local app (`src/App.tsx`) runs this way. Without `sandbox`,
+nothing is written to the browser, and missing `rows` mean "still loading", never sample
+data.
 
-The sample data is a separate file that's only downloaded in sandbox mode, so apps that
-pass their own `rows` don't carry it.
+The sample data is a separate file that's only downloaded in sandbox mode, so host apps
+don't carry it.
 
-- Try the viewer role by changing `src/App.tsx` to `<ReportBuilderApp role="viewer" />`.
+- Try the viewer role by changing `src/App.tsx` to `<ReportBuilderApp sandbox role="viewer" />`.
 - Start fresh by clearing the `flex-reports.sandbox.reportDefinition.v1` key in
   localStorage.
 

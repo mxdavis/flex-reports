@@ -16,7 +16,7 @@ import { useReportSave } from './useReportSave'
 
 export type ReportBuilderStateArgs = Omit<ReportBuilderAppProps, 'initialEditMode'> & {
   initialEditMode: boolean
-  // Required in sandbox mode (no rows); see useSandboxData.
+  // Set only in sandbox mode, once the sample data has loaded (see useSandboxData).
   sandboxData?: SandboxData
 }
 

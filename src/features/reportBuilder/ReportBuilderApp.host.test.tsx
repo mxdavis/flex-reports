@@ -271,6 +271,33 @@ describe('ReportBuilderApp host mode', () => {
     expect(onSave.mock.calls[0][0].fields[0]).toMatchObject({ sourceKey: 'units', displayType: 'decimal', aggregation: 'sum' })
   })
 
+  it('shows a loading state while rows are undefined, never the sample data, then builds from the real schema', () => {
+    const { rerender } = render(<ReportBuilderApp schema={schema} onSave={vi.fn()} />)
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading report…')
+    expect(screen.queryByRole('table')).toBeNull()
+    expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
+
+    rerender(<ReportBuilderApp schema={schema} rows={rows} onSave={vi.fn()} />)
+
+    const table = screen.getByRole('table')
+    expect(within(table).getByRole('columnheader', { name: 'Warehouse' })).toBeInTheDocument()
+    expect(within(table).getByText('Austin')).toBeInTheDocument()
+    expect(screen.queryByText('Work Date')).toBeNull()
+  })
+
+  it('keeps the builder and unsaved edits when a refetch briefly clears rows', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    const { rerender } = render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={onSave} initialEditMode />)
+    await renameSheet(user, 'Stock')
+
+    rerender(<ReportBuilderApp schema={schema} reportDefinition={savedDefinition} onSave={onSave} initialEditMode />)
+
+    expect(screen.getByRole('heading', { name: 'Stock' })).toBeInTheDocument()
+    expect(getSaveButton()).toBeEnabled()
+  })
+
   it('infers columns and logs when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     render(<ReportBuilderApp rows={rows} role="viewer" />)
@@ -295,7 +322,7 @@ describe('ReportBuilderApp sandbox mode', () => {
   })
 
   it('opens clean: no unsaved changes before any edit', async () => {
-    await renderSandboxApp(<ReportBuilderApp />)
+    await renderSandboxApp(<ReportBuilderApp sandbox />)
 
     // The seed's formulas aren't alphabetical; the builder sorts them, and the
     // saved baseline must match or the report would open as unsaved.
@@ -308,7 +335,7 @@ describe('ReportBuilderApp sandbox mode', () => {
   })
 
   it('shows a loading state until the sample data arrives', async () => {
-    render(<ReportBuilderApp />)
+    render(<ReportBuilderApp sandbox />)
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading sample data…')
     expect(await screen.findByRole('table')).toBeInTheDocument()
@@ -317,7 +344,7 @@ describe('ReportBuilderApp sandbox mode', () => {
 
   it('does not autosave; Save writes the definition to localStorage', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     await renameSheet(user, 'Sandbox report')
     expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
@@ -330,7 +357,7 @@ describe('ReportBuilderApp sandbox mode', () => {
 
   it('never writes to localStorage for a sandbox viewer', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp role="viewer" initialEditMode />)
+    await renderSandboxApp(<ReportBuilderApp sandbox role="viewer" initialEditMode />)
 
     await renameSheet(user, 'Viewer edit')
 

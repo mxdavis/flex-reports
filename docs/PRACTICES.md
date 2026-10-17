@@ -68,7 +68,7 @@
   domain keys, labels, or formulas (hours, rate, client, etc.) outside `src/seeds/`.
 - Seed data is just mock data that mimics a host app plugging in rows, so we can
   build and test the flow. It must never leak hardcoded customer values into code.
-- Sandbox mode (no `rows` prop → seed data) must always stay runnable for debugging and
+- Sandbox mode (the `sandbox` prop → seed data) must always stay runnable for debugging and
   repro workflows, independent of host-app integrations.
 - `localStorage` is used **only in sandbox mode**. In host mode nothing is written to the
   browser; the definition goes out through `onSave`, and the host persists it and

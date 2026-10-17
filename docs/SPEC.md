@@ -30,8 +30,9 @@ The host passes plain data to the component. Flex Reports does no fetching:
 - `schema` → columns with types (drives `{{field}}` autocomplete and default formatting).
   Optional; inferred from the first row when omitted (with a console warning).
 - `rows` → array of `{ id, ...anything }`. Any shape works; nothing is domain-specific.
-- **Sandbox mode:** when `rows` is omitted, the builder loads mock seed data so local
-  development and repro never depend on a host.
+- **Sandbox mode:** with the `sandbox` prop, the builder loads mock seed data so local
+  development and repro never depend on a host. Without it, `rows` being undefined means
+  the host is still loading, and the builder shows "Loading report…".
 
 ### 3.2 Report definition (the only persisted artifact, JSON)
 One versioned object, passed in as `reportDefinition` and returned through `onSave`:
