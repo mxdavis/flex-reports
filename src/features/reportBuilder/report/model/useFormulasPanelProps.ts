@@ -1,54 +1,97 @@
 import type { FormulasSectionProps } from '../../components/FormulasSection'
 import { MAX_FORMULAS } from '../../config'
-import { sortFormulasByLabel } from '../../../../utils/reportBuilder'
+import { getNextFormulaLabel, sortFormulasByLabel, validateFormulaInput } from '../../../../utils/reportBuilder'
 import { useReportBuilder } from '../useReportBuilder'
 
 type FormulasPanelProps = Omit<FormulasSectionProps, 'isCollapsed' | 'onToggleCollapsed'>
 
+// Formulas: its props and every formula action (add, edit, rename, remove).
 export function useFormulasPanelProps(): FormulasPanelProps {
-  const { state, computed, handlers, actions } = useReportBuilder()
-  const { ui } = state
+  const { state, computed } = useReportBuilder()
+  const { ui, dispatchUi, formulas, setFormulas, newFormula, setNewFormula, setFormulaError, setEditingFormulaError } = state
+  const { editingFormula } = ui
+
+  const setIsAddingFormula = (value: boolean) => dispatchUi({ type: 'set', changes: { isAddingFormula: value } })
+
+  function stopEditingFormula(): void {
+    dispatchUi({ type: 'stopEditFormula' })
+    setEditingFormulaError('')
+  }
+
+  function addFormula(): void {
+    if (formulas.length >= MAX_FORMULAS) {
+      setFormulaError(`Formula limit reached (${MAX_FORMULAS}).`)
+      return
+    }
+    const candidate = { label: newFormula.label.trim(), expression: newFormula.expression.trim() }
+    const validationError = validateFormulaInput(formulas, candidate)
+    if (validationError) {
+      setFormulaError(validationError)
+      return
+    }
+
+    const next = sortFormulasByLabel([...formulas, candidate])
+    setFormulas(next)
+    setNewFormula({ label: getNextFormulaLabel(next.map((formula) => formula.label)), expression: '' })
+    setFormulaError('')
+    setIsAddingFormula(false)
+  }
+
+  // Renaming a formula also repoints the columns that show it.
+  function saveEditingFormula(): void {
+    if (!editingFormula) return
+    const { originalLabel, draft } = editingFormula
+    const candidate = { label: draft.label.trim(), expression: draft.expression.trim() }
+    const validationError = validateFormulaInput(formulas, candidate, { ignoreLabel: originalLabel })
+    if (validationError) {
+      setEditingFormulaError(validationError)
+      return
+    }
+
+    setFormulas((previous) => sortFormulasByLabel(previous.map((formula) => (formula.label === originalLabel ? candidate : formula))))
+    const originalKey = originalLabel.toLowerCase()
+    state.setFields((previous) => previous.map((field) => (field.sourceKey.toLowerCase() !== originalKey ? field : {
+      ...field,
+      sourceKey: candidate.label,
+      label: field.label === originalLabel ? candidate.label : field.label,
+    })))
+    stopEditingFormula()
+    setFormulaError('')
+  }
 
   return {
-    formulas: state.formulas,
+    formulas,
     isAddingFormula: ui.isAddingFormula,
     maxFormulas: MAX_FORMULAS,
-    newFormula: state.newFormula,
+    newFormula,
     formulaError: state.formulaError,
-    editingFormulaLabel: ui.editingFormulaLabel,
-    editingFormula: ui.editingFormula,
+    editingFormulaLabel: editingFormula?.originalLabel ?? null,
+    editingFormula: editingFormula?.draft ?? null,
     editingFormulaError: state.editingFormulaError,
     formulaTokenOptions: computed.formulaTokenOptions,
     onStartAddFormula: () => {
-      state.setFormulaError('')
-      actions.setIsAddingFormula(true)
+      setFormulaError('')
+      setIsAddingFormula(true)
     },
     onCancelAddFormula: () => {
-      state.setFormulaError('')
-      actions.setIsAddingFormula(false)
+      setFormulaError('')
+      setIsAddingFormula(false)
     },
-    onSetNewFormulaLabel: (value: string) => {
-      state.setNewFormula((previous) => ({ ...previous, label: value }))
+    onSetNewFormulaLabel: (value: string) => setNewFormula((previous) => ({ ...previous, label: value })),
+    onSetNewFormulaExpression: (value: string) => setNewFormula((previous) => ({ ...previous, expression: value })),
+    onAddFormula: addFormula,
+    onStartEditFormula: (formula) => {
+      dispatchUi({ type: 'startEditFormula', formula })
+      setEditingFormulaError('')
     },
-    onSetNewFormulaExpression: (value: string) => {
-      state.setNewFormula((previous) => ({ ...previous, expression: value }))
-    },
-    onAddFormula: handlers.handleAddFormula,
-    onStartEditFormula: handlers.handleStartEditFormula,
-    onCancelEditFormula: handlers.handleCancelEditFormula,
-    onSaveEditFormula: handlers.handleSaveEditFormula,
+    onCancelEditFormula: stopEditingFormula,
+    onSaveEditFormula: saveEditingFormula,
     onRemoveFormula: (label: string) => {
-      state.setFormulas((previous) => sortFormulasByLabel(previous.filter((current) => current.label !== label)))
-      if (ui.editingFormulaLabel === label) {
-        handlers.handleCancelEditFormula()
-      }
-      state.setFormulaError('')
+      setFormulas((previous) => previous.filter((formula) => formula.label !== label))
+      if (editingFormula?.originalLabel === label) stopEditingFormula()
+      setFormulaError('')
     },
-    onSetEditingFormulaLabel: (value: string) => {
-      handlers.patchEditingFormulaDraft({ label: value })
-    },
-    onSetEditingFormulaExpression: (value: string) => {
-      handlers.patchEditingFormulaDraft({ expression: value })
-    },
+    onSetEditingFormulaLabel: (value: string) => dispatchUi({ type: 'patchEditFormula', changes: { label: value } }),
+    onSetEditingFormulaExpression: (value: string) => dispatchUi({ type: 'patchEditFormula', changes: { expression: value } }),
   }
 }

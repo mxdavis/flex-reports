@@ -145,7 +145,8 @@ src/
 ```
 
 Builder state is shared through React context: `ReportBuilderProvider` runs
-`useReportBuilderCore` once (state, derived data, actions), and each section's props
-hook reads what it needs with `useReportBuilder()`. Section components stay
-presentational (props in), so they're tested without the provider. To expose something
-new to a section, add it to the core and read it in that section's props hook.
+`useReportBuilderCore` once (state and derived data), and each section's props hook
+(`model/use*Props`) reads what it needs with `useReportBuilder()` and holds that
+section's actions. Section components stay presentational (props in), so they're tested
+without the provider. UI state lives in one reducer (`state/uiState.ts`): plain values go
+through `set`/`toggle`, and named actions cover changes that update several fields at once.

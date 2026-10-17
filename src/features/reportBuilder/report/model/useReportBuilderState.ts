@@ -105,7 +105,7 @@ export function useReportBuilderState({
   useEffect(() => {
     if (!ui.isTableFullscreen) return
     function handleEscape(event: KeyboardEvent): void {
-      if (event.key === 'Escape') dispatchUi({ type: 'setIsTableFullscreen', value: false })
+      if (event.key === 'Escape') dispatchUi({ type: 'set', changes: { isTableFullscreen: false } })
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
@@ -115,7 +115,7 @@ export function useReportBuilderState({
     const nextMax = fields.length + 1
     const nextPosition = Math.min(Math.max(ui.addColumnPosition, 1), nextMax)
     if (nextPosition !== ui.addColumnPosition) {
-      dispatchUi({ type: 'setAddColumnPosition', value: nextPosition })
+      dispatchUi({ type: 'set', changes: { addColumnPosition: nextPosition } })
     }
   }, [fields.length, ui.addColumnPosition])
 
