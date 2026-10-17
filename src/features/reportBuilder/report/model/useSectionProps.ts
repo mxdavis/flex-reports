@@ -32,7 +32,7 @@ export function useReportSettingsProps(): Omit<ReportSettingsSectionProps, 'isCo
 }
 
 export function useTableSectionProps(): ReportTableSectionProps {
-  const { state, computed, actions, outline } = useReportBuilder()
+  const { state, computed, actions, outline, vertical } = useReportBuilder()
   const { ui } = state
   return {
     sheetName: state.sheetName.trim().length > 0 ? state.sheetName : DEFAULT_SHEET_NAME,
@@ -44,6 +44,8 @@ export function useTableSectionProps(): ReportTableSectionProps {
     outlineRowCounts: outline.rowCounts,
     maxVisibleRows: outline.maxVisibleRows,
     isOutlineCapped: outline.isCapped,
+    isVerticalViewAvailable: vertical.isAvailable,
+    maxVerticalViewRows: vertical.maxRows,
     showTips: state.showTips,
     fields: state.fields,
     rows: computed.rows,

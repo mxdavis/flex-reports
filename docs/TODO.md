@@ -54,7 +54,7 @@ Status tags used in each item:
 - [ ] (todo) PDF/XLSX export reflects collapsed groups (XLSX via native row outlines); CSV exports every row
 - [x] (in-pr) Large data: cache formatting, memoize the table, tree-row layout, and draw only visible rows (50k rows: every interaction under 0.3 s)
 - [x] (in-pr) Grouped reports open at the deepest Show rows level under `maxVisibleRows` (default 1,000)
-- [ ] (todo) Vertical view with very large data (one column per row isn't windowed)
+- [x] (in-pr) Vertical view limited to 100 rows, without totals (disabled with an explanation above that)
 - [ ] (todo) Beyond ~100k rows: group off the main thread (Web Worker) or accept pre-aggregated data from the host
 - [ ] (todo) Per-instance element IDs (React `useId`) so two builders can share a page
 - [x] (in-pr) PR #10: host props API (`schema`, `rows`, `reportDefinition`, `role`, `onSave`); sandbox mode on seed data when `rows` is omitted

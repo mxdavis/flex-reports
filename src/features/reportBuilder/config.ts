@@ -7,6 +7,8 @@ export const MAX_REPORT_COLUMNS = 15
 export const MIN_REPORT_COLUMNS = 1
 export const MAX_FORMULAS = 25
 export const DEFAULT_MAX_VISIBLE_ROWS = 1000
+// Vertical view turns each row into a column, so past this it stops being readable.
+export const MAX_VERTICAL_VIEW_ROWS = 100
 
 export const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'currency', label: 'Currency' },

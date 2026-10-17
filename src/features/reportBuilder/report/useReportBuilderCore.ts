@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 import type { ReportField } from '../../../services/reportDefinition/types'
 import { getDefaultCurrencySymbol } from '../../../services/reportDefinition/displayType'
 import { getNextFieldId } from '../../../utils/reportBuilder'
-import { DEFAULT_MAX_VISIBLE_ROWS, MAX_REPORT_COLUMNS } from '../config'
+import { DEFAULT_MAX_VISIBLE_ROWS, MAX_REPORT_COLUMNS, MAX_VERTICAL_VIEW_ROWS } from '../config'
 import type { UiAction } from '../state/uiState'
 import { countOutlineRows, getEffectiveExpandedLevels, type OutlineRowCounts } from './model/pivotLayout'
 import { useReportBuilderComputed } from './model/useReportBuilderComputed'
@@ -24,13 +24,18 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     dispatchUi({ type, value } as UiValueAction)
   }
 
+  // Vertical view is only offered for small reports. A report saved vertical
+  // shows horizontally once its data is too big; the saved setting is kept.
+  const isVerticalViewAvailable = state.rows.length <= MAX_VERTICAL_VIEW_ROWS
+  const tableOrientation = isVerticalViewAvailable ? ui.tableOrientation : 'horizontal'
+
   const computed = useReportBuilderComputed({
     rows: state.rows,
     sourceColumns: state.sourceColumns,
     reportFields: state.fields,
     formulas: state.formulas,
     currencySymbol: state.currencySymbol,
-    tableOrientation: ui.tableOrientation,
+    tableOrientation,
     showTips: state.showTips,
   })
 
@@ -64,7 +69,7 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
   // Large grouped reports open at the deepest outline level that fits within
   // maxVisibleRows. This only changes what's shown; the saved level is kept.
   const maxVisibleRows = args.maxVisibleRows ?? DEFAULT_MAX_VISIBLE_ROWS
-  const isGroupingActive = ui.isGroupingEnabled && ui.tableOrientation === 'horizontal'
+  const isGroupingActive = ui.isGroupingEnabled && tableOrientation === 'horizontal'
   const { rows, fields } = state
   const { getMappedValue } = computed
   const outlineRowCounts = useMemo<OutlineRowCounts>(
@@ -85,6 +90,8 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     maxVisibleRows,
     isCapped: expandedLevels !== getEffectiveExpandedLevels(ui.expandedLevels, outlineRowCounts, Infinity),
   }
+
+  const vertical = { isAvailable: isVerticalViewAvailable, maxRows: MAX_VERTICAL_VIEW_ROWS }
 
   const actions = {
     ...tableActions,
@@ -128,7 +135,7 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     },
   }
 
-  return { state, computed, handlers, actions, outline }
+  return { state, computed, handlers, actions, outline, vertical }
 }
 
 export type ReportBuilderCore = ReturnType<typeof useReportBuilderCore>

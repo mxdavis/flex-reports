@@ -48,6 +48,10 @@ Newest at top. Each entry: what we decided and why.
   deepest outline level that fits, and deeper levels are disabled. Opening a single group
   is still allowed. The cap is display-only (the saved level isn't changed, so the report
   isn't marked unsaved), and ungrouped tables aren't capped. Windowing stays underneath.
+- **Vertical view is for small reports, without totals.** One column per row stops being
+  readable past about 100 rows, so the button is disabled above `MAX_VERTICAL_VIEW_ROWS`
+  (100) and a report saved vertical opens horizontally (display-only). Totals and
+  grouping are disabled there; their saved settings come back in horizontal view.
 - **Only visible rows are drawn.** The table scrolls in its own box with pinned headers
   and total, and draws the rows in view plus a buffer. Measured in Chromium on a
   production build: 50k rows went from 5–9.5 s to render (11.5 s to toggle grouping) to

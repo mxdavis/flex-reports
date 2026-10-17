@@ -234,18 +234,6 @@
   flex-wrap: wrap;
 }
 
-.fr-grouping-toggle-wrapper {
-  display: inline-flex;
-}
-
-.fr-grouping-toggle-wrapper[title] {
-  cursor: not-allowed;
-}
-
-.fr-grouping-toggle-wrapper .fr-grouping-toggle-button:disabled {
-  pointer-events: none;
-}
-
 .fr-report-table-header button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;

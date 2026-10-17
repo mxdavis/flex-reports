@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import SideArrowIcon from '../../../shared/icons/SideArrowIcon'
 import UpDownArrowIcon from '../../../shared/icons/UpDownArrowIcon'
+import HintedButton from '../../../shared/components/HintedButton'
 import { getTreeLayout, type OutlineRowCounts } from '../report/model/pivotLayout'
 import ReportTableContent, { type ReportTableContentProps } from '../sections/ReportTableContent'
 import './ReportTableSection.css'
@@ -13,6 +14,8 @@ export type ReportTableSectionProps = ReportTableContentProps & {
   outlineRowCounts: OutlineRowCounts
   maxVisibleRows: number
   isOutlineCapped: boolean
+  isVerticalViewAvailable: boolean
+  maxVerticalViewRows: number
   showTips: boolean
   onToggleTotals: () => void
   onToggleGrouping: () => void
@@ -30,6 +33,8 @@ function ReportTableSection({
   outlineRowCounts,
   maxVisibleRows,
   isOutlineCapped,
+  isVerticalViewAvailable,
+  maxVerticalViewRows,
   showTips,
   onToggleTotals,
   onToggleGrouping,
@@ -39,7 +44,6 @@ function ReportTableSection({
   ...tableProps
 }: ReportTableSectionProps) {
   const { isHorizontalTable, isGroupingEnabled, showTotals, fields } = tableProps
-  const isGroupingUnavailable = !isHorizontalTable
   const isGroupingActive = isHorizontalTable && isGroupingEnabled
   // Outline levels, like Excel's 1/2/3 buttons: show groups down to a column.
   const groupLevelCount = getTreeLayout(fields).groupCount
@@ -78,30 +82,22 @@ function ReportTableSection({
       <div className="fr-report-table-header">
         <h2>{sheetName}</h2>
         <div className="fr-report-table-actions">
-          <button
-            type="button"
-            className="fr-totals-toggle-button"
-            aria-pressed={showTotals}
+          <HintedButton
+            isPressed={isHorizontalTable && showTotals}
             onClick={onToggleTotals}
             title="Show totals. Each column totals by its own Total type setting."
+            disabledReason={isHorizontalTable ? undefined : 'Totals are available in horizontal view.'}
           >
             Totals
-          </button>
-          <span
-            className="fr-grouping-toggle-wrapper"
-            title={isGroupingUnavailable ? 'Switch to horizontal view to use grouping.' : undefined}
+          </HintedButton>
+          <HintedButton
+            isPressed={isGroupingActive}
+            onClick={onToggleGrouping}
+            title={groupingTitle}
+            disabledReason={isHorizontalTable ? undefined : 'Switch to horizontal view to use grouping.'}
           >
-            <button
-              type="button"
-              className="fr-grouping-toggle-button"
-              aria-pressed={isGroupingActive}
-              disabled={isGroupingUnavailable}
-              onClick={onToggleGrouping}
-              title={isGroupingUnavailable ? undefined : groupingTitle}
-            >
-              Grouping
-            </button>
-          </span>
+            Grouping
+          </HintedButton>
           {isGroupingActive && groupLevelCount > 0 && (
             <select
               aria-label="Show rows"
@@ -118,14 +114,17 @@ function ReportTableSection({
               ))}
             </select>
           )}
-          <button
-            type="button"
+          <HintedButton
             onClick={onToggleOrientation}
             title={isHorizontalTable ? 'Switch to vertical view' : 'Switch to horizontal view'}
+            disabledReason={isHorizontalTable && !isVerticalViewAvailable
+              ? `Vertical view is available for up to ${formatCount(maxVerticalViewRows)} rows. `
+                + `This report has ${formatCount(tableProps.rows.length)}.`
+              : undefined}
           >
             {isHorizontalTable ? <UpDownArrowIcon /> : <SideArrowIcon />}
             <span>{isHorizontalTable ? 'Vertical view' : 'Horizontal view'}</span>
-          </button>
+          </HintedButton>
           <button
             type="button"
             onClick={onToggleFullscreen}

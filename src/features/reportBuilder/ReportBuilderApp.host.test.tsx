@@ -109,15 +109,19 @@ describe('ReportBuilderApp host mode', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
-  it('opens on the saved default view', () => {
+  it('opens on the saved default view', async () => {
     const verticalDefinition: ReportDefinition = {
       ...savedDefinition,
       view: { orientation: 'vertical', showTotals: true, isGroupingEnabled: false, expandedLevels: null },
     }
     render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={verticalDefinition} role="viewer" />)
 
-    expect(screen.getByRole('button', { name: 'Totals' })).toHaveAttribute('aria-pressed', 'true')
+    // Vertical view has no totals, but the saved Totals setting comes back in horizontal view.
+    expect(screen.getByRole('button', { name: 'Totals' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Grouping' })).toBeDisabled()
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Horizontal view' }))
+    expect(screen.getByRole('button', { name: 'Totals' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('opens collapsed to the saved outline level and lets anyone open a single group', async () => {
@@ -156,6 +160,24 @@ describe('ReportBuilderApp host mode', () => {
     // A single group can still be opened.
     await user.click(screen.getByRole('button', { name: 'East' }))
     expect(screen.getByText('Austin')).toBeInTheDocument()
+  })
+
+  it('opens a big report saved in vertical view horizontally, keeping the saved setting', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    const manyRows: ReportRow[] = Array.from({ length: 150 }, (_, index) => ({ id: `r${index}`, warehouse: `W${index}`, units: index }))
+    const verticalDefinition: ReportDefinition = {
+      ...savedDefinition,
+      view: { orientation: 'vertical', showTotals: false, isGroupingEnabled: false, expandedLevels: null },
+    }
+    render(<ReportBuilderApp schema={schema} rows={manyRows} reportDefinition={verticalDefinition} onSave={onSave} initialEditMode />)
+
+    expect(screen.getByRole('button', { name: 'Vertical view' })).toBeDisabled()
+    expect(getSaveButton()).toBeDisabled()
+
+    await renameSheet(user, 'Stock')
+    await user.click(getSaveButton())
+    expect(onSave.mock.calls[0][0].view.orientation).toBe('vertical')
   })
 
   it('saves the outline level but not groups toggled by hand', async () => {

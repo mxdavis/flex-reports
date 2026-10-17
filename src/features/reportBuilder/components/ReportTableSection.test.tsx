@@ -24,6 +24,8 @@ function renderSection(overrides: Partial<ReportTableSectionProps> = {}) {
     outlineRowCounts: { byLevel: [2], all: 5 },
     maxVisibleRows: 1000,
     isOutlineCapped: false,
+    isVerticalViewAvailable: true,
+    maxVerticalViewRows: 100,
     showTips: true,
     fields,
     rows: rows,
@@ -145,6 +147,23 @@ describe('ReportTableSection', () => {
     const groupingButton = screen.getByRole('button', { name: 'Grouping' })
     expect(groupingButton).toBeDisabled()
     expect(groupingButton).toHaveAttribute('aria-pressed', 'false')
-    expect(groupingButton.closest('.fr-grouping-toggle-wrapper')).toHaveAttribute('title', 'Switch to horizontal view to use grouping.')
+    expect(groupingButton.closest('.fr-hinted-button')).toHaveAttribute('title', 'Switch to horizontal view to use grouping.')
+  })
+
+  it('disables totals in vertical view', () => {
+    renderSection({ isHorizontalTable: false, showTotals: true })
+
+    const totalsButton = screen.getByRole('button', { name: 'Totals' })
+    expect(totalsButton).toBeDisabled()
+    expect(totalsButton).toHaveAttribute('aria-pressed', 'false')
+    expect(totalsButton.closest('.fr-hinted-button')).toHaveAttribute('title', 'Totals are available in horizontal view.')
+  })
+
+  it('disables vertical view for reports over the row limit and says why', () => {
+    renderSection({ isVerticalViewAvailable: false, rows: Array.from({ length: 150 }, (_, index) => ({ ...rows[0], id: `r${index}` })) })
+
+    const verticalButton = screen.getByRole('button', { name: 'Vertical view' })
+    expect(verticalButton).toBeDisabled()
+    expect(verticalButton.closest('.fr-hinted-button')).toHaveAttribute('title', 'Vertical view is available for up to 100 rows. This report has 150.')
   })
 })

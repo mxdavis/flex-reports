@@ -110,7 +110,7 @@ describe('ReportTableContent', () => {
     expect(onToggleGroup).toHaveBeenCalledWith(getGroupKey(['North']), false)
   })
 
-  it('renders vertical rows with a per-column Total column', () => {
+  it('renders vertical rows without a Total column', () => {
     const verticalFields = [field('store', 'Store', 'count', 'string'), field('units', 'Units', 'sum')]
     renderTable({
       isHorizontalTable: false,
@@ -119,7 +119,8 @@ describe('ReportTableContent', () => {
     })
 
     expect(screen.getAllByRole('columnheader', { name: 'Ames' })).toHaveLength(2)
+    expect(screen.queryByRole('columnheader', { name: 'Total' })).toBeNull()
     const unitsRow = screen.getByText('Units').closest('tr')!
-    expect(within(unitsRow).getByText('14')).toBeInTheDocument()
+    expect(within(unitsRow).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['2', '3', '5', '4'])
   })
 })

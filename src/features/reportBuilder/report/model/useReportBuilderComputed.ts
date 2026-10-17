@@ -212,13 +212,14 @@ export function useReportBuilderComputed({
 
   const verticalColumns = useMemo(() => {
     const firstField = reportFields[0]
-    if (!firstField) return [] as Array<{ key: string, headerValue: string, rows: ReportRow[] }>
+    // Only built in vertical view: one column object per row is wasted work otherwise.
+    if (!firstField || isHorizontalTable) return [] as Array<{ key: string, headerValue: string, rows: ReportRow[] }>
     return rows.map((row) => ({
       key: row.id,
       headerValue: getMappedValue(row, firstField.sourceKey, firstField.displayType),
       rows: [row],
     }))
-  }, [getMappedValue, rows, reportFields])
+  }, [getMappedValue, isHorizontalTable, rows, reportFields])
 
   const summaryItems = useMemo(
     () => buildSummaryItems({ fields: reportFields, rows, formatFieldTotal }),

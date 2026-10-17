@@ -26,10 +26,10 @@ The toolbar above it has:
 
 | Control | What it does |
 |---|---|
-| **Totals** | Shows a total row, plus each group's totals on its group row when grouping is on. |
+| **Totals** | Shows a total row, plus each group's totals on its group row when grouping is on. Horizontal view only. |
 | **Grouping** | Nests rows into groups. Horizontal view only. |
 | **Show rows** | Appears while grouping is on. Picks how far groups open. |
-| **Vertical view** / **Horizontal view** | Switches the table's orientation. |
+| **Vertical view** / **Horizontal view** | Switches the table's orientation. Vertical view is for reports of up to 100 rows. |
 | **Full screen** | Expands the table to fill the window. Press `Esc` to exit. |
 
 ## Totals
@@ -122,8 +122,13 @@ opens fully again if the data gets smaller. The host app can change the limit wi
 ## Vertical view and full screen
 
 **Vertical view** turns the table on its side. Each data row becomes a column headed by
-its first-column value, and each remaining column becomes a row. With **Totals** on, a
-**Total** column is added on the right. Grouping isn't available in vertical view.
+its first-column value, and each remaining column becomes a row. It's for reading a few
+rows side by side, so:
+
+- It's available for reports of up to 100 rows. Past that, the button is disabled and
+  explains why, and a report saved in vertical view opens horizontally (the saved
+  setting is kept for when the data is smaller again).
+- Totals and grouping aren't available. Switching back to horizontal view restores them.
 
 **Full screen** expands the table to fill the window and hides the rest of the page,
 keeping the toolbar, column headers, and total. Press `Esc` or click **Exit full screen** to

@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import type { ReportRow } from '../../../services/adapters'
-import { isNumericDisplayType, isNumericTotal } from '../report/model/fieldTotals'
+import { isNumericDisplayType } from '../report/model/fieldTotals'
 import {
   HorizontalTableContent,
   type HorizontalTableContentProps,
@@ -24,7 +24,8 @@ function ReportTableContent({ isHorizontalTable, verticalColumns, ...tableProps 
     return <HorizontalTableContent {...tableProps} />
   }
 
-  const { showTotals, fields, rows, getMappedValue, formatFieldTotal, getFieldWarning } = tableProps
+  // Vertical view has no totals: it's for reading a few rows side by side.
+  const { fields, getMappedValue, getFieldWarning } = tableProps
 
   return (
     <>
@@ -36,7 +37,6 @@ function ReportTableContent({ isHorizontalTable, verticalColumns, ...tableProps 
           {verticalColumns.map((column) => {
             return <th key={`column-view-${column.key}`}>{column.headerValue}</th>
           })}
-          {showTotals && <th>Total</th>}
         </tr>
       </thead>
       <tbody>
@@ -51,11 +51,6 @@ function ReportTableContent({ isHorizontalTable, verticalColumns, ...tableProps 
                 {getMappedValue(column.rows[0], field.sourceKey, field.displayType, field.currencySymbol)}
               </td>
             ))}
-            {showTotals && (
-              <td className={isNumericTotal(field) ? 'fr-numeric-cell' : ''}>
-                <strong>{formatFieldTotal(rows, field)}</strong>
-              </td>
-            )}
           </tr>
         ))}
       </tbody>
