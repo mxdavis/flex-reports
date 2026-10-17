@@ -18,7 +18,6 @@ describe('generateDefaultReportDefinition', () => {
     expect(definition.fields.map((field) => field.sourceKey)).toEqual(['sku', 'shippedOn', 'quantity', 'price'])
     expect(definition.fields.map((field) => field.displayType)).toEqual(['string', 'date', 'decimal', 'currency'])
     expect(definition.fields.map((field) => field.aggregation)).toEqual(['distinct', 'distinct', 'sum', 'sum'])
-    expect(definition.fields[3].currencySymbol).toBe('$')
     expect(definition.formulas).toEqual([])
     expect(definition.view).toEqual({ orientation: 'horizontal', showTotals: false, isGroupingEnabled: false, expandedLevels: null })
   })
@@ -62,7 +61,7 @@ describe('normalizeReportDefinition', () => {
     }, sourceColumns)
 
     expect(normalized.fields).toEqual([
-      { id: 'a', sourceKey: 'price', label: 'price', displayType: 'currency', aggregation: 'sum', currencySymbol: '$' },
+      { id: 'a', sourceKey: 'price', label: 'price', displayType: 'currency', aggregation: 'sum' },
     ])
     expect(normalized.formulas).toEqual([{ label: 'x', expression: '1' }])
     expect(normalized.view).toEqual({ orientation: 'horizontal', showTotals: false, isGroupingEnabled: false, expandedLevels: null })

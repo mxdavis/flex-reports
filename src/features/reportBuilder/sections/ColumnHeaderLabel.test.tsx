@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { ReportField } from '../../../services/reportDefinition/types'
 import ColumnHeaderLabel from './ColumnHeaderLabel'
 
-const field: ReportField = { id: 'units', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum', currencySymbol: '' }
+const field: ReportField = { id: 'units', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum' }
 
 function renderHeader(warning: string | null) {
   render(<table><thead><tr><ColumnHeaderLabel field={field} warning={warning} /></tr></thead></table>)

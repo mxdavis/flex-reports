@@ -7,6 +7,7 @@ import { DEFAULT_CURRENCY_SYMBOL } from '../../config'
 import { formatCellValue } from '../../../../utils/reportBuilder'
 import { buildSummaryItems } from '../../summaryItems'
 import { getTotalDisplayType } from './fieldTotals'
+import { isBlank, type GetFieldValue } from './pivotLayout'
 
 function buildBaseFormulaContext(row: ReportRow): Record<string, number> {
   const context: Record<string, number> = {}
@@ -14,6 +15,13 @@ function buildBaseFormulaContext(row: ReportRow): Record<string, number> {
     if (typeof value === 'number' && Number.isFinite(value)) context[key] = value
   }
   return context
+}
+
+// In vertical view each data row becomes a column, headed by its first-column value.
+export type VerticalColumn = {
+  key: string
+  headerValue: string
+  row: ReportRow
 }
 
 type UseReportBuilderComputedArgs = {
@@ -138,16 +146,14 @@ export function useReportBuilderComputed({
     }
   }, [formulasByLabel, getFormulaValue, sourceColumnByKey])
 
-  const resolveCurrencySymbol = useCallback((displayType: DisplayType, localCurrencySymbol?: string) => {
-    return displayType === 'currency'
-      ? (currencySymbol.trim() || localCurrencySymbol?.trim() || DEFAULT_CURRENCY_SYMBOL)
-      : undefined
-  }, [currencySymbol])
+  // One currency symbol for the whole report.
+  const formatOptions = useMemo(() => ({ currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL }), [currencySymbol])
 
-  const getMappedValue = useMemo(() => {
+  // A row's value for a column, formatted for display.
+  const getFieldValue = useMemo<GetFieldValue>(() => {
     const cache = new WeakMap<ReportRow, Map<string, string>>()
-    return (row: ReportRow, sourceKey: string, displayType: DisplayType, localCurrencySymbol?: string): string => {
-      const cacheKey = `${sourceKey}\u0000${displayType}\u0000${localCurrencySymbol ?? ''}`
+    return (row, field) => {
+      const cacheKey = `${field.sourceKey}\u0000${field.displayType}`
       let rowCache = cache.get(row)
       if (!rowCache) {
         rowCache = new Map()
@@ -155,12 +161,11 @@ export function useReportBuilderComputed({
       }
       const cached = rowCache.get(cacheKey)
       if (cached !== undefined) return cached
-      const resolvedCurrencySymbol = resolveCurrencySymbol(displayType, localCurrencySymbol)
-      const value = formatCellValue(getMappedRawValue(row, sourceKey), displayType, { currencySymbol: resolvedCurrencySymbol })
+      const value = formatCellValue(getMappedRawValue(row, field.sourceKey), field.displayType, formatOptions)
       rowCache.set(cacheKey, value)
       return value
     }
-  }, [getMappedRawValue, resolveCurrencySymbol])
+  }, [formatOptions, getMappedRawValue])
 
   const getAggregatedFieldValue = useCallback((
     rowsToAggregate: ReportRow[],
@@ -173,8 +178,7 @@ export function useReportBuilderComputed({
       const seen = new Set<string>()
       for (const row of rowsToAggregate) {
         const value = getMappedRawValue(row, sourceKey)
-        if (value === null || value === undefined || value === '') continue
-        if (typeof value === 'number' && Number.isNaN(value)) continue
+        if (isBlank(value)) continue
         seen.add(`${typeof value}:${String(value)}`)
       }
       return seen.size
@@ -206,20 +210,15 @@ export function useReportBuilderComputed({
     const value = getAggregatedFieldValue(rowsToAggregate, field.sourceKey, field.aggregation)
     if (value === null) return ''
     if (Number.isNaN(value)) return 'Invalid formula'
-    const displayType = getTotalDisplayType(field)
-    return formatCellValue(value, displayType, { currencySymbol: resolveCurrencySymbol(displayType, field.currencySymbol) })
-  }, [getAggregatedFieldValue, resolveCurrencySymbol])
+    return formatCellValue(value, getTotalDisplayType(field), formatOptions)
+  }, [formatOptions, getAggregatedFieldValue])
 
-  const verticalColumns = useMemo(() => {
+  const verticalColumns = useMemo<VerticalColumn[]>(() => {
     const firstField = reportFields[0]
     // Only built in vertical view: one column object per row is wasted work otherwise.
-    if (!firstField || isHorizontalTable) return [] as Array<{ key: string, headerValue: string, rows: ReportRow[] }>
-    return rows.map((row) => ({
-      key: row.id,
-      headerValue: getMappedValue(row, firstField.sourceKey, firstField.displayType),
-      rows: [row],
-    }))
-  }, [getMappedValue, isHorizontalTable, rows, reportFields])
+    if (!firstField || isHorizontalTable) return []
+    return rows.map((row) => ({ key: row.id, headerValue: getFieldValue(row, firstField), row }))
+  }, [getFieldValue, isHorizontalTable, rows, reportFields])
 
   const summaryItems = useMemo(
     () => buildSummaryItems({ fields: reportFields, rows, formatFieldTotal }),
@@ -234,7 +233,7 @@ export function useReportBuilderComputed({
     summaryItems,
     verticalColumns,
     getPreferredDisplayType,
-    getMappedValue,
+    getFieldValue,
     getMappedRawValue,
     formatFieldTotal,
     getFieldWarning,

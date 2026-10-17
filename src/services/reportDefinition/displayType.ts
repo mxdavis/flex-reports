@@ -12,7 +12,3 @@ export function getDefaultDisplayType(source: Pick<SourceColumn, 'dataType'>): D
 export function getDefaultAggregation(displayType: DisplayType): AggregationMode {
   return displayType === 'string' || displayType === 'date' ? 'distinct' : 'sum'
 }
-
-export function getDefaultCurrencySymbol(displayType: DisplayType): string {
-  return displayType === 'currency' ? DEFAULT_CURRENCY_SYMBOL : ''
-}

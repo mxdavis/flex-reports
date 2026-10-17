@@ -4,7 +4,7 @@ import type { ReportTableSectionProps } from '../../components/ReportTableSectio
 import type { ReportSettingsSectionProps } from '../../components/ReportSettingsSection'
 import { DEFAULT_SHEET_NAME, EDIT_MODE_JUMP_TARGETS, MAX_VERTICAL_VIEW_ROWS } from '../../config'
 import { useReportBuilder } from '../useReportBuilder'
-import { countOutlineRows, getEffectiveExpandedLevels, type OutlineRowCounts } from './pivotLayout'
+import { countOutlineRows, getEffectiveExpandedLevels, getTreeLayout, type OutlineRowCounts } from './pivotLayout'
 
 function jumpToSection(sectionId: string): void {
   const section = document.getElementById(sectionId)
@@ -46,7 +46,7 @@ export function useReportSettingsProps(): Omit<ReportSettingsSectionProps, 'isCo
 export function useTableSectionProps(): ReportTableSectionProps {
   const { state, computed, isVerticalViewAvailable, maxVisibleRows } = useReportBuilder()
   const { ui, dispatchUi, rows, fields } = state
-  const { getMappedValue } = computed
+  const { getFieldValue } = computed
 
   // Stable callbacks (dispatch never changes), so the memoized table skips
   // re-rendering when unrelated state changes.
@@ -61,10 +61,13 @@ export function useTableSectionProps(): ReportTableSectionProps {
 
   // Large grouped reports open at the deepest outline level that fits within
   // maxVisibleRows. This only changes what's shown; the saved level is kept.
-  const isGroupingActive = ui.isGroupingEnabled && computed.isHorizontalTable
+  // Grouping is decided here once: on (the button) and grouped (there's a
+  // column to group by). Every grouping-dependent piece reads these.
+  const isGroupingOn = ui.isGroupingEnabled && computed.isHorizontalTable
+  const isGrouped = isGroupingOn && getTreeLayout(fields).groupCount > 0
   const outlineRowCounts = useMemo<OutlineRowCounts>(
-    () => (isGroupingActive ? countOutlineRows(rows, fields, getMappedValue) : { byLevel: [], all: rows.length }),
-    [fields, getMappedValue, isGroupingActive, rows],
+    () => (isGrouped ? countOutlineRows(rows, fields, getFieldValue) : { byLevel: [], all: rows.length }),
+    [fields, getFieldValue, isGrouped, rows],
   )
   const expandedLevels = getEffectiveExpandedLevels(ui.expandedLevels, outlineRowCounts, maxVisibleRows)
 
@@ -80,7 +83,8 @@ export function useTableSectionProps(): ReportTableSectionProps {
     isTableFullscreen: ui.isTableFullscreen,
     isHorizontalTable: computed.isHorizontalTable,
     showTotals: ui.showTotals,
-    isGroupingEnabled: ui.isGroupingEnabled,
+    isGroupingOn,
+    isGrouped,
     expandedLevels,
     outlineRowCounts,
     maxVisibleRows,
@@ -92,7 +96,7 @@ export function useTableSectionProps(): ReportTableSectionProps {
     rows,
     verticalColumns: computed.verticalColumns,
     scrollContainerRef: state.tableScrollRef,
-    getMappedValue,
+    getFieldValue,
     getRawValue: computed.getMappedRawValue,
     formatFieldTotal: computed.formatFieldTotal,
     getFieldWarning: computed.getFieldWarning,

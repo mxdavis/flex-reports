@@ -10,7 +10,6 @@ function createField(): ReportField {
     label: 'Hours',
     displayType: 'number',
     aggregation: 'sum',
-    currencySymbol: '',
   }
 }
 

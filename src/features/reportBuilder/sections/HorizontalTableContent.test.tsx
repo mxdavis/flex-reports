@@ -2,29 +2,29 @@ import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
-import { plainMappedValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
+import { plainFieldValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
 import { HorizontalTableContent } from './HorizontalTableContent'
 
 const fields: ReportField[] = [
-  { id: 'region', label: 'Region', sourceKey: 'region', displayType: 'string', aggregation: 'none', currencySymbol: '' },
-  { id: 'store', label: 'Store', sourceKey: 'store', displayType: 'string', aggregation: 'none', currencySymbol: '' },
-  { id: 'units', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum', currencySymbol: '' },
+  { id: 'region', label: 'Region', sourceKey: 'region', displayType: 'string', aggregation: 'none' },
+  { id: 'store', label: 'Store', sourceKey: 'store', displayType: 'string', aggregation: 'none' },
+  { id: 'units', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum' },
 ]
 
 function makeRows(count: number): ReportRow[] {
   return Array.from({ length: count }, (_, index) => ({ id: `r${index}`, region: index % 2 ? 'North' : 'South', store: `Store ${index}`, units: 1 }))
 }
 
-function renderTable(isGroupingEnabled: boolean, rows: ReportRow[] = makeRows(3)) {
+function renderTable(isGrouped: boolean, rows: ReportRow[] = makeRows(3)) {
   return render(
     <table>
       <HorizontalTableContent
         showTotals
-        isGroupingEnabled={isGroupingEnabled}
+        isGrouped={isGrouped}
         fields={fields}
         rows={rows}
         scrollContainerRef={{ current: null }}
-        getMappedValue={plainMappedValue}
+        getFieldValue={plainFieldValue}
         getRawValue={rawValue}
         formatFieldTotal={simpleFieldTotal}
         getFieldWarning={() => null}

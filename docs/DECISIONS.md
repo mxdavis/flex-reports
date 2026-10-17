@@ -57,6 +57,8 @@ Newest at top. Each entry: what we decided and why.
   production build: 50k rows went from 5–9.5 s to render (11.5 s to toggle grouping) to
   under 0.3 s for every interaction. A hand-rolled windowing hook (rows are fixed height)
   avoids a new dependency.
+- **One currency symbol per report.** Columns used to store their own symbol, but the
+  report-wide symbol always won, so the per-column one was dead weight and was removed.
 - **Namespaced CSS classes and IDs (`fr-`).** The builder renders inside host pages, so
   unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
   CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.

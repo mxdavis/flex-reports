@@ -5,7 +5,7 @@ import { rawValue, simpleFieldTotal } from '../../../../test/simpleFieldTotal'
 import { buildTreeRows, compareRawValues, countOutlineRows, getEffectiveExpandedLevels, getGroupKey, getTreeLayout, type TreeRow } from './pivotLayout'
 
 function field(sourceKey: string, displayType: ReportField['displayType'], aggregation: ReportField['aggregation'] = 'none'): ReportField {
-  return { id: sourceKey, label: sourceKey, sourceKey, displayType, aggregation, currencySymbol: '$' }
+  return { id: sourceKey, label: sourceKey, sourceKey, displayType, aggregation }
 }
 
 const teamFields = [field('team', 'string'), field('member', 'string'), field('task', 'string'), field('hours', 'number', 'sum')]
@@ -21,7 +21,7 @@ function build(options: { showTotals?: boolean, collapsed?: string[], rows?: Rep
     rows: options.rows ?? teamRows,
     fields: options.fields ?? teamFields,
     showTotals: options.showTotals ?? true,
-    getMappedValue: (row, sourceKey) => String(row[sourceKey]),
+    getFieldValue: (row, field) => String(row[field.sourceKey]),
     getRawValue: rawValue,
     formatFieldTotal: simpleFieldTotal,
     isGroupExpanded: (_level, groupKey) => !(options.collapsed ?? []).includes(groupKey),
@@ -94,7 +94,7 @@ describe('buildTreeRows', () => {
       rows: [{ id: 'a', price: 1000, region: 'North', units: 1 }, { id: 'b', price: 240, region: 'South', units: 2 }],
       fields: [field('price', 'string'), field('region', 'string'), field('units', 'number')],
       showTotals: false,
-      getMappedValue: (row, sourceKey) => (sourceKey === 'price' ? `$${Number(row.price).toLocaleString('en-US')}.00` : String(row[sourceKey])),
+      getFieldValue: (row, field) => (field.sourceKey === 'price' ? `$${Number(row.price).toLocaleString('en-US')}.00` : String(row[field.sourceKey])),
       getRawValue: rawValue,
       formatFieldTotal: () => '',
       isGroupExpanded: () => true,
@@ -110,7 +110,7 @@ describe('buildTreeRows', () => {
 
 describe('countOutlineRows', () => {
   it('counts the rows shown at each outline level and fully expanded', () => {
-    const counts = countOutlineRows(teamRows, teamFields, (row, sourceKey) => String(row[sourceKey]))
+    const counts = countOutlineRows(teamRows, teamFields, (row, field) => String(row[field.sourceKey]))
 
     // Teams: Blue, Red. Members: Blue›Cy, Red›Ann, Red›Bo. Plus 4 detail rows.
     expect(counts).toEqual({ byLevel: [2, 5], all: 9 })

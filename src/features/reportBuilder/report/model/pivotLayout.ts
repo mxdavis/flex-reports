@@ -1,5 +1,5 @@
 import type { ReportRow } from '../../../../services/adapters'
-import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
+import type { ReportField } from '../../../../services/reportDefinition/types'
 import { isNumericDisplayType, isNumericTotal } from './fieldTotals'
 
 export type TreeCell = {
@@ -21,16 +21,12 @@ export type TreeLayout = {
   labelIndex: number
 }
 
-type GetMappedValue = (
-  row: ReportRow,
-  sourceKey: string,
-  displayType: DisplayType,
-  currencySymbol?: string,
-) => string
+// A row's value for a column, formatted for display.
+export type GetFieldValue = (row: ReportRow, field: ReportField) => string
 
 type GetRawValue = (row: ReportRow, sourceKey: string) => unknown
 
-function isBlank(value: unknown): boolean {
+export function isBlank(value: unknown): boolean {
   return value === null || value === undefined || value === '' || (typeof value === 'number' && Number.isNaN(value))
 }
 
@@ -58,6 +54,11 @@ export function getTreeLayout(fields: ReportField[]): TreeLayout {
   return { groupCount: Math.max(labelIndex, 0), labelIndex }
 }
 
+// The header of the nested label column, e.g. "Person › Client › Task".
+export function joinFieldLabels(fields: ReportField[]): string {
+  return fields.map((field) => field.label).join(' › ')
+}
+
 // Stable id for a group: its value at every level down to its own, so
 // "Alex Rivera > Delta Freight" and "Sam Patel > Delta Freight" differ.
 export function getGroupKey(path: string[]): string {
@@ -68,7 +69,7 @@ type BuildTreeRowsArgs = {
   rows: ReportRow[]
   fields: ReportField[]
   showTotals: boolean
-  getMappedValue: GetMappedValue
+  getFieldValue: GetFieldValue
   getRawValue: GetRawValue
   formatFieldTotal: (rows: ReportRow[], field: ReportField) => string
   isGroupExpanded: (level: number, groupKey: string) => boolean
@@ -78,7 +79,7 @@ export function buildTreeRows({
   rows,
   fields,
   showTotals,
-  getMappedValue,
+  getFieldValue,
   getRawValue,
   formatFieldTotal,
   isGroupExpanded,
@@ -97,10 +98,7 @@ export function buildTreeRows({
     return left - right
   })
   const sortedRows = order.map((index) => rows[index])
-  const mappedAt = (row: ReportRow, column: number) => {
-    const field = fields[column]
-    return getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)
-  }
+  const mappedAt = (row: ReportRow, column: number) => getFieldValue(row, fields[column])
 
   const output: TreeRow[] = []
 
@@ -171,15 +169,14 @@ export type OutlineRowCounts = {
 export function countOutlineRows(
   rows: ReportRow[],
   fields: ReportField[],
-  getMappedValue: GetMappedValue,
+  getFieldValue: GetFieldValue,
 ): OutlineRowCounts {
   const { groupCount } = getTreeLayout(fields)
   const groupsAtLevel = Array.from({ length: groupCount }, () => new Set<string>())
   for (const row of rows) {
     let path = ''
     for (let level = 0; level < groupCount; level += 1) {
-      const field = fields[level]
-      path += `\u0000${getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)}`
+      path += `\u0000${getFieldValue(row, fields[level])}`
       groupsAtLevel[level].add(path)
     }
   }

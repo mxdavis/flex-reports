@@ -5,7 +5,7 @@ import { getSourceChangePatch } from './columnDraft'
 const typeBySource: Record<string, DisplayType> = { region: 'string', store: 'string', price: 'currency', units: 'decimal' }
 
 // A customized currency column: shown as a plain number, averaged.
-const original: ReportField = { id: 'c1', label: 'Price', sourceKey: 'price', displayType: 'number', aggregation: 'avg', currencySymbol: '$' }
+const original: ReportField = { id: 'c1', label: 'Price', sourceKey: 'price', displayType: 'number', aggregation: 'avg' }
 
 function patchFor(nextSourceKey: string, draft: ReportField = original) {
   return getSourceChangePatch({

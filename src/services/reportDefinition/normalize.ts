@@ -3,7 +3,6 @@ import { sortFormulasByLabel } from '../../utils/reportBuilder'
 import {
   DEFAULT_CURRENCY_SYMBOL,
   getDefaultAggregation,
-  getDefaultCurrencySymbol,
   getDefaultDisplayType,
 } from './displayType'
 import {
@@ -41,7 +40,6 @@ export function generateDefaultFields(sourceColumns: SourceColumn[]): ReportFiel
       sourceKey: column.key,
       displayType,
       aggregation: getDefaultAggregation(displayType),
-      currencySymbol: getDefaultCurrencySymbol(displayType),
     }
   })
 }
@@ -81,9 +79,6 @@ function normalizeField(raw: unknown, sourceByKey: Map<string, SourceColumn>): R
     sourceKey,
     displayType,
     aggregation,
-    currencySymbol: typeof raw.currencySymbol === 'string'
-      ? raw.currencySymbol
-      : getDefaultCurrencySymbol(displayType),
   }
 }
 

@@ -1,8 +1,8 @@
 import { useMemo, type RefObject } from 'react'
 import type { ReportRow } from '../../../services/adapters'
-import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
+import type { ReportField } from '../../../services/reportDefinition/types'
 import { isNumericDisplayType, isNumericTotal } from '../report/model/fieldTotals'
-import { buildTreeRows, getTreeLayout } from '../report/model/pivotLayout'
+import { buildTreeRows, getTreeLayout, joinFieldLabels, type GetFieldValue } from '../report/model/pivotLayout'
 import ColumnHeaderLabel from './ColumnHeaderLabel'
 import TreeTableRow from './TreeTableRow'
 import VirtualTableBody from './VirtualTableBody'
@@ -10,11 +10,12 @@ import './HorizontalTableContent.css'
 
 export type HorizontalTableContentProps = {
   showTotals: boolean
-  isGroupingEnabled: boolean
+  // Grouping is on and there's at least one column to group by.
+  isGrouped: boolean
   fields: ReportField[]
   rows: ReportRow[]
   scrollContainerRef: RefObject<HTMLDivElement | null>
-  getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, currencySymbol?: string) => string
+  getFieldValue: GetFieldValue
   getRawValue: (row: ReportRow, sourceKey: string) => unknown
   formatFieldTotal: (rows: ReportRow[], field: ReportField) => string
   getFieldWarning: (field: ReportField) => string | null
@@ -24,38 +25,37 @@ export type HorizontalTableContentProps = {
 
 export function HorizontalTableContent({
   showTotals,
-  isGroupingEnabled,
+  isGrouped,
   fields,
   rows,
   scrollContainerRef,
-  getMappedValue,
+  getFieldValue,
   getRawValue,
   formatFieldTotal,
   getFieldWarning,
   isGroupExpanded,
   onToggleGroup,
 }: HorizontalTableContentProps) {
-  const layout = getTreeLayout(fields)
-  const isGrouped = isGroupingEnabled && layout.groupCount > 0
-
   const treeRows = useMemo(() => (isGrouped
-    ? buildTreeRows({ rows, fields, showTotals, getMappedValue, getRawValue, formatFieldTotal, isGroupExpanded })
-    : []), [fields, formatFieldTotal, getMappedValue, getRawValue, isGroupExpanded, isGrouped, rows, showTotals])
+    ? buildTreeRows({ rows, fields, showTotals, getFieldValue, getRawValue, formatFieldTotal, isGroupExpanded })
+    : []), [fields, formatFieldTotal, getFieldValue, getRawValue, isGroupExpanded, isGrouped, rows, showTotals])
 
-  // Grouped: one label column (the group columns plus the row label, nested),
-  // then the value columns. Ungrouped: every column as-is.
-  const labelFields = isGrouped ? fields.slice(0, layout.labelIndex + 1) : fields.slice(0, 1)
+  // The first column is the label column: grouped, it nests the group columns
+  // and the row-naming column under one header. Every other column is a value.
+  const labelFields = isGrouped ? fields.slice(0, getTreeLayout(fields).labelIndex + 1) : fields.slice(0, 1)
   const valueFields = fields.slice(labelFields.length)
-  const labelWarnings = labelFields.map(getFieldWarning).filter(Boolean)
-  const labelHeaderField = { ...labelFields[0], label: labelFields.map((field) => field.label).join(' › ') }
+  const labelHeader = labelFields.length > 0 && (
+    <ColumnHeaderLabel
+      field={{ ...labelFields[0], label: joinFieldLabels(labelFields) }}
+      warning={labelFields.map(getFieldWarning).filter(Boolean).join(' ') || null}
+    />
+  )
 
   const header = (
     <thead>
       <tr>
-        {isGrouped
-          ? <ColumnHeaderLabel field={labelHeaderField} warning={labelWarnings.join(' ') || null} />
-          : fields.map((field) => <ColumnHeaderLabel key={field.id} field={field} warning={getFieldWarning(field)} />)}
-        {isGrouped && valueFields.map((field) => <ColumnHeaderLabel key={field.id} field={field} warning={getFieldWarning(field)} />)}
+        {labelHeader}
+        {valueFields.map((field) => <ColumnHeaderLabel key={field.id} field={field} warning={getFieldWarning(field)} />)}
       </tr>
     </thead>
   )
@@ -98,7 +98,7 @@ export function HorizontalTableContent({
               key={field.id}
               className={isNumericDisplayType(field.displayType) ? 'fr-numeric-cell' : undefined}
             >
-              {getMappedValue(rows[index], field.sourceKey, field.displayType, field.currencySymbol)}
+              {getFieldValue(rows[index], field)}
             </td>
           ))}
         </tr>

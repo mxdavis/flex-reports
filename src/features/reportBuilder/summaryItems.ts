@@ -2,7 +2,7 @@ import type { ReportRow } from '../../services/adapters'
 import type { ReportField } from '../../services/reportDefinition/types'
 import { getAggregationLabel } from './config'
 
-type SummaryItem = {
+export type SummaryItem = {
   label: string
   value: string
 }

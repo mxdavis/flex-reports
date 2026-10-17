@@ -33,9 +33,9 @@ where it can also vary per row.
   "sheetName": "Inventory",
   "currencySymbol": "$",
   "fields": [
-    { "id": "warehouse", "label": "Warehouse", "sourceKey": "warehouse", "displayType": "string", "aggregation": "distinct", "currencySymbol": "" },
-    { "id": "units", "label": "Units", "sourceKey": "units", "displayType": "number", "aggregation": "sum", "currencySymbol": "" },
-    { "id": "field-1", "label": "Line total", "sourceKey": "lineTotal", "displayType": "currency", "aggregation": "sum", "currencySymbol": "$" }
+    { "id": "warehouse", "label": "Warehouse", "sourceKey": "warehouse", "displayType": "string", "aggregation": "distinct" },
+    { "id": "units", "label": "Units", "sourceKey": "units", "displayType": "number", "aggregation": "sum" },
+    { "id": "field-1", "label": "Line total", "sourceKey": "lineTotal", "displayType": "currency", "aggregation": "sum" }
   ],
   "formulas": [
     { "label": "lineTotal", "expression": "{{units}} * {{price}}" }

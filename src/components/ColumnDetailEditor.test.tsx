@@ -17,7 +17,6 @@ describe('ColumnDetailEditor', () => {
           label: 'Date',
           displayType: 'date',
           aggregation: 'count',
-          currencySymbol: '',
         }}
         columnLabel="COLUMN 1"
         sourceOptions={['workDate', 'hours']}

@@ -19,7 +19,6 @@ const reportFields: ReportField[] = [
     sourceKey: 'workDate',
     displayType: 'date',
     aggregation: 'count',
-    currencySymbol: '',
   },
   {
     id: 'field-clientName',
@@ -27,7 +26,6 @@ const reportFields: ReportField[] = [
     sourceKey: 'clientName',
     displayType: 'string',
     aggregation: 'count',
-    currencySymbol: '',
   },
   {
     id: 'field-originating',
@@ -35,7 +33,6 @@ const reportFields: ReportField[] = [
     sourceKey: 'originatingPersonId',
     displayType: 'string',
     aggregation: 'count',
-    currencySymbol: '',
   },
   {
     id: 'field-rate',
@@ -43,7 +40,6 @@ const reportFields: ReportField[] = [
     sourceKey: 'rate',
     displayType: 'currency',
     aggregation: 'sum',
-    currencySymbol: '$',
   },
 ]
 
@@ -146,12 +142,12 @@ describe('useReportBuilderComputed', () => {
     )
     const row = repeatedValueRows[0]
 
-    expect(result.current.getMappedValue(row, 'rate', 'currency')).toBe('$240.00')
+    expect(result.current.getFieldValue(row, rate)).toBe('$240.00')
     expect(result.current.getMappedRawValue(row, 'doubleRate')).toBe(480)
 
     rerender({ currencySymbol: '€', formulas: [{ label: 'doubleRate', expression: '{{rate}} * 3' }] })
 
-    expect(result.current.getMappedValue(row, 'rate', 'currency')).toBe('€240.00')
+    expect(result.current.getFieldValue(row, rate)).toBe('€240.00')
     expect(result.current.getMappedRawValue(row, 'doubleRate')).toBe(720)
     expect(result.current.formatFieldTotal(repeatedValueRows, rate)).toBe('€480.00')
   })

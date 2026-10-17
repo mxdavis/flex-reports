@@ -1,7 +1,6 @@
 import { AGGREGATION_OPTIONS, DISPLAY_TYPE_OPTIONS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS, getDefaultAggregation } from '../../config'
 import type { MappingPanelSectionProps } from '../../components/MappingPanelSection'
 import type { AggregationMode, DisplayType, ReportField } from '../../../../services/reportDefinition/types'
-import { DEFAULT_CURRENCY_SYMBOL, getDefaultCurrencySymbol } from '../../../../services/reportDefinition/displayType'
 import { getNextFieldId } from '../../../../utils/reportBuilder'
 import { useReportBuilder } from '../useReportBuilder'
 import { getSourceChangePatch } from './columnDraft'
@@ -34,9 +33,6 @@ export function useMappingPanelProps(): MappingPanelProps {
       label: editingField.label.trim() || field.label,
       displayType: editingField.displayType,
       aggregation: editingField.aggregation,
-      currencySymbol: editingField.displayType === 'currency'
-        ? (editingField.currencySymbol || field.currencySymbol || DEFAULT_CURRENCY_SYMBOL)
-        : '',
     })))
     stopEditingField()
   }
@@ -74,7 +70,6 @@ export function useMappingPanelProps(): MappingPanelProps {
       sourceKey,
       displayType,
       aggregation: getDefaultAggregation(displayType),
-      currencySymbol: getDefaultCurrencySymbol(displayType),
     }
   }
 
@@ -95,7 +90,6 @@ export function useMappingPanelProps(): MappingPanelProps {
         id: getNextFieldId(previous.map((field) => field.id)),
         label: draft.label.trim() || sourceKey,
         sourceKey,
-        currencySymbol: getDefaultCurrencySymbol(draft.displayType),
       })
       return next
     })

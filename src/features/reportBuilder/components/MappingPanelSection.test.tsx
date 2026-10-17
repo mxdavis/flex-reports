@@ -10,7 +10,6 @@ const fields: ReportField[] = [
     sourceKey: 'workDate',
     displayType: 'date',
     aggregation: 'count',
-    currencySymbol: '',
   },
 ]
 

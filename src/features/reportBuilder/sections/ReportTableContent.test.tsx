@@ -2,12 +2,12 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
-import { plainMappedValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
+import { plainFieldValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
 import { getGroupKey } from '../report/model/pivotLayout'
 import ReportTableContent, { type ReportTableContentProps } from './ReportTableContent'
 
 function field(id: string, label: string, aggregation: ReportField['aggregation'], displayType: ReportField['displayType'] = 'number'): ReportField {
-  return { id, label, sourceKey: id, displayType, aggregation, currencySymbol: '' }
+  return { id, label, sourceKey: id, displayType, aggregation }
 }
 
 // Deliberately not billing data: the table must work for any shape.
@@ -30,12 +30,12 @@ function renderTable(overrides: Partial<ReportTableContentProps> = {}) {
   const props: ReportTableContentProps = {
     isHorizontalTable: true,
     showTotals: true,
-    isGroupingEnabled: true,
+    isGrouped: true,
     fields: groupedFields,
     rows: groupedRows,
     verticalColumns: [],
     scrollContainerRef: { current: null },
-    getMappedValue: plainMappedValue,
+    getFieldValue: plainFieldValue,
     getRawValue: rawValue,
     formatFieldTotal: simpleFieldTotal,
     getFieldWarning: () => null,
@@ -53,7 +53,7 @@ function rowCells(rowHeaderName: string): string[] {
 
 describe('ReportTableContent', () => {
   it('renders plain rows with a Total footer when grouping is off', () => {
-    renderTable({ isGroupingEnabled: false })
+    renderTable({ isGrouped: false })
 
     expect(screen.getByRole('columnheader', { name: 'Region' })).toBeInTheDocument()
     expect(screen.getAllByRole('cell', { name: 'North' })).toHaveLength(3)
@@ -115,7 +115,7 @@ describe('ReportTableContent', () => {
     renderTable({
       isHorizontalTable: false,
       fields: verticalFields,
-      verticalColumns: groupedRows.map((row) => ({ key: row.id, headerValue: String(row.store), rows: [row] })),
+      verticalColumns: groupedRows.map((row) => ({ key: row.id, headerValue: String(row.store), row })),
     })
 
     expect(screen.getAllByRole('columnheader', { name: 'Ames' })).toHaveLength(2)

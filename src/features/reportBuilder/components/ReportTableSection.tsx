@@ -2,13 +2,15 @@ import { useEffect } from 'react'
 import SideArrowIcon from '../../../shared/icons/SideArrowIcon'
 import UpDownArrowIcon from '../../../shared/icons/UpDownArrowIcon'
 import HintedButton from '../../../shared/components/HintedButton'
-import { getTreeLayout, type OutlineRowCounts } from '../report/model/pivotLayout'
+import { getTreeLayout, joinFieldLabels, type OutlineRowCounts } from '../report/model/pivotLayout'
 import ReportTableContent, { type ReportTableContentProps } from '../sections/ReportTableContent'
 import './ReportTableSection.css'
 
 export type ReportTableSectionProps = ReportTableContentProps & {
   sheetName: string
   isTableFullscreen: boolean
+  // The Grouping button is pressed (grouping is on, in horizontal view).
+  isGroupingOn: boolean
   // The level actually shown, after the maxVisibleRows cap.
   expandedLevels: number | null
   outlineRowCounts: OutlineRowCounts
@@ -29,6 +31,7 @@ const ALL_ROWS = 'all'
 function ReportTableSection({
   sheetName,
   isTableFullscreen,
+  isGroupingOn,
   expandedLevels,
   outlineRowCounts,
   maxVisibleRows,
@@ -43,8 +46,7 @@ function ReportTableSection({
   onToggleFullscreen,
   ...tableProps
 }: ReportTableSectionProps) {
-  const { isHorizontalTable, isGroupingEnabled, showTotals, fields } = tableProps
-  const isGroupingActive = isHorizontalTable && isGroupingEnabled
+  const { isHorizontalTable, isGrouped, showTotals, fields } = tableProps
   // Outline levels, like Excel's 1/2/3 buttons: show groups down to a column.
   const groupLevelCount = getTreeLayout(fields).groupCount
   // Levels that would show more than maxVisibleRows rows can't be picked.
@@ -52,7 +54,7 @@ function ReportTableSection({
   const outlineOptions = [
     ...Array.from({ length: groupLevelCount }, (_, level) => ({
       value: String(level),
-      label: fields.slice(0, level + 1).map((field) => field.label).join(' › '),
+      label: joinFieldLabels(fields.slice(0, level + 1)),
       rowCount: outlineRowCounts.byLevel[level] ?? 0,
     })),
     { value: ALL_ROWS, label: 'All rows', rowCount: outlineRowCounts.all },
@@ -61,7 +63,8 @@ function ReportTableSection({
     ? 'Tip: groups by each column from the left. The last text column before your numbers names each row, '
       + 'and number columns are values. Set a column\'s Total type in edit mode to choose how it adds up.'
     : 'Group rows, with totals for each group.'
-  const outlineValue = expandedLevels === null || expandedLevels >= groupLevelCount ? ALL_ROWS : String(expandedLevels)
+  // expandedLevels arrives normalized: null means everything is open.
+  const outlineValue = expandedLevels === null ? ALL_ROWS : String(expandedLevels)
 
   useEffect(() => {
     if (!isTableFullscreen) {
@@ -91,14 +94,14 @@ function ReportTableSection({
             Totals
           </HintedButton>
           <HintedButton
-            isPressed={isGroupingActive}
+            isPressed={isGroupingOn}
             onClick={onToggleGrouping}
             title={groupingTitle}
             disabledReason={isHorizontalTable ? undefined : 'Switch to horizontal view to use grouping.'}
           >
             Grouping
           </HintedButton>
-          {isGroupingActive && groupLevelCount > 0 && (
+          {isGrouped && (
             <select
               aria-label="Show rows"
               value={outlineValue}
@@ -134,7 +137,7 @@ function ReportTableSection({
           </button>
         </div>
       </div>
-      {isGroupingActive && isOutlineCapped && (
+      {isGrouped && isOutlineCapped && (
         <p className="fr-outline-note" role="note">
           This report has {formatCount(outlineRowCounts.all)} rows fully expanded, more than
           the {formatCount(maxVisibleRows)}-row limit, so it opens

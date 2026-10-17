@@ -14,8 +14,8 @@ export function simpleFieldTotal(rows: ReportRow[], field: ReportField): string 
   return String(field.aggregation === 'avg' ? sum / numbers.length : sum)
 }
 
-export function plainMappedValue(row: ReportRow, sourceKey: string): string {
-  return String(row[sourceKey] ?? '')
+export function plainFieldValue(row: ReportRow, field: ReportField): string {
+  return String(row[field.sourceKey] ?? '')
 }
 
 export function rawValue(row: ReportRow, sourceKey: string): unknown {

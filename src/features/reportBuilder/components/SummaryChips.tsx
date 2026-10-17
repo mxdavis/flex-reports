@@ -1,9 +1,5 @@
+import type { SummaryItem } from '../summaryItems'
 import './SummaryChips.css'
-
-export type SummaryItem = {
-  label: string
-  value: string
-}
 
 type SummaryChipsProps = {
   items: SummaryItem[]

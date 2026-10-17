@@ -20,7 +20,6 @@ export type ReportField = {
   sourceKey: string
   displayType: DisplayType
   aggregation: AggregationMode
-  currencySymbol: string
 }
 
 // The default view every viewer lands on.

@@ -6,7 +6,7 @@ const initial: UiState = createInitialUiState({
   initialEditMode: true,
   initialView: { orientation: 'horizontal', showTotals: false, isGroupingEnabled: true, expandedLevels: 1 },
 })
-const field: ReportField = { id: 'f1', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum', currencySymbol: '' }
+const field: ReportField = { id: 'f1', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum' }
 
 describe('uiReducer', () => {
   it('starts from the saved view', () => {

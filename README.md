@@ -138,9 +138,9 @@ This is the only thing you store. Save it as-is:
   "sheetName": "Sales",
   "currencySymbol": "$",
   "fields": [
-    { "id": "region", "label": "Region", "sourceKey": "region", "displayType": "string", "aggregation": "none", "currencySymbol": "" },
-    { "id": "units", "label": "Units", "sourceKey": "units", "displayType": "number", "aggregation": "sum", "currencySymbol": "" },
-    { "id": "field-1", "label": "Revenue", "sourceKey": "revenue", "displayType": "currency", "aggregation": "sum", "currencySymbol": "$" }
+    { "id": "region", "label": "Region", "sourceKey": "region", "displayType": "string", "aggregation": "none" },
+    { "id": "units", "label": "Units", "sourceKey": "units", "displayType": "number", "aggregation": "sum" },
+    { "id": "field-1", "label": "Revenue", "sourceKey": "revenue", "displayType": "currency", "aggregation": "sum" }
   ],
   "formulas": [
     { "label": "revenue", "expression": "{{units}} * {{price}}" }

@@ -2,13 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
-import { plainMappedValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
+import { plainFieldValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
 import ReportTableSection, { type ReportTableSectionProps } from './ReportTableSection'
 
 const fields: ReportField[] = [
-  { id: 'region', label: 'Region', sourceKey: 'region', displayType: 'string', aggregation: 'distinct', currencySymbol: '' },
-  { id: 'store', label: 'Store', sourceKey: 'store', displayType: 'string', aggregation: 'count', currencySymbol: '' },
-  { id: 'units', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum', currencySymbol: '' },
+  { id: 'region', label: 'Region', sourceKey: 'region', displayType: 'string', aggregation: 'distinct' },
+  { id: 'store', label: 'Store', sourceKey: 'store', displayType: 'string', aggregation: 'count' },
+  { id: 'units', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum' },
 ]
 
 const rows: ReportRow[] = [{ id: 'row1', region: 'North', store: 'Ames', units: 3 }]
@@ -19,7 +19,7 @@ function renderSection(overrides: Partial<ReportTableSectionProps> = {}) {
     isTableFullscreen: false,
     isHorizontalTable: true,
     showTotals: false,
-    isGroupingEnabled: false,
+    isGroupingOn: false, isGrouped: false,
     expandedLevels: null,
     outlineRowCounts: { byLevel: [2], all: 5 },
     maxVisibleRows: 1000,
@@ -36,7 +36,7 @@ function renderSection(overrides: Partial<ReportTableSectionProps> = {}) {
     onExpandedLevelsChange: () => undefined,
     onToggleOrientation: () => undefined,
     onToggleFullscreen: () => undefined,
-    getMappedValue: plainMappedValue,
+    getFieldValue: plainFieldValue,
     getRawValue: rawValue,
     formatFieldTotal: simpleFieldTotal,
     getFieldWarning: () => null,
@@ -82,7 +82,7 @@ describe('ReportTableSection', () => {
     const { rerenderWith } = renderSection({ onExpandedLevelsChange })
     expect(screen.queryByRole('combobox', { name: 'Show rows' })).toBeNull()
 
-    rerenderWith({ isGroupingEnabled: true })
+    rerenderWith({ isGroupingOn: true, isGrouped: true })
     const outline = screen.getByRole('combobox', { name: 'Show rows' })
     const options = Array.from(outline.querySelectorAll('option')).map((option) => option.textContent)
     // Region groups; Store names each row, so it isn't an outline level.
@@ -97,7 +97,7 @@ describe('ReportTableSection', () => {
 
   it('disables levels over the row limit and explains when the report opened capped', () => {
     renderSection({
-      isGroupingEnabled: true,
+      isGroupingOn: true, isGrouped: true,
       expandedLevels: 0,
       outlineRowCounts: { byLevel: [400], all: 25000 },
       isOutlineCapped: true,
@@ -110,16 +110,10 @@ describe('ReportTableSection', () => {
   })
 
   it('shows no limit note when the report fits', () => {
-    renderSection({ isGroupingEnabled: true })
+    renderSection({ isGroupingOn: true, isGrouped: true })
 
     expect(screen.queryByRole('note')).toBeNull()
     expect(screen.getByRole('option', { name: 'All rows' })).toBeEnabled()
-  })
-
-  it('treats an outline level past the last group as all rows', () => {
-    renderSection({ isGroupingEnabled: true, expandedLevels: 5 })
-
-    expect(screen.getByRole('combobox', { name: 'Show rows' })).toHaveValue('all')
   })
 
   it('locks body scroll while fullscreen is active and releases it on unmount', () => {
