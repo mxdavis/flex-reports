@@ -63,6 +63,16 @@ Newest at top. Each entry: what we decided and why.
   unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
   CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.
   CSS modules were the alternative; the prefix keeps plain CSS and readable class names.
+- **Untouched default columns follow the schema.** Columns were built once at mount, so a
+  host that mounted with empty rows (or an empty schema) while loading was stuck with zero
+  columns. Without a saved definition, the defaults are rebuilt when the schema changes,
+  if nobody has edited them, and that becomes the "nothing to save" state. The schema is
+  compared by content, so an inline `schema={[...]}` doesn't recompute on every render.
+- **Reports from a newer version open read-only.** Resetting an unknown version to
+  defaults let an editor on an older deploy click Save and overwrite the newer report
+  (and normalizing drops fields it doesn't know). Now a higher `version` is read best
+  effort with Save turned off and a note for editors; only an unreadable version falls
+  back to defaults. Real upgrades will be a migration chain in `normalize`.
 - **One set of definition rules for the editor and for loading** (`reportDefinition/rules.ts`).
   Hosts can build definitions on their servers, so `normalizeReportDefinition` repairs
   anything the editor would reject (too many columns or formulas, repeated column ids,

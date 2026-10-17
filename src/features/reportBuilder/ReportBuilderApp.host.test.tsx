@@ -344,6 +344,58 @@ describe('ReportBuilderApp host mode', () => {
     expect(screen.queryByText(/newer version of Flex Reports/)).toBeNull()
   })
 
+  describe('when mounted before the data arrives', () => {
+    it('builds the default columns once rows arrive, without marking the report unsaved', () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      const { rerender } = render(<ReportBuilderApp rows={[]} onSave={vi.fn()} initialEditMode />)
+      expect(screen.queryAllByRole('columnheader')).toHaveLength(0)
+
+      rerender(<ReportBuilderApp rows={rows} onSave={vi.fn()} initialEditMode />)
+
+      const table = screen.getByRole('table')
+      expect(within(table).getByRole('columnheader', { name: 'warehouse' })).toBeInTheDocument()
+      expect(within(table).getByText('Austin')).toBeInTheDocument()
+      expect(getSaveButton()).toBeDisabled()
+    })
+
+    it('builds the default columns when an empty schema is filled in', () => {
+      const { rerender } = render(<ReportBuilderApp schema={[]} rows={[]} onSave={vi.fn()} />)
+
+      rerender(<ReportBuilderApp schema={schema} rows={rows} onSave={vi.fn()} />)
+
+      expect(within(screen.getByRole('table')).getByRole('columnheader', { name: 'Warehouse' })).toBeInTheDocument()
+    })
+
+    it('never replaces a saved definition\'s columns', () => {
+      const { rerender } = render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} />)
+
+      rerender(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={savedDefinition} onSave={vi.fn()} />)
+
+      expect(screen.queryByRole('columnheader', { name: 'Region' })).toBeNull()
+    })
+
+    it('keeps columns the user already changed', async () => {
+      const user = userEvent.setup()
+      const { rerender } = render(<ReportBuilderApp schema={schema} rows={rows} onSave={vi.fn()} initialEditMode />)
+      await user.click(screen.getAllByRole('button', { name: 'Remove' })[1])
+
+      rerender(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} onSave={vi.fn()} initialEditMode />)
+
+      expect(screen.queryByRole('columnheader', { name: 'Region' })).toBeNull()
+    })
+
+    it('ignores a new schema array with the same content', async () => {
+      const user = userEvent.setup()
+      const { rerender } = render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+      await renameSheet(user, 'Stock')
+
+      rerender(<ReportBuilderApp schema={schema.map((field) => ({ ...field }))} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+
+      expect(screen.getByRole('heading', { name: 'Stock' })).toBeInTheDocument()
+      expect(getSaveButton()).toBeEnabled()
+    })
+  })
+
   it('infers columns and logs when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     render(<ReportBuilderApp rows={rows} role="viewer" />)

@@ -4,7 +4,9 @@ import type { ReportDefinition } from '../../../../services/reportDefinition/typ
 
 type UseReportSaveArgs = {
   definition: ReportDefinition
-  initialDefinition: ReportDefinition
+  // The definition as last loaded; when it changes (default columns rebuilt
+  // for a new schema), it becomes the new "nothing to save" state.
+  baseline: ReportDefinition
   canSave: boolean
   isSandbox: boolean
   onSave?: (definition: ReportDefinition) => void | Promise<void>
@@ -16,8 +18,14 @@ function getErrorMessage(error: unknown): string {
 
 // Explicit save: edits stay local until Save, so half-finished changes never
 // reach everyone viewing the report. The last saved definition is the baseline.
-export function useReportSave({ definition, initialDefinition, canSave, isSandbox, onSave }: UseReportSaveArgs) {
-  const [savedJson, setSavedJson] = useState(() => JSON.stringify(initialDefinition))
+export function useReportSave({ definition, baseline, canSave, isSandbox, onSave }: UseReportSaveArgs) {
+  const baselineJson = JSON.stringify(baseline)
+  const [savedJson, setSavedJson] = useState(baselineJson)
+  const [trackedBaselineJson, setTrackedBaselineJson] = useState(baselineJson)
+  if (baselineJson !== trackedBaselineJson) {
+    setTrackedBaselineJson(baselineJson)
+    setSavedJson(baselineJson)
+  }
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const currentJson = JSON.stringify(definition)

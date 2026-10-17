@@ -204,6 +204,10 @@ whole report:
 Everyone who opens the report starts from that saved view. Groups opened or closed by
 hand aren't saved.
 
+If a report was saved by a newer version of Flex Reports than the one you're using,
+it opens read-only: Save is turned off and editors see a note saying why, so the newer
+report can't be overwritten.
+
 Nothing saves automatically. If you try to leave the page with unsaved changes, the
 browser asks you to confirm. If saving fails, the error appears next to the button and
 your changes stay, so you can try again.

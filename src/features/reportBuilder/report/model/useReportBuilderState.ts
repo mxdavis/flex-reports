@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { ReportFormula, SandboxData } from '../../../../services/adapters'
-import { isFromNewerVersion, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
+import type { ReportFormula, SandboxData, SchemaField } from '../../../../services/adapters'
+import { generateDefaultReportDefinition, isFromNewerVersion, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
 import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
   REPORT_DEFINITION_VERSION,
@@ -29,18 +29,37 @@ export function useReportBuilderState({
   initialEditMode,
   sandboxData,
 }: ReportBuilderStateArgs) {
+  // The schema is compared by content, so a host passing an inline array
+  // doesn't make every render recompute the report.
+  const schemaKey = hostSchema ? JSON.stringify(hostSchema) : ''
+  const stableSchema = useMemo(() => (schemaKey ? JSON.parse(schemaKey) as SchemaField[] : undefined), [schemaKey])
   const source = useMemo(
-    () => resolveReportSource(hostRows, hostSchema, sandboxData),
-    [hostRows, hostSchema, sandboxData],
+    () => resolveReportSource(hostRows, stableSchema, sandboxData),
+    [hostRows, stableSchema, sandboxData],
   )
   const { rows, isSandbox } = source
   const sourceColumns: SourceColumn[] = source.schema
 
-  const [initialDefinition] = useState<ReportDefinition>(() => (isSandbox
+  const [initialDefinition, setInitialDefinition] = useState<ReportDefinition>(() => (isSandbox
     ? loadSandboxDefinition(sourceColumns, source.seedFormulas)
     : normalizeReportDefinition(reportDefinition, sourceColumns)))
 
   const [fields, setFields] = useState<ReportField[]>(initialDefinition.fields)
+
+  // Without a saved definition, the columns are defaults for the schema. If the
+  // schema changes while they're untouched (e.g. mounted with empty rows while
+  // loading), rebuild them for the new schema and treat that as the starting point.
+  const columnsKey = sourceColumns.map((column) => `${column.key}:${column.dataType}`).join('|')
+  const [defaultsColumnsKey, setDefaultsColumnsKey] = useState(columnsKey)
+  if (columnsKey !== defaultsColumnsKey) {
+    setDefaultsColumnsKey(columnsKey)
+    const usesDefaults = !isSandbox && reportDefinition === undefined
+    if (usesDefaults && JSON.stringify(fields) === JSON.stringify(initialDefinition.fields)) {
+      const defaultFields = generateDefaultReportDefinition(sourceColumns).fields
+      setFields(defaultFields)
+      setInitialDefinition((previous) => ({ ...previous, fields: defaultFields }))
+    }
+  }
   const [formulas, setFormulas] = useState<ReportFormula[]>(initialDefinition.formulas)
   const [sheetName, setSheetName] = useState(initialDefinition.sheetName)
   const [currencySymbol, setCurrencySymbol] = useState(initialDefinition.currencySymbol)
@@ -92,7 +111,7 @@ export function useReportBuilderState({
     },
   }), [currencySymbol, fields, formulas, sheetName, ui.expandedLevels, ui.isGroupingEnabled, ui.showTotals, ui.tableOrientation])
 
-  const saveState = useReportSave({ definition, initialDefinition, canSave, isSandbox, onSave })
+  const saveState = useReportSave({ definition, baseline: initialDefinition, canSave, isSandbox, onSave })
 
   const tableScrollRef = useRef<HTMLDivElement | null>(null)
 

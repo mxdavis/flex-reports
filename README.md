@@ -91,7 +91,9 @@ If you leave `schema` out, fields are worked out from the first row, and a warni
 logged to the console. Passing a schema gives you proper labels and formats.
 
 `rows` and `schema` can change at any time, for example after a refetch, and the table
-updates.
+updates. Passing `schema` inline is fine: it's compared by content. If you don't pass a
+`reportDefinition`, the default columns are rebuilt whenever the schema changes (say, you
+mounted with empty rows while loading), as long as nobody has edited them yet.
 
 ### 2. Save the report
 
@@ -158,6 +160,7 @@ This is the only thing you store. Save it as-is:
 | `fields[].aggregation` | How the column totals: `'none' \| 'sum' \| 'avg' \| 'count' \| 'distinct'` |
 | `formulas` | Per-row calculations. See [Formulas](docs/FUNCTIONALITY.md#formulas). |
 | `view` | The default view everyone opens. |
+| `version` | The format version (currently `1`). A definition from a newer version of Flex Reports opens read-only, with Save turned off, so an older copy of the component can't overwrite it. An unreadable version falls back to defaults. |
 | `view.expandedLevels` | How many grouping levels start open: `0` shows only the first column's groups, `null` opens everything. |
 
 If a column's `sourceKey` is no longer in your schema, the column renders blank, editors
