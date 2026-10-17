@@ -1,6 +1,6 @@
 import type { ReportRow } from '../../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
-import type { AggregateMode } from '../../types'
+import { isNumericDisplayType, isNumericTotal } from './fieldTotals'
 
 // A single rendered cell in the nested pivot output. Only cells that are
 // actually rendered are present; cells covered by a rowSpan that began higher in
@@ -13,10 +13,13 @@ export type PivotCell = {
   rowSpan: number
   isNumeric: boolean
   emphasis: boolean
+  // Present on grouping-value cells: the group can be expanded or collapsed.
+  toggle?: { groupKey: string, isExpanded: boolean }
 }
 
 export type PivotRenderRow = {
   key: string
+  kind: 'detail' | 'subtotal' | 'collapsed'
   cells: PivotCell[]
 }
 
@@ -27,55 +30,73 @@ type GetMappedValue = (
   currencySymbol?: string,
 ) => string
 
-type GetAggregatedFieldValue = (
-  rowsToAggregate: ReportRow[],
-  sourceKey: string,
-  mode: AggregateMode,
-) => number | null
+type GetRawValue = (row: ReportRow, sourceKey: string) => unknown
 
-type FormatValue = (value: number | null, displayType: DisplayType, currencySymbol?: string) => string
+function isBlank(value: unknown): boolean {
+  return value === null || value === undefined || value === '' || (typeof value === 'number' && Number.isNaN(value))
+}
+
+// Sort on the underlying value, not the formatted text, so $1,000 sorts after
+// $240 and dates sort chronologically. Blanks go last.
+export function compareRawValues(left: unknown, right: unknown): number {
+  if (isBlank(left) || isBlank(right)) return Number(isBlank(left)) - Number(isBlank(right))
+  if (left instanceof Date && right instanceof Date) return left.getTime() - right.getTime()
+  if (typeof left === 'number' && typeof right === 'number') return left - right
+  return String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: 'base' })
+}
 
 type BuildPivotRenderRowsArgs = {
   previewRows: ReportRow[]
   fields: ReportField[]
-  aggregateMode: AggregateMode
   showTotals: boolean
   getMappedValue: GetMappedValue
-  getAggregatedFieldValue: GetAggregatedFieldValue
-  formatValue: FormatValue
-  isNumericDisplayType: (displayType: DisplayType) => boolean
+  getRawValue: GetRawValue
+  formatFieldTotal: (rows: ReportRow[], field: ReportField) => string
+  isGroupExpanded: (level: number, groupKey: string) => boolean
 }
 
-// Grouping rule: the leftmost columns nest left-to-right. Every column except
-// the last acts as a grouping level; the last column holds the leaf detail
-// value. A subtotal row is emitted whenever a grouping level closes, so the
-// aggregate (sum / avg / count / distinct count) is shown for every subgroup —
-// not just the top-level group. Grouping-value cells use rowSpan so repeated
-// parent values render once, spreadsheet-style, and their span covers nested
-// subtotal rows but stops before the level's own subtotal row.
+// Grouping nests left to right and stops at the first number column, so
+// measures (hours, prices, totals) stay values instead of becoming groups.
+// With no number columns, every column but the last is a group.
+export function getGroupLevelCount(fields: ReportField[]): number {
+  const firstNumericColumn = fields.findIndex((field) => isNumericDisplayType(field.displayType))
+  return firstNumericColumn === -1 ? Math.max(fields.length - 1, 0) : firstNumericColumn
+}
+
+// Stable id for a group: its value at every level down to its own, so
+// "Alex Rivera > Delta Freight" and "Sam Patel > Delta Freight" differ.
+export function getGroupKey(path: string[]): string {
+  return JSON.stringify(path)
+}
+
+// Grouping rule: the leading columns nest left-to-right (see
+// getGroupLevelCount); the remaining columns are shown per row. When totals are on, every group gets a total row, using each
+// column's own aggregation. Grouping-value cells use rowSpan so repeated
+// parent values render once, spreadsheet-style; their span covers nested
+// total rows but stops before the group's own total row. A collapsed group
+// renders as a single row: its value plus its totals.
 export function buildPivotRenderRows({
   previewRows,
   fields,
-  aggregateMode,
   showTotals,
   getMappedValue,
-  getAggregatedFieldValue,
-  formatValue,
-  isNumericDisplayType,
+  getRawValue,
+  formatFieldTotal,
+  isGroupExpanded,
 }: BuildPivotRenderRowsArgs): PivotRenderRow[] {
-  if (fields.length < 2 || previewRows.length === 0) return []
-
-  const lastGroupLevel = fields.length - 2
-  const leafColumn = fields.length - 1
+  const groupLevelCount = getGroupLevelCount(fields)
+  if (groupLevelCount === 0 || previewRows.length === 0) return []
 
   const mapped = previewRows.map((row) =>
     fields.map((field) => getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)),
   )
 
+  const raw = previewRows.map((row) => fields.map((field) => getRawValue(row, field.sourceKey)))
+
   const order = previewRows.map((_, index) => index).sort((left, right) => {
     for (let column = 0; column < fields.length; column += 1) {
-      if (mapped[left][column] < mapped[right][column]) return -1
-      if (mapped[left][column] > mapped[right][column]) return 1
+      const comparison = compareRawValues(raw[left][column], raw[right][column])
+      if (comparison !== 0) return comparison
     }
     return 0
   })
@@ -83,76 +104,66 @@ export function buildPivotRenderRows({
   const sortedRows = order.map((index) => previewRows[index])
   const sortedMapped = order.map((index) => mapped[index])
 
-  const aggregateSummaryLabel = aggregateMode === 'avg' ? 'Average' : 'Total'
-  const aggregateDisplayType = (field: ReportField): DisplayType => {
-    return aggregateMode === 'count' || aggregateMode === 'distinct' ? 'number' : field.displayType
-  }
-
-  const buildSubtotalLabel = (value: string, rowCount: number): string => {
-    if (aggregateMode === 'count') return `${value} Count Total ${rowCount}`
-    if (aggregateMode === 'distinct') return `${value} DISTINCT COUNT`
-    return `${value} ${aggregateSummaryLabel}`
-  }
-
-  const buildSubtotalRow = (level: number, value: string, indices: number[]): PivotRenderRow => {
+  const buildTotalCells = (level: number, indices: number[]): PivotCell[] => {
     const blockRows = indices.map((index) => sortedRows[index])
-    const cells: PivotCell[] = [{
-      columnIndex: level,
-      tag: 'th',
-      scope: 'row',
-      value: buildSubtotalLabel(value, indices.length),
-      rowSpan: 1,
-      isNumeric: false,
-      emphasis: true,
-    }]
-
+    const cells: PivotCell[] = []
     for (let column = level + 1; column < fields.length; column += 1) {
       const field = fields[column]
-      const isNumeric = aggregateMode === 'count'
-        || aggregateMode === 'distinct'
-        || isNumericDisplayType(field.displayType)
-      const cellValue = aggregateMode === 'count'
-        ? ''
-        : formatValue(
-          getAggregatedFieldValue(blockRows, field.sourceKey, aggregateMode),
-          aggregateDisplayType(field),
-          field.currencySymbol,
-        )
-      cells.push({ columnIndex: column, tag: 'td', value: cellValue, rowSpan: 1, isNumeric, emphasis: true })
-    }
-
-    return { key: `subtotal-${level}-${indices[0]}-${value}`, cells }
-  }
-
-  const buildLeafRows = (indices: number[]): PivotRenderRow[] => {
-    const rows: PivotRenderRow[] = []
-    const isNumeric = isNumericDisplayType(fields[leafColumn].displayType)
-    let cursor = 0
-    while (cursor < indices.length) {
-      const value = sortedMapped[indices[cursor]][leafColumn]
-      let span = 1
-      while (
-        cursor + span < indices.length
-        && sortedMapped[indices[cursor + span]][leafColumn] === value
-      ) {
-        span += 1
-      }
-
-      rows.push({
-        key: `leaf-${sortedRows[indices[cursor]].id}`,
-        cells: [{ columnIndex: leafColumn, tag: 'td', value, rowSpan: span, isNumeric, emphasis: false }],
+      cells.push({
+        columnIndex: column,
+        tag: 'td',
+        value: formatFieldTotal(blockRows, field),
+        rowSpan: 1,
+        isNumeric: isNumericTotal(field),
+        emphasis: true,
       })
-      for (let offset = 1; offset < span; offset += 1) {
-        rows.push({ key: `leaf-${sortedRows[indices[cursor + offset]].id}`, cells: [] })
-      }
-      cursor += span
     }
-    return rows
+    return cells
   }
 
-  const process = (indices: number[], level: number): PivotRenderRow[] => {
-    if (level > lastGroupLevel) {
-      return buildLeafRows(indices)
+  const buildSubtotalRow = (level: number, value: string, groupKey: string, indices: number[]): PivotRenderRow => ({
+    key: `subtotal-${groupKey}`,
+    kind: 'subtotal',
+    cells: [
+      { columnIndex: level, tag: 'th', scope: 'row', value: `${value} Total`, rowSpan: 1, isNumeric: false, emphasis: true },
+      ...buildTotalCells(level, indices),
+    ],
+  })
+
+  const buildCollapsedRow = (level: number, value: string, groupKey: string, indices: number[]): PivotRenderRow => ({
+    key: `collapsed-${groupKey}`,
+    kind: 'collapsed',
+    cells: [
+      {
+        columnIndex: level,
+        tag: 'th',
+        scope: 'row',
+        value,
+        rowSpan: 1,
+        isNumeric: false,
+        emphasis: true,
+        toggle: { groupKey, isExpanded: false },
+      },
+      ...buildTotalCells(level, indices),
+    ],
+  })
+
+  const buildDetailRows = (indices: number[]): PivotRenderRow[] => indices.map((index) => ({
+    key: `detail-${sortedRows[index].id}`,
+    kind: 'detail',
+    cells: fields.slice(groupLevelCount).map((field, offset) => ({
+      columnIndex: groupLevelCount + offset,
+      tag: 'td',
+      value: sortedMapped[index][groupLevelCount + offset],
+      rowSpan: 1,
+      isNumeric: isNumericDisplayType(field.displayType),
+      emphasis: false,
+    })),
+  }))
+
+  const process = (indices: number[], level: number, parentPath: string[]): PivotRenderRow[] => {
+    if (level >= groupLevelCount) {
+      return buildDetailRows(indices)
     }
 
     const output: PivotRenderRow[] = []
@@ -168,8 +179,16 @@ export function buildPivotRenderRows({
       }
 
       const blockIndices = indices.slice(cursor, cursor + count)
-      const childRows = process(blockIndices, level + 1)
+      const path = [...parentPath, value]
+      const groupKey = getGroupKey(path)
+      cursor += count
 
+      if (!isGroupExpanded(level, groupKey)) {
+        output.push(buildCollapsedRow(level, value, groupKey, blockIndices))
+        continue
+      }
+
+      const childRows = process(blockIndices, level + 1, path)
       const groupCell: PivotCell = {
         columnIndex: level,
         tag: level === 0 ? 'th' : 'td',
@@ -178,18 +197,17 @@ export function buildPivotRenderRows({
         rowSpan: childRows.length,
         isNumeric: isNumericDisplayType(fields[level].displayType),
         emphasis: false,
+        toggle: { groupKey, isExpanded: true },
       }
       childRows[0] = { ...childRows[0], cells: [groupCell, ...childRows[0].cells] }
       output.push(...childRows)
 
-      if (showTotals && (level === 0 || count > 1)) {
-        output.push(buildSubtotalRow(level, value, blockIndices))
+      if (showTotals) {
+        output.push(buildSubtotalRow(level, value, groupKey, blockIndices))
       }
-
-      cursor += count
     }
     return output
   }
 
-  return process(sortedRows.map((_, index) => index), 0)
+  return process(sortedRows.map((_, index) => index), 0, [])
 }

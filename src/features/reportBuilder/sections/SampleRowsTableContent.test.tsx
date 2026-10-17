@@ -1,455 +1,133 @@
-import { render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
-import SampleRowsTableContent from './SampleRowsTableContent'
+import { plainMappedValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
+import { getGroupKey } from '../report/model/sampleRowsPivot'
+import SampleRowsTableContent, { type SampleRowsTableContentProps } from './SampleRowsTableContent'
 
-const fields: ReportField[] = [
-  {
-    id: 'field-workDate',
-    label: 'Date',
-    sourceKey: 'workDate',
-    displayType: 'date',
-    chipAggregation: 'count',
-    currencySymbol: '',
-  },
-  {
-    id: 'field-hours',
-    label: 'Hours',
-    sourceKey: 'hours',
-    displayType: 'number',
-    chipAggregation: 'sum',
-    currencySymbol: '',
-  },
-]
-
-const row: ReportRow = {
-  id: 'row1',
-  workDate: '2024-01-01',
-  personId: 'person1',
-  personName: 'Alice',
-  clientId: 'client1',
-  clientName: 'Client',
-  originatingPersonId: 'person1',
-  task: 'Task',
-  hours: 2,
-  rate: 100,
-  total: 200,
+function field(id: string, label: string, aggregation: ReportField['aggregation'], displayType: ReportField['displayType'] = 'number'): ReportField {
+  return { id, label, sourceKey: id, displayType, aggregation, currencySymbol: '' }
 }
 
-const pivotFields: ReportField[] = [
-  {
-    id: 'field-person',
-    label: 'Person',
-    sourceKey: 'personName',
-    displayType: 'string',
-    chipAggregation: 'count',
-    currencySymbol: '',
-  },
-  {
-    id: 'field-client',
-    label: 'Client',
-    sourceKey: 'clientName',
-    displayType: 'string',
-    chipAggregation: 'count',
-    currencySymbol: '',
-  },
-  {
-    id: 'field-hours-pivot',
-    label: 'Hours',
-    sourceKey: 'hours',
-    displayType: 'number',
-    chipAggregation: 'sum',
-    currencySymbol: '',
-  },
+// Deliberately not billing data: the table must work for any shape.
+const groupedFields: ReportField[] = [
+  field('region', 'Region', 'distinct', 'string'),
+  field('store', 'Store', 'count', 'string'),
+  field('price', 'Price', 'avg'),
+  field('units', 'Units', 'sum'),
 ]
 
-const pivotRows: ReportRow[] = [
-  {
-    ...row,
-    id: 'row-a-1',
-    personName: 'Alice',
-    clientName: 'Client A',
-    hours: 2,
-  },
-  {
-    ...row,
-    id: 'row-a-2',
-    personName: 'Alice',
-    clientName: 'Client A',
-    hours: 3,
-  },
-  {
-    ...row,
-    id: 'row-a-3',
-    personName: 'Alice',
-    clientName: 'Client B',
-    hours: 5,
-  },
-  {
-    ...row,
-    id: 'row-b-1',
-    personName: 'Bob',
-    clientName: 'Client C',
-    hours: 4,
-  },
+const groupedRows: ReportRow[] = [
+  { id: 'n1', region: 'North', store: 'Ames', price: 10, units: 2 },
+  { id: 'n2', region: 'North', store: 'Ames', price: 20, units: 3 },
+  { id: 'n3', region: 'North', store: 'Boone', price: 30, units: 5 },
+  { id: 's1', region: 'South', store: 'Cary', price: 40, units: 4 },
 ]
+
+function renderTable(overrides: Partial<SampleRowsTableContentProps> = {}) {
+  const props: SampleRowsTableContentProps = {
+    isHorizontalTable: true,
+    showTotals: true,
+    isGroupingEnabled: true,
+    fields: groupedFields,
+    previewRows: groupedRows,
+    verticalColumns: [],
+    getMappedValue: plainMappedValue,
+    getRawValue: rawValue,
+    formatFieldTotal: simpleFieldTotal,
+    isGroupExpanded: () => true,
+    onToggleGroup: () => undefined,
+    ...overrides,
+  }
+  return render(<table><SampleRowsTableContent {...props} /></table>)
+}
+
+function rowCells(rowHeaderName: string): string[] {
+  const row = screen.getByRole('rowheader', { name: rowHeaderName }).closest('tr')!
+  return Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent ?? '')
+}
 
 describe('SampleRowsTableContent', () => {
-  it('renders horizontal headers and total row', () => {
-    render(
-      <table>
-        <SampleRowsTableContent
-          isHorizontalTable
-          showTotals
-          aggregateMode="sum"
-          isGroupingEnabled={false}
-          fields={fields}
-          previewRows={[row]}
-          verticalColumns={[]}
-          getMappedValue={() => 'value'}
-          getAggregatedFieldValue={() => 2}
-          formatValue={() => '2'}
-        />
-      </table>,
-    )
+  it('renders plain rows with a Total footer when grouping is off', () => {
+    renderTable({ isGroupingEnabled: false })
 
-    expect(screen.getByRole('columnheader', { name: 'Date' })).toBeInTheDocument()
-    expect(screen.getByText('Total')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Region' })).toBeInTheDocument()
+    expect(screen.getAllByRole('cell', { name: 'North' })).toHaveLength(3)
+    expect(rowCells('Total')).toEqual(['4', '25', '14'])
   })
 
-  it('renders vertical row headers', () => {
-    render(
-      <table>
-        <SampleRowsTableContent
-          isHorizontalTable={false}
-          showTotals={false}
-          aggregateMode="none"
-          isGroupingEnabled={false}
-          fields={fields}
-          previewRows={[row]}
-          verticalColumns={[{ key: 'row1', headerValue: '2024-01-01', rows: [row] }]}
-          getMappedValue={() => 'value'}
-          getAggregatedFieldValue={() => null}
-          formatValue={() => ''}
-        />
-      </table>,
-    )
+  it('gives every group a total row, including single-row groups', () => {
+    renderTable()
 
-    expect(screen.getByRole('columnheader', { name: '2024-01-01' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Hours' })).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: 'North Total' })).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: 'South Total' })).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: 'Ames Total' })).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: 'Boone Total' })).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: 'Grand total' })).toBeInTheDocument()
   })
 
-  it('renders embedded subcolumn pivot layout with subgroup, group, and grand totals', () => {
-    render(
-      <table>
-        <SampleRowsTableContent
-          isHorizontalTable
-          showTotals
-          aggregateMode="sum"
-          isGroupingEnabled
-          fields={pivotFields}
-          previewRows={pivotRows}
-          verticalColumns={[]}
-          getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
-          getAggregatedFieldValue={(rowsToAggregate, sourceKey) => {
-            return rowsToAggregate.reduce((total, mappedRow) => {
-              const value = mappedRow[sourceKey as keyof ReportRow]
-              return typeof value === 'number' ? total + value : total
-            }, 0)
-          }}
-          formatValue={(value) => (value === null ? '' : String(value))}
-        />
-      </table>,
-    )
+  it('totals each column by its own aggregation', () => {
+    renderTable()
 
-    expect(screen.getByRole('rowheader', { name: 'Alice' })).toBeInTheDocument()
-    expect(screen.queryByRole('columnheader', { name: '' })).toBeNull()
-
-    // Detail rows are expanded: Client A has two rows (hours 2 and 3) shown
-    // individually rather than collapsed into a single summed cell.
-    const clientARow = screen.getByText('Client A').closest('tr')
-    expect(clientARow).toBeTruthy()
-    if (!clientARow) {
-      return
-    }
-    expect(within(clientARow).getByText('2')).toBeInTheDocument()
-
-    // Client B is a single-row subgroup showing its raw value.
-    const clientBRow = screen.getByText('Client B').closest('tr')
-    expect(clientBRow).toBeTruthy()
-    if (!clientBRow) {
-      return
-    }
-    expect(within(clientBRow).getByText('5')).toBeInTheDocument()
-
-    const groupTotalRow = screen.getByRole('rowheader', { name: 'Alice Total' }).closest('tr')
-    expect(groupTotalRow).toBeTruthy()
-    if (!groupTotalRow) {
-      return
-    }
-    expect(within(groupTotalRow).getByText('10')).toBeInTheDocument()
-
-    // Subtotals hit every subgroup: Client A (hours 2 + 3) has its own subtotal.
-    const clientASubtotalRow = screen.getByRole('rowheader', { name: 'Client A Total' }).closest('tr')
-    expect(clientASubtotalRow).toBeTruthy()
-    if (!clientASubtotalRow) {
-      return
-    }
-    expect(within(clientASubtotalRow).getByText('5')).toBeInTheDocument()
-
-    // Single-row subgroups (Client B) are not duplicated with a redundant subtotal.
-    expect(screen.queryByRole('rowheader', { name: 'Client B Total' })).toBeNull()
-
-    const grandTotalRow = screen.getByRole('rowheader', { name: 'Grand total' }).closest('tr')
-    expect(grandTotalRow).toBeTruthy()
-    if (!grandTotalRow) {
-      return
-    }
-    expect(within(grandTotalRow).getByText('14')).toBeInTheDocument()
+    // Store counts rows, Price averages, Units sums.
+    expect(rowCells('North Total')).toEqual(['3', '20', '10'])
+    expect(rowCells('Grand total')).toEqual(['4', '25', '14'])
   })
 
-  it('renders plain horizontal rows when grouping is off', () => {
-    render(
-      <table>
-        <SampleRowsTableContent
-          isHorizontalTable
-          showTotals={false}
-          aggregateMode="none"
-          isGroupingEnabled={false}
-          fields={pivotFields}
-          previewRows={pivotRows}
-          verticalColumns={[]}
-          getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
-          getAggregatedFieldValue={() => null}
-          formatValue={(value) => (value === null ? '' : String(value))}
-        />
-      </table>,
-    )
+  it('leaves a column blank in totals when its aggregation is none', () => {
+    renderTable({ fields: [groupedFields[0], groupedFields[1], field('price', 'Price', 'none'), groupedFields[3]] })
 
-    expect(screen.getAllByRole('cell', { name: 'Alice' }).length).toBeGreaterThan(0)
-    expect(screen.queryByRole('rowheader', { name: 'Alice Total' })).toBeNull()
+    expect(rowCells('North Total')).toEqual(['3', '', '10'])
   })
 
-  it('preserves raw values for single-row grouped subgroups when aggregate mode is count', () => {
-    render(
-      <table>
-        <SampleRowsTableContent
-          isHorizontalTable
-          showTotals
-          aggregateMode="count"
-          isGroupingEnabled
-          fields={pivotFields}
-          previewRows={pivotRows}
-          verticalColumns={[]}
-          getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
-          getAggregatedFieldValue={(rowsToAggregate) => rowsToAggregate.length}
-          formatValue={(value) => (value === null ? '' : String(value))}
-        />
-      </table>,
-    )
+  it('omits total rows when totals are off', () => {
+    renderTable({ showTotals: false })
 
-    const bobRow = screen.getByRole('rowheader', { name: 'Bob' }).closest('tr')
-    expect(bobRow).toBeTruthy()
-    if (!bobRow) {
-      return
-    }
-
-    expect(within(bobRow).getByText('Client C')).toBeInTheDocument()
-    expect(within(bobRow).getByText('4')).toBeInTheDocument()
+    expect(screen.queryByRole('rowheader', { name: 'North Total' })).toBeNull()
+    expect(screen.queryByRole('rowheader', { name: 'Grand total' })).toBeNull()
   })
 
-  it('shows data (not counts) in multi-row grouped subgroup rows while totals show counts', () => {
-    // Regression: previously count mode replaced every metric cell in a
-    // multi-row subgroup with the row count (e.g. "3 3 3"), hiding the data.
-    // Detail rows must show data; only the total rows should show counts.
-    const countBugFields: ReportField[] = [
-      {
-        id: 'field-person',
-        label: 'Person',
-        sourceKey: 'personName',
-        displayType: 'string',
-        chipAggregation: 'count',
-        currencySymbol: '',
-      },
-      {
-        id: 'field-client',
-        label: 'Client',
-        sourceKey: 'clientName',
-        displayType: 'string',
-        chipAggregation: 'count',
-        currencySymbol: '',
-      },
-      {
-        id: 'field-hours',
-        label: 'Hours',
-        sourceKey: 'hours',
-        displayType: 'number',
-        chipAggregation: 'sum',
-        currencySymbol: '',
-      },
-    ]
+  it('renders a collapsed group as one row with its totals', () => {
+    const northKey = getGroupKey(['North'])
+    renderTable({ isGroupExpanded: (_level, groupKey) => groupKey !== northKey })
 
-    // Alex / ClientX has 3 rows: count = 3, but the representative value is 10.
-    const countBugRows: ReportRow[] = [
-      { ...row, id: 'alex-1', personName: 'Alex', clientName: 'ClientX', hours: 10 },
-      { ...row, id: 'alex-2', personName: 'Alex', clientName: 'ClientX', hours: 20 },
-      { ...row, id: 'alex-3', personName: 'Alex', clientName: 'ClientX', hours: 30 },
-    ]
-
-    render(
-      <table>
-        <SampleRowsTableContent
-          isHorizontalTable
-          showTotals
-          aggregateMode="count"
-          isGroupingEnabled
-          fields={countBugFields}
-          previewRows={countBugRows}
-          verticalColumns={[]}
-          getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
-          getAggregatedFieldValue={(rowsToAggregate) => rowsToAggregate.length}
-          formatValue={(value) => (value === null ? '' : String(value))}
-        />
-      </table>,
-    )
-
-    // Detail subgroup row must show the underlying data (10), not the count (3).
-    const subgroupRow = screen.getByText('ClientX').closest('tr')
-    expect(subgroupRow).toBeTruthy()
-    if (!subgroupRow) {
-      return
-    }
-    expect(within(subgroupRow).getByText('10')).toBeInTheDocument()
-    expect(within(subgroupRow).queryByText('3')).toBeNull()
-
-    // The group total row is where the count belongs, labelled once with the
-    // plain row count for the group.
-    const totalRow = screen.getByRole('rowheader', { name: 'Alex Count Total 3' }).closest('tr')
-    expect(totalRow).toBeTruthy()
-    if (!totalRow) {
-      return
-    }
-    expect(totalRow).toHaveTextContent('Alex Count Total 3')
-    expect(within(totalRow).queryByText('10')).toBeNull()
-    const totalCells = Array.from(totalRow.querySelectorAll('td')).map((cell) => cell.textContent?.trim() ?? '')
-    expect(totalCells.every((value) => value === '')).toBe(true)
+    const northButton = screen.getByRole('button', { name: 'North' })
+    expect(northButton).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Ames')).toBeNull()
+    expect(screen.queryByRole('rowheader', { name: 'North Total' })).toBeNull()
+    expect(rowCells('North')).toEqual(['3', '20', '10'])
+    expect(screen.getByRole('button', { name: 'South' })).toHaveAttribute('aria-expanded', 'true')
   })
 
-  it('renders subgroup subtotal labels for sum, avg, count, and distinct modes', () => {
-    const modeFields: ReportField[] = [
-      {
-        id: 'field-person',
-        label: 'Person',
-        sourceKey: 'personName',
-        displayType: 'string',
-        chipAggregation: 'count',
-        currencySymbol: '',
-      },
-      {
-        id: 'field-rate',
-        label: 'Rate',
-        sourceKey: 'rate',
-        displayType: 'number',
-        chipAggregation: 'sum',
-        currencySymbol: '',
-      },
-      {
-        id: 'field-client',
-        label: 'Client',
-        sourceKey: 'clientName',
-        displayType: 'string',
-        chipAggregation: 'count',
-        currencySymbol: '',
-      },
-      {
-        id: 'field-gross',
-        label: 'Gross',
-        sourceKey: 'total',
-        displayType: 'number',
-        chipAggregation: 'sum',
-        currencySymbol: '',
-      },
-    ]
+  it('keeps nested groups distinct by their full path', () => {
+    const amesKey = getGroupKey(['North', 'Ames'])
+    renderTable({ isGroupExpanded: (_level, groupKey) => groupKey !== amesKey })
 
-    const modeRows: ReportRow[] = [
-      { ...row, id: 'alex-1', personName: 'Alex Rivera', rate: 240, clientName: 'Delta Freight', total: 780 },
-      { ...row, id: 'alex-2', personName: 'Alex Rivera', rate: 240, clientName: 'Delta Freight', total: 300 },
-      { ...row, id: 'alex-3', personName: 'Alex Rivera', rate: 240, clientName: 'Delta Freight', total: 540 },
-      { ...row, id: 'alex-4', personName: 'Alex Rivera', rate: 240, clientName: 'Northwind Manufacturing', total: 600 },
-      { ...row, id: 'alex-5', personName: 'Alex Rivera', rate: 240, clientName: 'Northwind Manufacturing', total: 360 },
-      { ...row, id: 'alex-6', personName: 'Alex Rivera', rate: 240, clientName: 'ACME Legal', total: 1080 },
-      { ...row, id: 'alex-7', personName: 'Alex Rivera', rate: 240, clientName: 'Summit Health', total: 540 },
-    ]
+    expect(screen.getByRole('button', { name: 'Ames' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Boone' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.queryByRole('rowheader', { name: 'Ames Total' })).toBeNull()
+  })
 
-    const getAggregatedFieldValue = (rowsToAggregate: ReportRow[], sourceKey: string, mode: 'none' | 'sum' | 'avg' | 'count' | 'distinct') => {
-      if (mode === 'none') return null
-      if (mode === 'count') return rowsToAggregate.length
-      if (mode === 'distinct') {
-        const distinctValues = new Set(rowsToAggregate.map((mappedRow) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')))
-        return distinctValues.size
-      }
-      const values = rowsToAggregate.map((mappedRow) => Number(mappedRow[sourceKey as keyof ReportRow] ?? Number.NaN)).filter((value) => Number.isFinite(value))
-      if (values.length === 0) return null
-      const sum = values.reduce((total, value) => total + value, 0)
-      return mode === 'avg' ? sum / values.length : sum
-    }
+  it('reports the group and its next state when a group is toggled', () => {
+    const onToggleGroup = vi.fn()
+    renderTable({ onToggleGroup })
 
-    const expectations: Array<{
-      mode: 'sum' | 'avg' | 'count' | 'distinct'
-      subgroupLabel: string
-      midGroupLabel: string
-      topGroupLabel: string
-    }> = [
-      {
-        mode: 'sum',
-        subgroupLabel: 'Delta Freight Total',
-        midGroupLabel: '240 Total',
-        topGroupLabel: 'Alex Rivera Total',
-      },
-      {
-        mode: 'avg',
-        subgroupLabel: 'Delta Freight Average',
-        midGroupLabel: '240 Average',
-        topGroupLabel: 'Alex Rivera Average',
-      },
-      {
-        mode: 'count',
-        subgroupLabel: 'Delta Freight Count Total 3',
-        midGroupLabel: '240 Count Total 7',
-        topGroupLabel: 'Alex Rivera Count Total 7',
-      },
-      {
-        mode: 'distinct',
-        subgroupLabel: 'Delta Freight DISTINCT COUNT',
-        midGroupLabel: '240 DISTINCT COUNT',
-        topGroupLabel: 'Alex Rivera DISTINCT COUNT',
-      },
-    ]
+    fireEvent.click(screen.getByRole('button', { name: 'North' }))
 
-    for (const expectation of expectations) {
-      const { unmount } = render(
-        <table>
-          <SampleRowsTableContent
-            isHorizontalTable
-            showTotals
-            aggregateMode={expectation.mode}
-            isGroupingEnabled
-            fields={modeFields}
-            previewRows={modeRows}
-            verticalColumns={[]}
-            getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
-            getAggregatedFieldValue={getAggregatedFieldValue}
-            formatValue={(value) => (value === null ? '' : String(value))}
-          />
-        </table>,
-      )
+    expect(onToggleGroup).toHaveBeenCalledWith(getGroupKey(['North']), false)
+  })
 
-      expect(screen.getByRole('rowheader', { name: expectation.subgroupLabel })).toBeInTheDocument()
-      expect(screen.getByRole('rowheader', { name: expectation.midGroupLabel })).toBeInTheDocument()
-      expect(screen.getByRole('rowheader', { name: expectation.topGroupLabel })).toBeInTheDocument()
+  it('renders vertical rows with a per-column Total column', () => {
+    const verticalFields = [field('store', 'Store', 'count', 'string'), field('units', 'Units', 'sum')]
+    renderTable({
+      isHorizontalTable: false,
+      fields: verticalFields,
+      verticalColumns: groupedRows.map((row) => ({ key: row.id, headerValue: String(row.store), rows: [row] })),
+    })
 
-      unmount()
-    }
+    expect(screen.getAllByRole('columnheader', { name: 'Ames' })).toHaveLength(2)
+    const unitsRow = screen.getByText('Units').closest('tr')!
+    expect(within(unitsRow).getByText('14')).toBeInTheDocument()
   })
 })
