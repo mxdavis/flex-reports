@@ -1,0 +1,17 @@
+.seed-table th.column-header-warning {
+  color: #b54708;
+}
+
+.column-header-warning-icon {
+  cursor: help;
+}
+
+/* Read by screen readers; the icon carries it visually. */
+.column-header-warning-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
