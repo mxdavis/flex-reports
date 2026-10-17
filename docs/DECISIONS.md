@@ -43,6 +43,11 @@ Newest at top. Each entry: what we decided and why.
   with indented rows under it (Excel's compact pivot form). Merged cells can't be split
   across a windowed table, and separate "X Total" rows multiplied the row count on deep
   groupings (10k data rows became 22k table rows).
+- **Grouped reports cap expanded rows at 1,000 (`maxVisibleRows`).** A report view is for
+  summaries, not reading tens of thousands of rows, so a large grouped report opens at the
+  deepest outline level that fits, and deeper levels are disabled. Opening a single group
+  is still allowed. The cap is display-only (the saved level isn't changed, so the report
+  isn't marked unsaved), and ungrouped tables aren't capped. Windowing stays underneath.
 - **Only visible rows are drawn.** The table scrolls in its own box with pinned headers
   and total, and draws the rows in view plus a buffer. Measured in Chromium on a
   production build: 50k rows went from 5–9.5 s to render (11.5 s to toggle grouping) to

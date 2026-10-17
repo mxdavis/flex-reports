@@ -10,8 +10,8 @@ a small JSON **report definition** for your app to save.
 **[How it works →](docs/FUNCTIONALITY.md)**: a full guide to grouping, totals,
 collapsing, formulas, saving, and roles.
 
-Large reports stay fast: only the rows in view are drawn, so tens of thousands of rows
-scroll and regroup smoothly.
+Large reports stay fast: only the rows in view are drawn, and grouped reports open at a
+summary level when fully expanding them would show more than 1,000 rows.
 
 ---
 
@@ -126,6 +126,7 @@ Viewers can try anything without risk, and they don't see authoring tips.
 | `role` | `'editor' \| 'viewer'` | `'editor'` | Controls the Save button and tips. |
 | `onSave` | `(definition) => void \| Promise<void>` | — | Required for editors. Without it the Save button is hidden and an error is logged. |
 | `initialEditMode` | `boolean` | `false` | Open straight into edit mode. |
+| `maxVisibleRows` | `number` | `1000` | Grouped reports that would show more rows than this fully expanded open at the deepest **Show rows** level that fits. Ungrouped tables aren't capped. |
 
 ### Report definition
 

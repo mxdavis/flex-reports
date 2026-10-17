@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ReportRow } from '../../../../services/adapters'
 import type { ReportField } from '../../../../services/reportDefinition/types'
 import { rawValue, simpleFieldTotal } from '../../../../test/simpleFieldTotal'
-import { buildTreeRows, compareRawValues, getGroupKey, getTreeLayout, type TreeRow } from './pivotLayout'
+import { buildTreeRows, compareRawValues, countOutlineRows, getEffectiveExpandedLevels, getGroupKey, getTreeLayout, type TreeRow } from './pivotLayout'
 
 function field(sourceKey: string, displayType: ReportField['displayType'], aggregation: ReportField['aggregation'] = 'none'): ReportField {
   return { id: sourceKey, label: sourceKey, sourceKey, displayType, aggregation, currencySymbol: '$' }
@@ -105,5 +105,36 @@ describe('buildTreeRows', () => {
 
   it('returns nothing when there is no column to group by', () => {
     expect(build({ fields: [field('task', 'string'), field('hours', 'number', 'sum')] })).toEqual([])
+  })
+})
+
+describe('countOutlineRows', () => {
+  it('counts the rows shown at each outline level and fully expanded', () => {
+    const counts = countOutlineRows(teamRows, teamFields, (row, sourceKey) => String(row[sourceKey]))
+
+    // Teams: Blue, Red. Members: Blue›Cy, Red›Ann, Red›Bo. Plus 4 detail rows.
+    expect(counts).toEqual({ byLevel: [2, 5], all: 9 })
+  })
+})
+
+describe('getEffectiveExpandedLevels', () => {
+  const counts = { byLevel: [2, 5], all: 9 }
+
+  it('keeps the requested level when it fits', () => {
+    expect(getEffectiveExpandedLevels(null, counts, 9)).toBeNull()
+    expect(getEffectiveExpandedLevels(1, counts, 5)).toBe(1)
+  })
+
+  it('falls back to the deepest level that fits', () => {
+    expect(getEffectiveExpandedLevels(null, counts, 8)).toBe(1)
+    expect(getEffectiveExpandedLevels(null, counts, 4)).toBe(0)
+  })
+
+  it('opens at the first level when even that is over the limit', () => {
+    expect(getEffectiveExpandedLevels(null, counts, 1)).toBe(0)
+  })
+
+  it('treats a level past the last group as fully expanded', () => {
+    expect(getEffectiveExpandedLevels(7, counts, 100)).toBeNull()
   })
 })

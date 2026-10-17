@@ -1,14 +1,18 @@
 import { useEffect } from 'react'
 import SideArrowIcon from '../../../shared/icons/SideArrowIcon'
 import UpDownArrowIcon from '../../../shared/icons/UpDownArrowIcon'
-import { getTreeLayout } from '../report/model/pivotLayout'
+import { getTreeLayout, type OutlineRowCounts } from '../report/model/pivotLayout'
 import ReportTableContent, { type ReportTableContentProps } from '../sections/ReportTableContent'
 import './ReportTableSection.css'
 
 export type ReportTableSectionProps = ReportTableContentProps & {
   sheetName: string
   isTableFullscreen: boolean
+  // The level actually shown, after the maxVisibleRows cap.
   expandedLevels: number | null
+  outlineRowCounts: OutlineRowCounts
+  maxVisibleRows: number
+  isOutlineCapped: boolean
   showTips: boolean
   onToggleTotals: () => void
   onToggleGrouping: () => void
@@ -23,6 +27,9 @@ function ReportTableSection({
   sheetName,
   isTableFullscreen,
   expandedLevels,
+  outlineRowCounts,
+  maxVisibleRows,
+  isOutlineCapped,
   showTips,
   onToggleTotals,
   onToggleGrouping,
@@ -36,10 +43,16 @@ function ReportTableSection({
   const isGroupingActive = isHorizontalTable && isGroupingEnabled
   // Outline levels, like Excel's 1/2/3 buttons: show groups down to a column.
   const groupLevelCount = getTreeLayout(fields).groupCount
-  const outlineOptions = Array.from({ length: groupLevelCount }, (_, level) => ({
-    value: String(level),
-    label: fields.slice(0, level + 1).map((field) => field.label).join(' › '),
-  }))
+  // Levels that would show more than maxVisibleRows rows can't be picked.
+  const formatCount = (count: number) => count.toLocaleString('en-US')
+  const outlineOptions = [
+    ...Array.from({ length: groupLevelCount }, (_, level) => ({
+      value: String(level),
+      label: fields.slice(0, level + 1).map((field) => field.label).join(' › '),
+      rowCount: outlineRowCounts.byLevel[level] ?? 0,
+    })),
+    { value: ALL_ROWS, label: 'All rows', rowCount: outlineRowCounts.all },
+  ].map((option) => ({ ...option, isOverLimit: option.rowCount > maxVisibleRows }))
   const groupingTitle = showTips
     ? 'Tip: groups by each column from the left. The last text column before your numbers names each row, '
       + 'and number columns are values. Set a column\'s Total type in edit mode to choose how it adds up.'
@@ -99,9 +112,10 @@ function ReportTableSection({
               }}
             >
               {outlineOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+                <option key={option.value} value={option.value} disabled={option.isOverLimit && option.value !== outlineValue}>
+                  {option.isOverLimit ? `${option.label} (over ${formatCount(maxVisibleRows)} rows)` : option.label}
+                </option>
               ))}
-              <option value={ALL_ROWS}>All rows</option>
             </select>
           )}
           <button
@@ -121,6 +135,14 @@ function ReportTableSection({
           </button>
         </div>
       </div>
+      {isGroupingActive && isOutlineCapped && (
+        <p className="fr-outline-note" role="note">
+          This report has {formatCount(outlineRowCounts.all)} rows fully expanded, more than
+          the {formatCount(maxVisibleRows)}-row limit, so it opens
+          at <strong>{outlineOptions.find((option) => option.value === outlineValue)?.label}</strong>.
+          Open any group to see its rows.
+        </p>
+      )}
       <div
         className="fr-report-table-scroll"
         role="region"

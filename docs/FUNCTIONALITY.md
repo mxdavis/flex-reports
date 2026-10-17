@@ -112,6 +112,13 @@ A collapsed group always shows its totals, even when **Totals** is off.
 The options are named after your own group columns. Changing **Show rows** resets any
 groups you opened or closed by hand.
 
+**Large reports open summarized.** If a level would show more than 1,000 rows, it's
+marked *(over 1,000 rows)* and can't be picked, and the report opens at the deepest level
+that fits, with a note saying so. You can still open any single group to see its rows.
+This only changes what's shown: the saved **Show rows** level is kept, so the report
+opens fully again if the data gets smaller. The host app can change the limit with the
+`maxVisibleRows` prop. Ungrouped tables show every row.
+
 ## Vertical view and full screen
 
 **Vertical view** turns the table on its side. Each data row becomes a column headed by

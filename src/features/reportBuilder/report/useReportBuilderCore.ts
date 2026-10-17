@@ -2,8 +2,9 @@ import { useCallback, useMemo } from 'react'
 import type { ReportField } from '../../../services/reportDefinition/types'
 import { getDefaultCurrencySymbol } from '../../../services/reportDefinition/displayType'
 import { getNextFieldId } from '../../../utils/reportBuilder'
-import { MAX_REPORT_COLUMNS } from '../config'
+import { DEFAULT_MAX_VISIBLE_ROWS, MAX_REPORT_COLUMNS } from '../config'
 import type { UiAction } from '../state/uiState'
+import { countOutlineRows, getEffectiveExpandedLevels, type OutlineRowCounts } from './model/pivotLayout'
 import { useReportBuilderComputed } from './model/useReportBuilderComputed'
 import { useReportBuilderHandlers } from './model/useReportBuilderHandlers'
 import { useReportBuilderState, type ReportBuilderStateArgs } from './model/useReportBuilderState'
@@ -60,11 +61,30 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     },
   }), [dispatchUi])
 
+  // Large grouped reports open at the deepest outline level that fits within
+  // maxVisibleRows. This only changes what's shown; the saved level is kept.
+  const maxVisibleRows = args.maxVisibleRows ?? DEFAULT_MAX_VISIBLE_ROWS
+  const isGroupingActive = ui.isGroupingEnabled && ui.tableOrientation === 'horizontal'
+  const { rows, fields } = state
+  const { getMappedValue } = computed
+  const outlineRowCounts = useMemo<OutlineRowCounts>(
+    () => (isGroupingActive ? countOutlineRows(rows, fields, getMappedValue) : { byLevel: [], all: rows.length }),
+    [fields, getMappedValue, isGroupingActive, rows],
+  )
+  const expandedLevels = getEffectiveExpandedLevels(ui.expandedLevels, outlineRowCounts, maxVisibleRows)
+
   // A hand-toggled group wins; otherwise the outline level decides.
-  const { groupOverrides, expandedLevels } = ui
+  const { groupOverrides } = ui
   const isGroupExpanded = useCallback((level: number, groupKey: string): boolean => {
     return groupOverrides[groupKey] ?? (expandedLevels === null || level < expandedLevels)
   }, [expandedLevels, groupOverrides])
+
+  const outline = {
+    expandedLevels,
+    rowCounts: outlineRowCounts,
+    maxVisibleRows,
+    isCapped: expandedLevels !== getEffectiveExpandedLevels(ui.expandedLevels, outlineRowCounts, Infinity),
+  }
 
   const actions = {
     ...tableActions,
@@ -108,7 +128,7 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     },
   }
 
-  return { state, computed, handlers, actions }
+  return { state, computed, handlers, actions, outline }
 }
 
 export type ReportBuilderCore = ReturnType<typeof useReportBuilderCore>

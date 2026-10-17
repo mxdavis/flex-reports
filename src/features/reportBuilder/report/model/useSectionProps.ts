@@ -32,7 +32,7 @@ export function useReportSettingsProps(): Omit<ReportSettingsSectionProps, 'isCo
 }
 
 export function useTableSectionProps(): ReportTableSectionProps {
-  const { state, computed, actions } = useReportBuilder()
+  const { state, computed, actions, outline } = useReportBuilder()
   const { ui } = state
   return {
     sheetName: state.sheetName.trim().length > 0 ? state.sheetName : DEFAULT_SHEET_NAME,
@@ -40,7 +40,10 @@ export function useTableSectionProps(): ReportTableSectionProps {
     isHorizontalTable: computed.isHorizontalTable,
     showTotals: ui.showTotals,
     isGroupingEnabled: ui.isGroupingEnabled,
-    expandedLevels: ui.expandedLevels,
+    expandedLevels: outline.expandedLevels,
+    outlineRowCounts: outline.rowCounts,
+    maxVisibleRows: outline.maxVisibleRows,
+    isOutlineCapped: outline.isCapped,
     showTips: state.showTips,
     fields: state.fields,
     rows: computed.rows,

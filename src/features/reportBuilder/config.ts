@@ -6,6 +6,7 @@ export { DEFAULT_SHEET_NAME } from '../../services/reportDefinition/normalize'
 export const MAX_REPORT_COLUMNS = 15
 export const MIN_REPORT_COLUMNS = 1
 export const MAX_FORMULAS = 25
+export const DEFAULT_MAX_VISIBLE_ROWS = 1000
 
 export const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'currency', label: 'Currency' },

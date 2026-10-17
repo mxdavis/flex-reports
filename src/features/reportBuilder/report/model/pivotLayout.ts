@@ -157,3 +157,57 @@ export function buildTreeRows({
   pushGroups(sortedRows, 0, [])
   return output
 }
+
+export type OutlineRowCounts = {
+  // Rows shown at each Show rows level: byLevel[0] is one row per first-level
+  // group, byLevel[1] adds the second level's groups, and so on.
+  byLevel: number[]
+  // Rows shown fully expanded: every group row plus every detail row.
+  all: number
+}
+
+// How many rows each outline level would display, so a large report can open
+// at the deepest level that stays readable.
+export function countOutlineRows(
+  rows: ReportRow[],
+  fields: ReportField[],
+  getMappedValue: GetMappedValue,
+): OutlineRowCounts {
+  const { groupCount } = getTreeLayout(fields)
+  const groupsAtLevel = Array.from({ length: groupCount }, () => new Set<string>())
+  for (const row of rows) {
+    let path = ''
+    for (let level = 0; level < groupCount; level += 1) {
+      const field = fields[level]
+      path += `\u0000${getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)}`
+      groupsAtLevel[level].add(path)
+    }
+  }
+
+  const byLevel: number[] = []
+  let shown = 0
+  for (const groups of groupsAtLevel) {
+    shown += groups.size
+    byLevel.push(shown)
+  }
+  return { byLevel, all: shown + rows.length }
+}
+
+// The outline level to actually open at: the requested one when it fits under
+// maxVisibleRows, otherwise the deepest level that does (the first level when
+// nothing fits). null means fully expanded.
+export function getEffectiveExpandedLevels(
+  requested: number | null,
+  counts: OutlineRowCounts,
+  maxVisibleRows: number,
+): number | null {
+  const groupCount = counts.byLevel.length
+  const normalized = requested === null || requested >= groupCount ? null : requested
+  const rowsAt = (level: number | null) => (level === null ? counts.all : counts.byLevel[level])
+  if (groupCount === 0 || rowsAt(normalized) <= maxVisibleRows) return normalized
+
+  for (let level = (normalized ?? groupCount) - 1; level > 0; level -= 1) {
+    if (rowsAt(level) <= maxVisibleRows) return level
+  }
+  return 0
+}

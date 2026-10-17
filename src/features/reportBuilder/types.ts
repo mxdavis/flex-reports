@@ -17,4 +17,7 @@ export type ReportBuilderAppProps = {
   // Called with the full definition when an editor clicks Save. Throw/reject to show an error.
   onSave?: (definition: ReportDefinition) => void | Promise<void>
   initialEditMode?: boolean
+  // Grouped reports open at the deepest Show rows level that stays within this
+  // many rows. Defaults to 1,000. Ungrouped tables aren't capped.
+  maxVisibleRows?: number
 }

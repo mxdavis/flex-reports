@@ -21,6 +21,9 @@ function renderSection(overrides: Partial<ReportTableSectionProps> = {}) {
     showTotals: false,
     isGroupingEnabled: false,
     expandedLevels: null,
+    outlineRowCounts: { byLevel: [2], all: 5 },
+    maxVisibleRows: 1000,
+    isOutlineCapped: false,
     showTips: true,
     fields,
     rows: rows,
@@ -88,6 +91,27 @@ describe('ReportTableSection', () => {
     expect(onExpandedLevelsChange).toHaveBeenCalledWith(0)
     fireEvent.change(outline, { target: { value: 'all' } })
     expect(onExpandedLevelsChange).toHaveBeenCalledWith(null)
+  })
+
+  it('disables levels over the row limit and explains when the report opened capped', () => {
+    renderSection({
+      isGroupingEnabled: true,
+      expandedLevels: 0,
+      outlineRowCounts: { byLevel: [400], all: 25000 },
+      isOutlineCapped: true,
+    })
+
+    const allRows = screen.getByRole('option', { name: 'All rows (over 1,000 rows)' })
+    expect(allRows).toBeDisabled()
+    expect(screen.getByRole('option', { name: 'Region' })).toBeEnabled()
+    expect(screen.getByRole('note')).toHaveTextContent('This report has 25,000 rows fully expanded, more than the 1,000-row limit, so it opens at Region.')
+  })
+
+  it('shows no limit note when the report fits', () => {
+    renderSection({ isGroupingEnabled: true })
+
+    expect(screen.queryByRole('note')).toBeNull()
+    expect(screen.getByRole('option', { name: 'All rows' })).toBeEnabled()
   })
 
   it('treats an outline level past the last group as all rows', () => {

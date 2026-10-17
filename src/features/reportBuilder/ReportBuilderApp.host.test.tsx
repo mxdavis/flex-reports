@@ -138,6 +138,26 @@ describe('ReportBuilderApp host mode', () => {
     expect(screen.queryByText('Denver')).toBeNull()
   })
 
+  it('opens a large grouped report at the deepest level under maxVisibleRows, without marking it unsaved', async () => {
+    const user = userEvent.setup()
+    const fullyExpanded: ReportDefinition = {
+      ...generateDefaultReportDefinition(groupedSchema),
+      view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: null },
+    }
+    // Fully expanded is 2 region rows + 3 detail rows = 5, over a limit of 3.
+    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={fullyExpanded} onSave={vi.fn()} maxVisibleRows={3} />)
+
+    expect(screen.getByRole('combobox', { name: 'Show rows' })).toHaveValue('0')
+    expect(screen.getByRole('option', { name: 'All rows (over 3 rows)' })).toBeDisabled()
+    expect(screen.getByRole('note')).toHaveTextContent('opens at Region')
+    expect(screen.queryByText('Austin')).toBeNull()
+    expect(getSaveButton()).toBeDisabled()
+
+    // A single group can still be opened.
+    await user.click(screen.getByRole('button', { name: 'East' }))
+    expect(screen.getByText('Austin')).toBeInTheDocument()
+  })
+
   it('saves the outline level but not groups toggled by hand', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
