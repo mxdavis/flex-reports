@@ -1,12 +1,14 @@
 import type { ReportBuilderAppProps } from './types'
 import ReportBuilderView from './report/ReportBuilderView'
-import { useReportBuilderController } from './report/useReportBuilderController'
+import ReportBuilderProvider from './report/ReportBuilderProvider'
 import './ReportBuilderApp.css'
 
 function ReportBuilderApp({ initialEditMode = false, ...props }: ReportBuilderAppProps) {
-  const controller = useReportBuilderController({ ...props, initialEditMode })
-
-  return <ReportBuilderView {...controller} />
+  return (
+    <ReportBuilderProvider args={{ ...props, initialEditMode }}>
+      <ReportBuilderView />
+    </ReportBuilderProvider>
+  )
 }
 
 export default ReportBuilderApp

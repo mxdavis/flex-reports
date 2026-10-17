@@ -126,7 +126,8 @@ src/
   features/reportBuilder/
     ReportBuilderApp.tsx  # public component (props API)
     types.ts              # ReportBuilderAppProps, ReportRole
-    report/               # controller/model hooks (state, save, computed values)
+    report/               # ReportBuilderProvider + useReportBuilder (context), core hook,
+                          # per-section props hooks (model/use*Props), state, save, computed values
     components/           # toolbar, settings, mapping, formulas, table section
     sections/             # table bodies (horizontal/grouped, vertical)
     state/                # UI reducer
@@ -139,3 +140,9 @@ src/
   components/             # shared editors (column, formula, card)
   utils/                  # formatting + formula helpers
 ```
+
+Builder state is shared through React context: `ReportBuilderProvider` runs
+`useReportBuilderCore` once (state, derived data, actions), and each section's props
+hook reads what it needs with `useReportBuilder()`. Section components stay
+presentational (props in), so they're tested without the provider. To expose something
+new to a section, add it to the core and read it in that section's props hook.

@@ -5,20 +5,21 @@ import SampleRowsSection from '../components/SampleRowsSection'
 import SeedFormulasSection from '../components/SeedFormulasSection'
 import SeedHeader from '../components/SeedHeader'
 import SeedStats from '../components/SeedStats'
-import type { useReportBuilderController } from './useReportBuilderController'
+import { useFormulasPanelProps } from './model/useFormulasPanelProps'
+import { useMappingPanelProps } from './model/useMappingPanelProps'
+import { useReportSettingsProps, useTableSectionProps, useToolbarProps } from './model/useSectionProps'
+import { useReportBuilder } from './useReportBuilder'
 
-type ReportBuilderViewProps = ReturnType<typeof useReportBuilderController>
-
-function ReportBuilderView({
-  showAuthoring,
-  summaryItems,
-  editModeToolbarProps,
-  seedHeaderProps,
-  mappingPanelProps,
-  seedFormulasProps,
-  sampleRowsProps,
-}: ReportBuilderViewProps) {
-  const isTableFullscreen = sampleRowsProps.isTableFullscreen
+function ReportBuilderView() {
+  const { state, computed } = useReportBuilder()
+  const editModeToolbarProps = useToolbarProps()
+  const seedHeaderProps = useReportSettingsProps()
+  const mappingPanelProps = useMappingPanelProps()
+  const seedFormulasProps = useFormulasPanelProps()
+  const sampleRowsProps = useTableSectionProps()
+  const { summaryItems } = computed
+  const showAuthoring = state.ui.isEditMode
+  const isTableFullscreen = state.ui.isTableFullscreen
   const [isSettingsCollapsed, setIsSettingsCollapsed] = useState(false)
   const [isColumnsCollapsed, setIsColumnsCollapsed] = useState(false)
   const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)

@@ -38,6 +38,9 @@ Newest at top. Each entry: what we decided and why.
   every distinct rate or hour value. With no number columns, every column but the last
   is a group. A **Tip** in Column Mapping and the Grouping tooltip explain that column
   order matters (editors only; viewers never see authoring tips). Groups sort by underlying values (numbers, dates), not formatted text.
+- **Builder state lives in React context**, not props threaded through builder
+  functions. React Query was considered and rejected: it manages server fetching and
+  caching, and the host owns fetching here. Section components stay presentational.
 - **Columns with a missing source stay put.** They render blank, with a warning for
   editors and in the console, instead of being silently pointed at another field (which
   changed the report behind the user's back and made it look unsaved on open).
