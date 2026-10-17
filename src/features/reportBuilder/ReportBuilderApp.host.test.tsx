@@ -315,6 +315,21 @@ describe('ReportBuilderApp host mode', () => {
     expect(sheetNameInputs[0]).not.toBe(sheetNameInputs[1])
   })
 
+  it('rejects a new formula named like a data field', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+    const formulasSection = screen.getByRole('heading', { name: 'Formulas' }).closest('section')!
+
+    await user.click(within(formulasSection).getByRole('button', { name: 'Add formula' }))
+    const labelInput = within(formulasSection).getByLabelText('Label')
+    await user.clear(labelInput)
+    await user.type(labelInput, 'Units')
+    fireEvent.change(within(formulasSection).getByLabelText('Expression'), { target: { value: '1' } })
+    await user.click(within(formulasSection).getByRole('button', { name: 'Save formula' }))
+
+    expect(within(formulasSection).getByText('"Units" is already a data field. Pick a different formula label.')).toBeInTheDocument()
+  })
+
   it('infers columns and logs when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     render(<ReportBuilderApp rows={rows} role="viewer" />)

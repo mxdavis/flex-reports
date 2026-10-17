@@ -74,4 +74,40 @@ describe('normalizeReportDefinition', () => {
     expect(normalizeReportDefinition(undefined, sourceColumns)).toEqual(generateDefaultReportDefinition(sourceColumns))
     expect(errorSpy).not.toHaveBeenCalled()
   })
+
+  it('gives repeated column ids a fresh id, and keeps at most 15 columns', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const column = { id: 'dup', sourceKey: 'sku', label: 'SKU', displayType: 'string', aggregation: 'none' }
+
+    const normalized = normalizeReportDefinition({ version: 1, fields: Array.from({ length: 20 }, () => column) }, sourceColumns)
+
+    expect(normalized.fields).toHaveLength(15)
+    expect(new Set(normalized.fields.map((field) => field.id)).size).toBe(15)
+    expect(normalized.fields[0].id).toBe('dup')
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('more than 15 columns'))
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('repeated id "dup"'))
+  })
+
+  it('drops formulas the editor would reject, and keeps at most 25', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const valid = Array.from({ length: 30 }, (_, index) => ({ label: `f${index}`, expression: '1' }))
+
+    const normalized = normalizeReportDefinition({
+      version: 1,
+      fields: [],
+      formulas: [
+        { label: '9bad', expression: '1' },
+        { label: 'Price', expression: '{{quantity}} * 2' },
+        { label: 'long', expression: '1+'.repeat(400) },
+        ...valid,
+      ],
+    }, sourceColumns)
+
+    expect(normalized.formulas).toHaveLength(25)
+    expect(normalized.formulas.map((formula) => formula.label)).not.toContain('Price')
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Dropped formula "9bad"'))
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"Price" is already a data field'))
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Dropped formula "long"'))
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('more than 25 formulas'))
+  })
 })

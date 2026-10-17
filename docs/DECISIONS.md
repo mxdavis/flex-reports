@@ -63,6 +63,11 @@ Newest at top. Each entry: what we decided and why.
   unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
   CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.
   CSS modules were the alternative; the prefix keeps plain CSS and readable class names.
+- **One set of definition rules for the editor and for loading** (`reportDefinition/rules.ts`).
+  Hosts can build definitions on their servers, so `normalizeReportDefinition` repairs
+  anything the editor would reject (too many columns or formulas, repeated column ids,
+  bad or colliding formula labels, over-long expressions) instead of trusting it. A
+  formula can't share a data field's name: the field would always win, hiding it.
 - **The builder doesn't touch the host page's URL or global IDs.** Jump links only scroll
   (writing a `#hash` with `replaceState` wiped the host router's state), and every element
   ID is prefixed per builder via `useId()` (`useElementId`), so two builders can share a page.

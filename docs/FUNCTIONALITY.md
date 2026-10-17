@@ -185,6 +185,10 @@ You can have up to 25.
 Type `{{` to get suggestions for fields and formulas. A formula that refers to itself,
 directly or through other formulas, can't be calculated.
 
+A formula label must start with a letter and use only letters, numbers, spaces, and `_`.
+It can't match a data field's name or another formula's (ignoring case), and an
+expression can be up to 500 characters.
+
 To show a formula, add a column and set its **Source** to the formula's label.
 Example: a formula labelled `lineTotal` with `{{units}} * {{price}}`, shown in a column
 labelled *Line total* with display type *Currency*.
