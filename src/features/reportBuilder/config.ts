@@ -3,9 +3,7 @@ import type { AggregationMode, DisplayType } from '../../services/reportDefiniti
 export { DEFAULT_CURRENCY_SYMBOL, getDefaultAggregation } from '../../services/reportDefinition/displayType'
 export { DEFAULT_SHEET_NAME } from '../../services/reportDefinition/normalize'
 
-export const MAX_REPORT_COLUMNS = 15
-export const MIN_REPORT_COLUMNS = 1
-export const MAX_FORMULAS = 25
+export { MAX_FORMULAS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS } from '../../services/reportDefinition/rules'
 export const DEFAULT_MAX_VISIBLE_ROWS = 1000
 // Vertical view turns each row into a column, so past this it stops being readable.
 export const MAX_VERTICAL_VIEW_ROWS = 100

@@ -1,6 +1,7 @@
 import type { FormulasSectionProps } from '../../components/FormulasSection'
 import { MAX_FORMULAS } from '../../config'
-import { getNextSequencedName, sortFormulasByLabel, validateFormulaInput } from '../../../../utils/reportBuilder'
+import { getNextSequencedName, sortFormulasByLabel } from '../../../../utils/reportBuilder'
+import { getFormulaError } from '../../../../services/reportDefinition/rules'
 import { useReportBuilder } from '../useReportBuilder'
 
 type FormulasPanelProps = Omit<FormulasSectionProps, 'isCollapsed' | 'onToggleCollapsed'>
@@ -10,6 +11,7 @@ export function useFormulasPanelProps(): FormulasPanelProps {
   const { state, computed } = useReportBuilder()
   const { ui, dispatchUi, formulas, setFormulas, newFormula, setNewFormula, setFormulaError, setEditingFormulaError } = state
   const { editingFormula } = ui
+  const fieldKeys = state.sourceColumns.map((column) => column.key)
 
   const setIsAddingFormula = (value: boolean) => dispatchUi({ type: 'set', changes: { isAddingFormula: value } })
 
@@ -24,7 +26,7 @@ export function useFormulasPanelProps(): FormulasPanelProps {
       return
     }
     const candidate = { label: newFormula.label.trim(), expression: newFormula.expression.trim() }
-    const validationError = validateFormulaInput(formulas, candidate)
+    const validationError = getFormulaError(candidate, { existingLabels: formulas.map((formula) => formula.label), fieldKeys })
     if (validationError) {
       setFormulaError(validationError)
       return
@@ -42,7 +44,8 @@ export function useFormulasPanelProps(): FormulasPanelProps {
     if (!editingFormula) return
     const { originalLabel, draft } = editingFormula
     const candidate = { label: draft.label.trim(), expression: draft.expression.trim() }
-    const validationError = validateFormulaInput(formulas, candidate, { ignoreLabel: originalLabel })
+    const otherLabels = formulas.map((formula) => formula.label).filter((label) => label.toLowerCase() !== originalLabel.toLowerCase())
+    const validationError = getFormulaError(candidate, { existingLabels: otherLabels, fieldKeys })
     if (validationError) {
       setEditingFormulaError(validationError)
       return

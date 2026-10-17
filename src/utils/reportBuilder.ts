@@ -82,40 +82,6 @@ export function getNextSequencedName(prefix: string, existingNames: string[]): s
   return `${prefix}${maxSequence + 1}`
 }
 
-export function validateFormulaInput(
-  formulas: ReportFormula[],
-  candidate: ReportFormula,
-  options?: { ignoreLabel?: string },
-): string {
-  const label = candidate.label.trim()
-  const expression = candidate.expression.trim()
-
-  if (!label || !expression) {
-    return 'Label and expression are required.'
-  }
-
-  if (!/^[A-Za-z][A-Za-z0-9_ ]*$/.test(label)) {
-    return 'Label must start with a letter and use only letters, numbers, spaces, and _.'
-  }
-
-  const normalizedLabel = label.toLowerCase()
-  const ignoredLabel = options?.ignoreLabel?.toLowerCase()
-  const hasDuplicate = formulas.some((formula) => {
-    const currentLabel = formula.label.toLowerCase()
-    if (ignoredLabel && currentLabel === ignoredLabel) {
-      return false
-    }
-
-    return currentLabel === normalizedLabel
-  })
-
-  if (hasDuplicate) {
-    return `A formula with label "${label}" already exists.`
-  }
-
-  return ''
-}
-
 export function sortFormulasByLabel(items: ReportFormula[]): ReportFormula[] {
   return [...items].sort((left, right) => {
     return left.label.localeCompare(right.label, undefined, { sensitivity: 'base' })

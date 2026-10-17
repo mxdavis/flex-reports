@@ -1,5 +1,6 @@
 import type { ReportFormula } from '../adapters'
-import { sortFormulasByLabel } from '../../utils/reportBuilder'
+import { getNextSequencedName, sortFormulasByLabel } from '../../utils/reportBuilder'
+import { getFormulaError, MAX_FORMULAS, MAX_REPORT_COLUMNS } from './rules'
 import {
   DEFAULT_CURRENCY_SYMBOL,
   getDefaultAggregation,
@@ -82,19 +83,50 @@ function normalizeField(raw: unknown, sourceByKey: Map<string, SourceColumn>): R
   }
 }
 
-function normalizeFormulas(raw: unknown): ReportFormula[] {
-  if (!Array.isArray(raw)) return []
-  const seenLabels = new Set<string>()
+function logRepair(message: string): void {
+  console.error(`[flex-reports] ${message}`)
+}
+
+// Keeps the formulas the editor would accept (see getFormulaError), up to
+// MAX_FORMULAS, and logs each one it drops.
+function normalizeFormulas(raw: unknown[], fieldKeys: string[]): ReportFormula[] {
   const formulas: ReportFormula[] = []
   for (const item of raw) {
-    if (!isRecord(item)) continue
-    const label = asNonEmptyString(item.label)?.trim()
-    const expression = asNonEmptyString(item.expression)?.trim()
-    if (!label || !expression || seenLabels.has(label.toLowerCase())) continue
-    seenLabels.add(label.toLowerCase())
-    formulas.push({ label, expression })
+    const formula = {
+      label: isRecord(item) && typeof item.label === 'string' ? item.label.trim() : '',
+      expression: isRecord(item) && typeof item.expression === 'string' ? item.expression.trim() : '',
+    }
+    const error = getFormulaError(formula, { existingLabels: formulas.map((kept) => kept.label), fieldKeys })
+    if (error) {
+      logRepair(`Dropped formula "${formula.label}" from reportDefinition: ${error}`)
+      continue
+    }
+    if (formulas.length >= MAX_FORMULAS) {
+      logRepair(`Dropped formula "${formula.label}" from reportDefinition: more than ${MAX_FORMULAS} formulas.`)
+      continue
+    }
+    formulas.push(formula)
   }
   return sortFormulasByLabel(formulas)
+}
+
+// Gives repeated column ids a fresh one (the editor finds columns by id) and
+// keeps at most MAX_REPORT_COLUMNS columns.
+function repairFields(fields: ReportField[]): ReportField[] {
+  if (fields.length > MAX_REPORT_COLUMNS) {
+    logRepair(`Dropped ${fields.length - MAX_REPORT_COLUMNS} column(s) from reportDefinition: more than ${MAX_REPORT_COLUMNS} columns.`)
+  }
+  const seenIds = new Set<string>()
+  return fields.slice(0, MAX_REPORT_COLUMNS).map((field) => {
+    if (!seenIds.has(field.id)) {
+      seenIds.add(field.id)
+      return field
+    }
+    const id = getNextSequencedName('field-', [...seenIds])
+    seenIds.add(id)
+    logRepair(`Column "${field.label}" repeated id "${field.id}"; gave it id "${id}".`)
+    return { ...field, id }
+  })
 }
 
 function normalizeView(raw: unknown): ReportView {
@@ -138,15 +170,16 @@ export function normalizeReportDefinition(
     .map((field) => normalizeField(field, sourceByKey))
     .filter((field): field is ReportField => field !== null)
   if (fields.length < rawFields.length) {
-    console.error(`[flex-reports] Dropped ${rawFields.length - fields.length} invalid field(s) from reportDefinition.`)
+    logRepair(`Dropped ${rawFields.length - fields.length} invalid field(s) from reportDefinition.`)
   }
+  const fieldKeys = sourceColumns.map((column) => column.key)
 
   return {
     version: REPORT_DEFINITION_VERSION,
     sheetName: asNonEmptyString(raw.sheetName) ?? defaults.sheetName,
     currencySymbol: asNonEmptyString(raw.currencySymbol) ?? defaults.currencySymbol,
-    fields: fields.length > 0 ? fields : defaults.fields,
-    formulas: Array.isArray(raw.formulas) ? normalizeFormulas(raw.formulas) : defaults.formulas,
+    fields: fields.length > 0 ? repairFields(fields) : defaults.fields,
+    formulas: Array.isArray(raw.formulas) ? normalizeFormulas(raw.formulas, fieldKeys) : defaults.formulas,
     view: normalizeView(raw.view),
   }
 }
