@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
 import { getDefaultDisplayType } from '../../../../services/reportDefinition/displayType'
 import type { ReportRow, ReportFormula } from '../../../../services/adapters'
@@ -15,6 +15,7 @@ type UseReportBuilderComputedArgs = {
   formulas: ReportFormula[]
   currencySymbol: string
   tableOrientation: 'horizontal' | 'vertical'
+  showTips: boolean
 }
 
 export function useReportBuilderComputed({
@@ -24,6 +25,7 @@ export function useReportBuilderComputed({
   formulas,
   currencySymbol,
   tableOrientation,
+  showTips,
 }: UseReportBuilderComputedArgs) {
   const sourceColumnByKey = useMemo(() => {
     return new Map(sourceColumns.map((column) => [String(column.key), column]))
@@ -48,6 +50,25 @@ export function useReportBuilderComputed({
       ...formulas.map((formula) => `%${formula.label}`),
     ]))
   }, [formulas, sourceColumns])
+
+  // A column whose source isn't in the data or formulas stays put and renders
+  // blank, rather than being silently pointed at another field.
+  const missingSourceFields = useMemo(() => reportFields.filter((field) => (
+    !sourceColumnByKey.has(field.sourceKey) && !formulasByLabel.has(field.sourceKey.toLowerCase())
+  )), [formulasByLabel, reportFields, sourceColumnByKey])
+
+  const missingSourceSummary = missingSourceFields.map((field) => `"${field.label}" → "${field.sourceKey}"`).join(', ')
+  useEffect(() => {
+    if (missingSourceSummary) {
+      console.warn(`[flex-reports] Columns point at sources that aren't in the schema or formulas: ${missingSourceSummary}.`)
+    }
+  }, [missingSourceSummary])
+
+  // Editors only: viewers can't fix the column, so they just see it blank.
+  const getFieldWarning = (field: ReportField): string | null => {
+    if (!showTips || !missingSourceFields.includes(field)) return null
+    return `Source "${field.sourceKey}" isn't in the data or formulas. Edit the column to pick another source.`
+  }
 
   const previewRows = rows
   const isHorizontalTable = tableOrientation === 'horizontal'
@@ -190,5 +211,6 @@ export function useReportBuilderComputed({
     getMappedValue,
     getMappedRawValue,
     formatFieldTotal,
+    getFieldWarning,
   }
 }

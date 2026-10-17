@@ -154,6 +154,9 @@ This is the only thing you store. Save it as-is:
 | `view` | The default view everyone opens. |
 | `view.expandedLevels` | How many grouping levels start open: `0` shows only the first column's groups, `null` opens everything. |
 
+If a column's `sourceKey` is no longer in your schema, the column renders blank, editors
+see a warning, and a `[flex-reports]` warning is logged to the console.
+
 You can also build a starter definition on your server, for example to ship a default
 report. Invalid or partial definitions don't crash the page: the bad parts fall back to
 defaults and a `[flex-reports]` error is logged to the console.

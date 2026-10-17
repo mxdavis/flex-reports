@@ -177,6 +177,26 @@ describe('ReportBuilderApp host mode', () => {
     expect(dirtyEvent.defaultPrevented).toBe(true)
   })
 
+  it('keeps a column with a missing source in place and warns editors only', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const staleDefinition: ReportDefinition = {
+      ...savedDefinition,
+      fields: [...savedDefinition.fields, { ...savedDefinition.fields[1], id: 'gone', label: 'Old metric', sourceKey: 'removedField' }],
+    }
+    const { unmount } = render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={staleDefinition} onSave={vi.fn()} initialEditMode />)
+
+    expect(screen.getByRole('columnheader', { name: 'Old metric (missing source)' })).toBeInTheDocument()
+    expect(screen.getByText(/Source "removedField" isn't in the data or formulas/)).toBeInTheDocument()
+    // Not repointed, so nothing changed and there is nothing to save.
+    expect(getSaveButton()).toBeDisabled()
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"Old metric" → "removedField"'))
+    unmount()
+
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={staleDefinition} role="viewer" initialEditMode />)
+    expect(screen.getByRole('columnheader', { name: 'Old metric' })).toBeInTheDocument()
+    expect(screen.queryByText(/isn't in the data or formulas/)).not.toBeInTheDocument()
+  })
+
   it('infers columns and logs when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     render(<ReportBuilderApp rows={rows} role="viewer" />)

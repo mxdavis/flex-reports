@@ -18,6 +18,7 @@ export type MappingPanelSectionProps = {
   addColumnAggregation: AggregationMode
   maxColumns: number
   showTips: boolean
+  getFieldWarning: (field: ReportField) => string | null
   minColumns: number
   draggedFieldId: string | null
   dragOverFieldId: string | null
@@ -58,6 +59,7 @@ function MappingPanelSection({
   addColumnAggregation,
   maxColumns,
   showTips,
+  getFieldWarning,
   minColumns,
   draggedFieldId,
   dragOverFieldId,
@@ -181,6 +183,7 @@ function MappingPanelSection({
                 <MappingFieldCard
                   key={field.id}
                   field={field}
+                  warning={getFieldWarning(field)}
                   index={index}
                   fieldsLength={fields.length}
                   draggedFieldId={draggedFieldId}

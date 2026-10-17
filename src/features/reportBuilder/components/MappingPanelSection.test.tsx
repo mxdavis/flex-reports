@@ -26,6 +26,7 @@ describe('MappingPanelSection', () => {
         addColumnDisplayType="date"
         addColumnAggregation="count"
         maxColumns={15}
+        getFieldWarning={() => null}
         showTips
         minColumns={1}
         draggedFieldId={null}
@@ -75,6 +76,7 @@ describe('MappingPanelSection', () => {
         addColumnDisplayType="date"
         addColumnAggregation="count"
         maxColumns={15}
+        getFieldWarning={() => null}
         showTips={false}
         minColumns={1}
         draggedFieldId={null}

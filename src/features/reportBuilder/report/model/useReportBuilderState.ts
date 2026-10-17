@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { ReportFormula } from '../../../../services/adapters'
-import { generateDefaultFields, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
+import { normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
 import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
   REPORT_DEFINITION_VERSION,
@@ -89,22 +89,6 @@ export function useReportBuilderState({
   const saveState = useReportSave({ definition, initialDefinition, canSave, isSandbox, onSave })
 
   const tableScrollRef = useRef<HTMLDivElement | null>(null)
-
-  // Repoint fields whose source key no longer exists (removed column/formula).
-  useEffect(() => {
-    const defaults = generateDefaultFields(sourceColumns)
-    const knownKeys = new Set(
-      [...sourceColumns.map((column) => column.key), ...formulas.map((formula) => formula.label)]
-        .map((key) => key.toLowerCase()),
-    )
-    setFields((previous) => {
-      if (previous.every((field) => knownKeys.has(field.sourceKey.toLowerCase()))) return previous
-      return previous.map((field, index) => {
-        if (knownKeys.has(field.sourceKey.toLowerCase())) return field
-        return { ...field, sourceKey: defaults[index]?.sourceKey ?? defaults[0]?.sourceKey ?? field.sourceKey }
-      })
-    })
-  }, [formulas, sourceColumns])
 
   useEffect(() => {
     const tableScrollElement = tableScrollRef.current

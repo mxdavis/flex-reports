@@ -2,6 +2,7 @@ import type { ReportRow } from '../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
 import { isNumericDisplayType, isNumericTotal } from '../report/model/fieldTotals'
 import { buildPivotRenderRows, getGroupLevelCount } from '../report/model/sampleRowsPivot'
+import ColumnHeaderLabel from './ColumnHeaderLabel'
 import PivotTableBody from './PivotTableBody'
 import './SampleRowsHorizontalTableContent.css'
 
@@ -13,6 +14,7 @@ export type SampleRowsHorizontalTableContentProps = {
   getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, currencySymbol?: string) => string
   getRawValue: (row: ReportRow, sourceKey: string) => unknown
   formatFieldTotal: (rows: ReportRow[], field: ReportField) => string
+  getFieldWarning: (field: ReportField) => string | null
   isGroupExpanded: (level: number, groupKey: string) => boolean
   onToggleGroup: (groupKey: string, isExpanded: boolean) => void
 }
@@ -25,6 +27,7 @@ export function SampleRowsHorizontalTableContent({
   getMappedValue,
   getRawValue,
   formatFieldTotal,
+  getFieldWarning,
   isGroupExpanded,
   onToggleGroup,
 }: SampleRowsHorizontalTableContentProps) {
@@ -33,7 +36,7 @@ export function SampleRowsHorizontalTableContent({
   const header = (
     <thead>
       <tr>
-        {fields.map((field) => <th key={field.id}>{field.label}</th>)}
+        {fields.map((field) => <ColumnHeaderLabel key={field.id} field={field} warning={getFieldWarning(field)} />)}
       </tr>
     </thead>
   )

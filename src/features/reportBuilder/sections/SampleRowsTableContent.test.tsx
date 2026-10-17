@@ -36,6 +36,7 @@ function renderTable(overrides: Partial<SampleRowsTableContentProps> = {}) {
     getMappedValue: plainMappedValue,
     getRawValue: rawValue,
     formatFieldTotal: simpleFieldTotal,
+    getFieldWarning: () => null,
     isGroupExpanded: () => true,
     onToggleGroup: () => undefined,
     ...overrides,

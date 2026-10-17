@@ -38,6 +38,9 @@ Newest at top. Each entry: what we decided and why.
   every distinct rate or hour value. With no number columns, every column but the last
   is a group. A **Tip** in Column Mapping and the Grouping tooltip explain that column
   order matters (editors only; viewers never see authoring tips). Groups sort by underlying values (numbers, dates), not formatted text.
+- **Columns with a missing source stay put.** They render blank, with a warning for
+  editors and in the console, instead of being silently pointed at another field (which
+  changed the report behind the user's back and made it look unsaved on open).
 - **Every group gets a total row** when totals are on, including single-row groups, so
   the layout stays consistent and every group can collapse to its total.
 - **Each column totals by its own aggregation** (the column's "Total type", which also

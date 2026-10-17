@@ -91,6 +91,7 @@ describe('useReportBuilderComputed', () => {
         formulas: [],
         currencySymbol: '$',
         tableOrientation: 'horizontal',
+        showTips: true,
       }),
     ).result
   }

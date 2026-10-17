@@ -4,6 +4,7 @@ import type { AggregationMode, DisplayType, ReportField } from '../../../../serv
 
 type BuildMappingPanelPropsArgs = {
   showTips: boolean
+  getFieldWarning: (field: ReportField) => string | null
   reportFields: ReportField[]
   isAddingColumn: boolean
   addColumnPosition: number
@@ -45,6 +46,7 @@ export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
     addColumnAggregation: args.addColumnAggregation,
     maxColumns: MAX_REPORT_COLUMNS,
     showTips: args.showTips,
+    getFieldWarning: args.getFieldWarning,
     minColumns: MIN_REPORT_COLUMNS,
     draggedFieldId: args.draggedFieldId,
     dragOverFieldId: args.dragOverFieldId,

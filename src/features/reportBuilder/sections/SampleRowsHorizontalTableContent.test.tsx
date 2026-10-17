@@ -27,6 +27,7 @@ function renderTable(isGroupingEnabled: boolean) {
         getMappedValue={plainMappedValue}
         getRawValue={rawValue}
         formatFieldTotal={simpleFieldTotal}
+        getFieldWarning={() => null}
         isGroupExpanded={() => true}
         onToggleGroup={() => undefined}
       />

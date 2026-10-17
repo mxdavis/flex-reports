@@ -203,7 +203,9 @@ Refreshing the page puts them back on the saved default view.
   - date → date
   - text → string
 - Default total types: sum for number columns, distinct count for text and date columns.
-- If a saved report refers to a field that no longer exists, that column is pointed at an
-  existing field instead of breaking the report.
+- If a column's source isn't in the data or formulas (for example a removed field or a
+  deleted formula), the column stays where it is and shows blank values. Editors see
+  ⚠ on its header and a warning on its column card, so they can pick another source.
+  A warning is also logged to the browser console.
 - An invalid saved report doesn't crash the page. The bad parts fall back to defaults and
   an error is logged to the browser console.

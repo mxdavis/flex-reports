@@ -82,6 +82,7 @@ export function useReportBuilderModel(args: ReportBuilderStateArgs) {
     getMappedValue,
     getMappedRawValue,
     formatFieldTotal,
+    getFieldWarning,
   } = useReportBuilderComputed({
     rows: state.rows,
     sourceColumns: state.sourceColumns,
@@ -89,6 +90,7 @@ export function useReportBuilderModel(args: ReportBuilderStateArgs) {
     formulas: state.formulas,
     currencySymbol: state.currencySymbol,
     tableOrientation,
+    showTips: state.showTips,
   })
 
   const setNewFormulaValue = (value: ReportFormula): void => state.setNewFormula(value)
@@ -152,6 +154,7 @@ export function useReportBuilderModel(args: ReportBuilderStateArgs) {
   const showAuthoring = isEditMode
   const mappingPanelProps = buildMappingPanelProps({
     showTips: state.showTips,
+    getFieldWarning,
     reportFields: state.fields,
     isAddingColumn,
     addColumnPosition,
@@ -252,6 +255,7 @@ export function useReportBuilderModel(args: ReportBuilderStateArgs) {
       getMappedValue,
       getRawValue: getMappedRawValue,
       formatFieldTotal,
+      getFieldWarning,
       isGroupExpanded,
       onToggleGroup: (groupKey: string, isExpanded: boolean) => {
         state.dispatchUi({ type: 'setGroupExpanded', groupKey, isExpanded })

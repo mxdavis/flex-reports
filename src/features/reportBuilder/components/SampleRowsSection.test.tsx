@@ -34,6 +34,7 @@ function renderSection(overrides: Partial<SampleRowsSectionProps> = {}) {
     getMappedValue: plainMappedValue,
     getRawValue: rawValue,
     formatFieldTotal: simpleFieldTotal,
+    getFieldWarning: () => null,
     isGroupExpanded: () => true,
     onToggleGroup: () => undefined,
     ...overrides,

@@ -4,6 +4,7 @@ import {
   SampleRowsHorizontalTableContent,
   type SampleRowsHorizontalTableContentProps,
 } from './SampleRowsHorizontalTableContent'
+import ColumnHeaderLabel from './ColumnHeaderLabel'
 import './SampleRowsTableContent.css'
 
 type VerticalColumn = {
@@ -22,7 +23,7 @@ function SampleRowsTableContent({ isHorizontalTable, verticalColumns, ...tablePr
     return <SampleRowsHorizontalTableContent {...tableProps} />
   }
 
-  const { showTotals, fields, previewRows, getMappedValue, formatFieldTotal } = tableProps
+  const { showTotals, fields, previewRows, getMappedValue, formatFieldTotal, getFieldWarning } = tableProps
 
   return (
     <>
@@ -40,7 +41,7 @@ function SampleRowsTableContent({ isHorizontalTable, verticalColumns, ...tablePr
       <tbody>
         {fields.slice(1).map((field) => (
           <tr key={`row-view-${field.id}`}>
-            <th>{field.label}</th>
+            <ColumnHeaderLabel field={field} warning={getFieldWarning(field)} />
             {verticalColumns.map((column) => (
               <td
                 key={`${field.id}-${column.key}`}

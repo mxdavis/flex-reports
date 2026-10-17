@@ -9,6 +9,7 @@ import './MappingFieldCard.css'
 
 type MappingFieldCardProps = {
   field: ReportField
+  warning?: string | null
   index: number
   fieldsLength: number
   draggedFieldId: string | null
@@ -34,6 +35,7 @@ type MappingFieldCardProps = {
 
 function MappingFieldCard({
   field,
+  warning,
   index,
   fieldsLength,
   draggedFieldId,
@@ -97,7 +99,12 @@ function MappingFieldCard({
         draggedFieldId === field.id ? 'dragging' : '',
         dragOverFieldId === field.id ? 'drag-over' : '',
       ].filter(Boolean).join(' ')}
-      summaryLeft={field.label}
+      summaryLeft={warning ? (
+        <span className="mapping-field-summary">
+          {field.label}
+          <span className="mapping-field-warning" role="note">{warning}</span>
+        </span>
+      ) : field.label}
       summaryRight={`COLUMN ${index + 1}`}
       detail={editingFieldId === field.id && editingFieldDraft ? (
         <ColumnDetailEditor
