@@ -6,16 +6,13 @@ import type {
   ReportField,
 } from '../../../services/reportDefinition/types'
 import SectionTitleRow from '../../../shared/components/SectionTitleRow'
+import type { NewColumnDraft } from '../state/uiState'
 import './MappingPanelSection.css'
 
 export type MappingPanelSectionProps = {
   fields: ReportField[]
-  isAddingColumn: boolean
-  addColumnPosition: number
-  addColumnSourceKey: string
-  addColumnLabel: string
-  addColumnDisplayType: DisplayType
-  addColumnAggregation: AggregationMode
+  // The Add column form's draft, or null when the form is closed.
+  newColumn: NewColumnDraft | null
   maxColumns: number
   showTips: boolean
   getFieldWarning: (field: ReportField) => string | null
@@ -51,12 +48,7 @@ export type MappingPanelSectionProps = {
 }
 function MappingPanelSection({
   fields,
-  isAddingColumn,
-  addColumnPosition,
-  addColumnSourceKey,
-  addColumnLabel,
-  addColumnDisplayType,
-  addColumnAggregation,
+  newColumn,
   maxColumns,
   showTips,
   getFieldWarning,
@@ -113,7 +105,7 @@ function MappingPanelSection({
               its <strong>Total type</strong> (for example Sum for hours, Average for a rate).
             </p>
           )}
-          {!isAddingColumn && (
+          {!newColumn && (
             <div className="fr-formula-add-card">
               <button
                 type="button"
@@ -126,13 +118,13 @@ function MappingPanelSection({
               <small>{fields.length}/{maxColumns} columns</small>
             </div>
           )}
-          {isAddingColumn && (
+          {newColumn && (
             <div className="fr-formula-editor" id="fr-report-columns-content">
               <div className="fr-formula-editor-grid">
                 <label htmlFor="fr-add-column-position">Column number</label>
                 <select
                   id="fr-add-column-position"
-                  value={addColumnPosition}
+                  value={newColumn.position}
                   title="Insert this new column at the selected position. Existing columns will shift right."
                   onChange={(event) => {
                     onAddColumnPositionChange(Number(event.target.value))
@@ -145,14 +137,7 @@ function MappingPanelSection({
                 </select>
               </div>
               <ColumnDetailEditor
-                field={{
-                  id: 'add-column',
-                  sourceKey: addColumnSourceKey,
-                  label: addColumnLabel,
-                  displayType: addColumnDisplayType,
-                  aggregation: addColumnAggregation,
-                  currencySymbol: '',
-                }}
+                field={newColumn.draft}
                 columnLabel="Data point"
                 sourceOptions={sourceOptions}
                 displayTypeOptions={displayTypeOptions}
@@ -177,7 +162,7 @@ function MappingPanelSection({
               </small>
             </div>
           )}
-          {!isAddingColumn && (
+          {!newColumn && (
             <div className="fr-mapping-grid" id="fr-report-columns-content">
               {fields.map((field, index) => (
                 <MappingFieldCard

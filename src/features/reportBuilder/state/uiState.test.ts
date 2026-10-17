@@ -14,14 +14,23 @@ describe('uiReducer', () => {
   })
 
   it('sets and toggles plain values', () => {
-    expect(uiReducer(initial, { type: 'set', changes: { addColumnPosition: 3 } }).addColumnPosition).toBe(3)
+    expect(uiReducer(initial, { type: 'set', changes: { isAddingFormula: true } }).isAddingFormula).toBe(true)
     expect(uiReducer(initial, { type: 'toggle', key: 'showTotals' }).showTotals).toBe(true)
   })
 
   it('closes half-open add forms when toggling edit mode', () => {
-    const adding = { ...initial, isAddingColumn: true, isAddingFormula: true }
+    const adding = { ...initial, newColumn: { position: 1, draft: field }, isAddingFormula: true }
 
-    expect(uiReducer(adding, { type: 'toggleEditMode' })).toMatchObject({ isEditMode: false, isAddingColumn: false, isAddingFormula: false })
+    expect(uiReducer(adding, { type: 'toggleEditMode' })).toMatchObject({ isEditMode: false, newColumn: null, isAddingFormula: false })
+  })
+
+  it('patches the Add column draft and its position together', () => {
+    const adding = uiReducer(initial, { type: 'set', changes: { newColumn: { position: 1, draft: field } } })
+    const patched = uiReducer(adding, { type: 'patchNewColumn', changes: { label: 'Qty' }, position: 3 })
+
+    expect(patched.newColumn).toEqual({ position: 3, draft: { ...field, label: 'Qty' } })
+    expect(uiReducer(patched, { type: 'patchNewColumn', changes: { aggregation: 'avg' } }).newColumn?.position).toBe(3)
+    expect(uiReducer(initial, { type: 'patchNewColumn', changes: { label: 'x' } })).toBe(initial)
   })
 
   it('turns grouping off when switching to vertical', () => {

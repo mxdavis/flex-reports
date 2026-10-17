@@ -8,11 +8,17 @@ export type FormulaDraft = {
   draft: ReportFormula
 }
 
+export type NewColumnDraft = {
+  // 1-based column number the new column is inserted at.
+  position: number
+  draft: ReportField
+}
+
 export type UiState = {
   isEditMode: boolean
   isAddingFormula: boolean
-  isAddingColumn: boolean
-  addColumnPosition: number
+  // The Add column form, or null when it's closed.
+  newColumn: NewColumnDraft | null
   // The column being edited, as an unsaved draft (its id is the column's id).
   editingField: ReportField | null
   editingFormula: FormulaDraft | null
@@ -39,6 +45,7 @@ export type UiAction =
   | { type: 'toggleOrientation' }
   | { type: 'setExpandedLevels', value: number | null }
   | { type: 'setGroupExpanded', groupKey: string, isExpanded: boolean }
+  | { type: 'patchNewColumn', changes: Partial<ReportField>, position?: number }
   | { type: 'startEditField', field: ReportField }
   | { type: 'patchEditField', changes: Partial<ReportField> }
   | { type: 'stopEditField' }
@@ -50,8 +57,7 @@ export function createInitialUiState(args: { initialEditMode: boolean, initialVi
   return {
     isEditMode: args.initialEditMode,
     isAddingFormula: false,
-    isAddingColumn: false,
-    addColumnPosition: 1,
+    newColumn: null,
     editingField: null,
     editingFormula: null,
     draggedFieldId: null,
@@ -73,7 +79,7 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
       return { ...state, [action.key]: !state[action.key] }
     // Leaving or entering edit mode closes any half-open add forms.
     case 'toggleEditMode':
-      return { ...state, isEditMode: !state.isEditMode, isAddingFormula: false, isAddingColumn: false }
+      return { ...state, isEditMode: !state.isEditMode, isAddingFormula: false, newColumn: null }
     // Grouping only exists horizontally, so turning vertical switches it off.
     case 'toggleOrientation':
       return state.tableOrientation === 'horizontal'
@@ -83,6 +89,16 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
       return { ...state, expandedLevels: action.value, groupOverrides: {} }
     case 'setGroupExpanded':
       return { ...state, groupOverrides: { ...state.groupOverrides, [action.groupKey]: action.isExpanded } }
+    case 'patchNewColumn':
+      return state.newColumn
+        ? {
+          ...state,
+          newColumn: {
+            position: action.position ?? state.newColumn.position,
+            draft: { ...state.newColumn.draft, ...action.changes },
+          },
+        }
+        : state
     case 'startEditField':
       return { ...state, editingField: { ...action.field } }
     case 'patchEditField':

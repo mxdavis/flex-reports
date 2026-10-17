@@ -65,34 +65,46 @@ export function useMappingPanelProps(): MappingPanelProps {
     })
   }
 
-  function addColumnAtPosition(): void {
+  // A fresh Add column draft for a source, with that source's type defaults.
+  function draftForSource(sourceKey: string): ReportField {
+    const displayType = computed.getPreferredDisplayType(sourceKey)
+    return {
+      id: 'new-column',
+      label: sourceKey,
+      sourceKey,
+      displayType,
+      aggregation: getDefaultAggregation(displayType),
+      currencySymbol: getDefaultCurrencySymbol(displayType),
+    }
+  }
+
+  const patchNewColumn = (changes: Partial<ReportField>, position?: number) => {
+    dispatchUi({ type: 'patchNewColumn', changes, position })
+  }
+  const closeNewColumn = () => dispatchUi({ type: 'set', changes: { newColumn: null } })
+
+  function saveNewColumn(): void {
+    if (!ui.newColumn) return
+    const { position, draft } = ui.newColumn
+    const sourceKey = draft.sourceKey.trim() || computed.sourceOptions[0]
     setFields((previous) => {
-      if (previous.length >= MAX_REPORT_COLUMNS) return previous
-      const insertionIndex = Math.min(Math.max(ui.addColumnPosition - 1, 0), previous.length)
-      const sourceKey = state.addColumnSourceKey.trim() || computed.sourceOptions[0]
-      if (!sourceKey) return previous
-      const displayType = state.addColumnDisplayType || computed.getPreferredDisplayType(sourceKey)
+      if (previous.length >= MAX_REPORT_COLUMNS || !sourceKey) return previous
       const next = [...previous]
-      next.splice(insertionIndex, 0, {
+      next.splice(Math.min(Math.max(position - 1, 0), previous.length), 0, {
+        ...draft,
         id: getNextFieldId(previous.map((field) => field.id)),
-        label: state.addColumnLabel.trim() || sourceKey,
+        label: draft.label.trim() || sourceKey,
         sourceKey,
-        displayType,
-        aggregation: state.addColumnAggregation,
-        currencySymbol: getDefaultCurrencySymbol(displayType),
+        currencySymbol: getDefaultCurrencySymbol(draft.displayType),
       })
       return next
     })
+    closeNewColumn()
   }
 
   return {
     fields,
-    isAddingColumn: ui.isAddingColumn,
-    addColumnPosition: ui.addColumnPosition,
-    addColumnSourceKey: state.addColumnSourceKey,
-    addColumnLabel: state.addColumnLabel,
-    addColumnDisplayType: state.addColumnDisplayType,
-    addColumnAggregation: state.addColumnAggregation,
+    newColumn: ui.newColumn,
     maxColumns: MAX_REPORT_COLUMNS,
     showTips: state.showTips,
     getFieldWarning: computed.getFieldWarning,
@@ -105,33 +117,16 @@ export function useMappingPanelProps(): MappingPanelProps {
     displayTypeOptions: DISPLAY_TYPE_OPTIONS,
     aggregationOptions: AGGREGATION_OPTIONS,
     onStartAddColumn: () => {
-      const defaultSourceKey = computed.sourceOptions[0] ?? ''
-      const defaultDisplayType = computed.getPreferredDisplayType(defaultSourceKey)
-      state.setAddColumnSourceKey(defaultSourceKey)
-      state.setAddColumnLabel(defaultSourceKey)
-      state.setAddColumnDisplayType(defaultDisplayType)
-      state.setAddColumnAggregation(getDefaultAggregation(defaultDisplayType))
-      dispatchUi({ type: 'set', changes: { addColumnPosition: fields.length + 1, isAddingColumn: true } })
+      const newColumn = { position: fields.length + 1, draft: draftForSource(computed.sourceOptions[0] ?? '') }
+      dispatchUi({ type: 'set', changes: { newColumn } })
     },
-    onCancelAddColumn: () => dispatchUi({ type: 'set', changes: { isAddingColumn: false } }),
-    onAddColumnPositionChange: (value: number) => dispatchUi({ type: 'set', changes: { addColumnPosition: value } }),
-    onAddColumnSourceKeyChange: (value: string) => {
-      const nextDisplayType = computed.getPreferredDisplayType(value)
-      state.setAddColumnSourceKey(value)
-      state.setAddColumnLabel(value)
-      state.setAddColumnDisplayType(nextDisplayType)
-      state.setAddColumnAggregation(getDefaultAggregation(nextDisplayType))
-    },
-    onAddColumnLabelChange: state.setAddColumnLabel,
-    onAddColumnDisplayTypeChange: (value: DisplayType) => {
-      state.setAddColumnDisplayType(value)
-      state.setAddColumnAggregation(getDefaultAggregation(value))
-    },
-    onAddColumnAggregationChange: state.setAddColumnAggregation,
-    onSaveNewColumn: () => {
-      addColumnAtPosition()
-      dispatchUi({ type: 'set', changes: { isAddingColumn: false } })
-    },
+    onCancelAddColumn: closeNewColumn,
+    onAddColumnPositionChange: (value: number) => patchNewColumn({}, value),
+    onAddColumnSourceKeyChange: (value: string) => patchNewColumn(draftForSource(value)),
+    onAddColumnLabelChange: (value: string) => patchNewColumn({ label: value }),
+    onAddColumnDisplayTypeChange: (value: DisplayType) => patchNewColumn({ displayType: value, aggregation: getDefaultAggregation(value) }),
+    onAddColumnAggregationChange: (value: AggregationMode) => patchNewColumn({ aggregation: value }),
+    onSaveNewColumn: saveNewColumn,
     onMoveField: moveField,
     onStartEditField: startEditingField,
     onCancelEditField: stopEditingField,

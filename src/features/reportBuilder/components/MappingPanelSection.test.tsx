@@ -19,12 +19,7 @@ describe('MappingPanelSection', () => {
     render(
       <MappingPanelSection
         fields={fields}
-        isAddingColumn={false}
-        addColumnPosition={1}
-        addColumnSourceKey="workDate"
-        addColumnLabel="workDate"
-        addColumnDisplayType="date"
-        addColumnAggregation="count"
+        newColumn={null}
         maxColumns={15}
         getFieldWarning={() => null}
         showTips
@@ -69,12 +64,7 @@ describe('MappingPanelSection', () => {
     const { container } = render(
       <MappingPanelSection
         fields={fields}
-        isAddingColumn={false}
-        addColumnPosition={1}
-        addColumnSourceKey="workDate"
-        addColumnLabel="workDate"
-        addColumnDisplayType="date"
-        addColumnAggregation="count"
+        newColumn={null}
         maxColumns={15}
         getFieldWarning={() => null}
         showTips={false}

@@ -4,8 +4,6 @@ import { normalizeReportDefinition } from '../../../../services/reportDefinition
 import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
   REPORT_DEFINITION_VERSION,
-  type AggregationMode,
-  type DisplayType,
   type ReportDefinition,
   type ReportField,
   type SourceColumn,
@@ -52,10 +50,6 @@ export function useReportBuilderState({
   }))
   const [formulaError, setFormulaError] = useState('')
   const [editingFormulaError, setEditingFormulaError] = useState('')
-  const [addColumnSourceKey, setAddColumnSourceKey] = useState('')
-  const [addColumnLabel, setAddColumnLabel] = useState('')
-  const [addColumnDisplayType, setAddColumnDisplayType] = useState<DisplayType>('string')
-  const [addColumnAggregation, setAddColumnAggregation] = useState<AggregationMode>('count')
 
   const [ui, dispatchUi] = useReducer(
     uiReducer,
@@ -111,14 +105,6 @@ export function useReportBuilderState({
     return () => window.removeEventListener('keydown', handleEscape)
   }, [ui.isTableFullscreen])
 
-  useEffect(() => {
-    const nextMax = fields.length + 1
-    const nextPosition = Math.min(Math.max(ui.addColumnPosition, 1), nextMax)
-    if (nextPosition !== ui.addColumnPosition) {
-      dispatchUi({ type: 'set', changes: { addColumnPosition: nextPosition } })
-    }
-  }, [fields.length, ui.addColumnPosition])
-
   return {
     rows,
     sourceColumns,
@@ -132,14 +118,6 @@ export function useReportBuilderState({
     setFormulaError,
     editingFormulaError,
     setEditingFormulaError,
-    addColumnSourceKey,
-    setAddColumnSourceKey,
-    addColumnLabel,
-    setAddColumnLabel,
-    addColumnDisplayType,
-    setAddColumnDisplayType,
-    addColumnAggregation,
-    setAddColumnAggregation,
     sheetName,
     setSheetName,
     currencySymbol,
