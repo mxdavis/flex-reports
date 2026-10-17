@@ -12,6 +12,19 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '
 const TWO_DECIMALS_FORMAT = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const WHOLE_NUMBER_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
+
+// A date-only value ("2026-07-01") is a calendar day, so it's read in the
+// viewer's timezone. new Date("2026-07-01") would read it as UTC midnight and
+// show the previous day west of UTC. Values with a time are real instants.
+function parseDate(value: unknown): Date {
+  if (value instanceof Date) return value
+  const text = String(value).trim()
+  const dateOnly = DATE_ONLY.exec(text)
+  if (dateOnly) return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+  return new Date(text)
+}
+
 export function formatCellValue(
   value: unknown,
   displayType: DisplayType,
@@ -31,7 +44,7 @@ export function formatCellValue(
   }
 
   if (displayType === 'date') {
-    const parsedDate = value instanceof Date ? value : new Date(String(value))
+    const parsedDate = parseDate(value)
     if (Number.isNaN(parsedDate.getTime())) {
       return String(value)
     }

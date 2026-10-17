@@ -226,6 +226,9 @@ Refreshing the page puts them back on the saved default view.
   - date → date
   - text → string
 - Default total types: sum for number columns, distinct count for text and date columns.
+- Date-only values like `2026-07-01` show as that calendar day for every viewer,
+  whatever their timezone. Values with a time (`2026-07-01T23:30:00Z`) are shown in
+  the viewer's local time.
 - If a column's source isn't in the data or formulas (for example a removed field or a
   deleted formula), the column stays where it is and shows blank values. Editors see
   ⚠ on its header and a warning on its column card, so they can pick another source.
