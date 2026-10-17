@@ -49,7 +49,6 @@ function ReportTableSection({
   const { isHorizontalTable, isGrouped, showTotals, fields } = tableProps
   // Outline levels, like Excel's 1/2/3 buttons: show groups down to a column.
   const groupLevelCount = getTreeLayout(fields).groupCount
-  // Levels that would show more than maxVisibleRows rows can't be picked.
   const formatCount = (count: number) => count.toLocaleString('en-US')
   const outlineOptions = [
     ...Array.from({ length: groupLevelCount }, (_, level) => ({
@@ -58,6 +57,7 @@ function ReportTableSection({
       rowCount: outlineRowCounts.byLevel[level] ?? 0,
     })),
     { value: ALL_ROWS, label: 'All rows', rowCount: outlineRowCounts.all },
+  // Levels that would show more than maxVisibleRows rows can't be picked.
   ].map((option) => ({ ...option, isOverLimit: option.rowCount > maxVisibleRows }))
   const groupingTitle = showTips
     ? 'Tip: groups by each column from the left. The last text column before your numbers names each row, '
