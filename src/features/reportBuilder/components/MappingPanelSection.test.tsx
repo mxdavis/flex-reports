@@ -9,7 +9,7 @@ const fields: ReportField[] = [
     label: 'workDate',
     sourceKey: 'workDate',
     displayType: 'date',
-    chipAggregation: 'count',
+    aggregation: 'count',
     currencySymbol: '',
   },
 ]
@@ -24,8 +24,9 @@ describe('MappingPanelSection', () => {
         addColumnSourceKey="workDate"
         addColumnLabel="workDate"
         addColumnDisplayType="date"
-        addColumnChipAggregation="count"
+        addColumnAggregation="count"
         maxColumns={15}
+        showTips
         minColumns={1}
         draggedFieldId={null}
         dragOverFieldId={null}
@@ -33,14 +34,14 @@ describe('MappingPanelSection', () => {
         editingFieldDraft={null}
         sourceOptions={['workDate']}
         displayTypeOptions={[{ value: 'date', label: 'Date' }]}
-        chipAggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
+        aggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
         onStartAddColumn={() => undefined}
         onCancelAddColumn={() => undefined}
         onAddColumnPositionChange={() => undefined}
         onAddColumnSourceKeyChange={() => undefined}
         onAddColumnLabelChange={() => undefined}
         onAddColumnDisplayTypeChange={() => undefined}
-        onAddColumnChipAggregationChange={() => undefined}
+        onAddColumnAggregationChange={() => undefined}
         onSaveNewColumn={() => undefined}
         onMoveField={() => undefined}
         onStartEditField={() => undefined}
@@ -52,13 +53,14 @@ describe('MappingPanelSection', () => {
         onSetEditingFieldSourceKey={() => undefined}
         onSetEditingFieldLabel={() => undefined}
         onSetEditingFieldDisplayType={() => undefined}
-        onSetEditingFieldChipAggregation={() => undefined}
+        onSetEditingFieldAggregation={() => undefined}
       />,
     )
 
     const heading = screen.getByRole('heading', { name: 'Column Mapping' })
     const section = heading.closest('section')
     expect(section?.id).toBe('report-columns')
+    expect(screen.getByText(/stops at the\s+first number column/)).toBeInTheDocument()
   })
 
   it('forwards add column intent', () => {
@@ -71,8 +73,9 @@ describe('MappingPanelSection', () => {
         addColumnSourceKey="workDate"
         addColumnLabel="workDate"
         addColumnDisplayType="date"
-        addColumnChipAggregation="count"
+        addColumnAggregation="count"
         maxColumns={15}
+        showTips={false}
         minColumns={1}
         draggedFieldId={null}
         dragOverFieldId={null}
@@ -80,14 +83,14 @@ describe('MappingPanelSection', () => {
         editingFieldDraft={null}
         sourceOptions={['workDate']}
         displayTypeOptions={[{ value: 'date', label: 'Date' }]}
-        chipAggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
+        aggregationOptions={[{ value: 'count', label: 'Count (unique values)' }]}
         onStartAddColumn={onStartAddColumn}
         onCancelAddColumn={() => undefined}
         onAddColumnPositionChange={() => undefined}
         onAddColumnSourceKeyChange={() => undefined}
         onAddColumnLabelChange={() => undefined}
         onAddColumnDisplayTypeChange={() => undefined}
-        onAddColumnChipAggregationChange={() => undefined}
+        onAddColumnAggregationChange={() => undefined}
         onSaveNewColumn={() => undefined}
         onMoveField={() => undefined}
         onStartEditField={() => undefined}
@@ -99,7 +102,7 @@ describe('MappingPanelSection', () => {
         onSetEditingFieldSourceKey={() => undefined}
         onSetEditingFieldLabel={() => undefined}
         onSetEditingFieldDisplayType={() => undefined}
-        onSetEditingFieldChipAggregation={() => undefined}
+        onSetEditingFieldAggregation={() => undefined}
       />,
     )
 
@@ -111,5 +114,7 @@ describe('MappingPanelSection', () => {
 
     fireEvent.click(within(section).getByRole('button', { name: 'Add column' }))
     expect(onStartAddColumn).toHaveBeenCalledTimes(1)
+    // Tips are editor-only.
+    expect(screen.queryByText(/first number column/)).toBeNull()
   })
 })
