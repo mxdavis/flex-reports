@@ -48,7 +48,7 @@ describe('SampleRowsSection', () => {
     renderSection()
 
     const section = screen.getByRole('heading', { name: 'Finance Sheet' }).closest('section')
-    expect(section?.id).toBe('report-table')
+    expect(section?.id).toBe('fr-report-table')
   })
 
   it('toggles totals and reflects the pressed state', () => {
@@ -97,13 +97,13 @@ describe('SampleRowsSection', () => {
 
   it('locks body scroll while fullscreen is active and releases it on unmount', () => {
     const { rerenderWith, unmount } = renderSection()
-    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(false)
+    expect(document.body.classList.contains('fr-seed-table-fullscreen-lock')).toBe(false)
 
     rerenderWith({ isTableFullscreen: true })
-    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(true)
+    expect(document.body.classList.contains('fr-seed-table-fullscreen-lock')).toBe(true)
 
     unmount()
-    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(false)
+    expect(document.body.classList.contains('fr-seed-table-fullscreen-lock')).toBe(false)
   })
 
   it('shows the grouping tip to editors only', () => {
@@ -120,6 +120,6 @@ describe('SampleRowsSection', () => {
     const groupingButton = screen.getByRole('button', { name: 'Grouping' })
     expect(groupingButton).toBeDisabled()
     expect(groupingButton).toHaveAttribute('aria-pressed', 'false')
-    expect(groupingButton.closest('.grouping-toggle-wrapper')).toHaveAttribute('title', 'Switch to horizontal view to use grouping.')
+    expect(groupingButton.closest('.fr-grouping-toggle-wrapper')).toHaveAttribute('title', 'Switch to horizontal view to use grouping.')
   })
 })

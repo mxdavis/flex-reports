@@ -11,10 +11,10 @@ function ColumnHeaderLabel({ field, warning }: ColumnHeaderLabelProps) {
   if (!warning) return <th>{field.label}</th>
 
   return (
-    <th className="column-header-warning" title={warning}>
+    <th className="fr-column-header-warning" title={warning}>
       {field.label}{' '}
-      <span className="column-header-warning-icon" aria-hidden="true">⚠</span>
-      <span className="column-header-warning-text">(missing source)</span>
+      <span className="fr-column-header-warning-icon" aria-hidden="true">⚠</span>
+      <span className="fr-column-header-warning-text">(missing source)</span>
     </th>
   )
 }

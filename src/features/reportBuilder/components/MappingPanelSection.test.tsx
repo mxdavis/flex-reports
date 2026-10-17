@@ -15,7 +15,7 @@ const fields: ReportField[] = [
 ]
 
 describe('MappingPanelSection', () => {
-  it('renders section with report-columns id', () => {
+  it('renders section with fr-report-columns id', () => {
     render(
       <MappingPanelSection
         fields={fields}
@@ -60,7 +60,7 @@ describe('MappingPanelSection', () => {
 
     const heading = screen.getByRole('heading', { name: 'Column Mapping' })
     const section = heading.closest('section')
-    expect(section?.id).toBe('report-columns')
+    expect(section?.id).toBe('fr-report-columns')
     expect(screen.getByText(/stops at the\s+first number column/)).toBeInTheDocument()
   })
 
@@ -108,7 +108,7 @@ describe('MappingPanelSection', () => {
       />,
     )
 
-    const section = container.querySelector('#report-columns')
+    const section = container.querySelector('#fr-report-columns')
     expect(section).toBeTruthy()
     if (!(section instanceof HTMLElement)) {
       return

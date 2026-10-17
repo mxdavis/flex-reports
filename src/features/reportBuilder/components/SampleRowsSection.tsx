@@ -53,23 +53,23 @@ function SampleRowsSection({
       return
     }
 
-    document.body.classList.add('seed-table-fullscreen-lock')
+    document.body.classList.add('fr-seed-table-fullscreen-lock')
     return () => {
-      document.body.classList.remove('seed-table-fullscreen-lock')
+      document.body.classList.remove('fr-seed-table-fullscreen-lock')
     }
   }, [isTableFullscreen])
 
   return (
     <section
-      id="report-table"
-      className={`seed-table sample-rows-jump-target ${isTableFullscreen ? 'fullscreen' : ''}`}
+      id="fr-report-table"
+      className={`fr-seed-table fr-sample-rows-jump-target ${isTableFullscreen ? 'fr-fullscreen' : ''}`}
     >
-      <div className="seed-table-header">
+      <div className="fr-seed-table-header">
         <h2>{sheetName}</h2>
-        <div className="seed-table-actions">
+        <div className="fr-seed-table-actions">
           <button
             type="button"
-            className="totals-toggle-button"
+            className="fr-totals-toggle-button"
             aria-pressed={showTotals}
             onClick={onToggleTotals}
             title="Show totals. Each column totals by its own Total type setting."
@@ -77,12 +77,12 @@ function SampleRowsSection({
             Totals
           </button>
           <span
-            className="grouping-toggle-wrapper"
+            className="fr-grouping-toggle-wrapper"
             title={isGroupingUnavailable ? 'Switch to horizontal view to use grouping.' : undefined}
           >
             <button
               type="button"
-              className="grouping-toggle-button"
+              className="fr-grouping-toggle-button"
               aria-pressed={isGroupingActive}
               disabled={isGroupingUnavailable}
               onClick={onToggleGrouping}
@@ -124,7 +124,7 @@ function SampleRowsSection({
         </div>
       </div>
       <div
-        className="seed-table-scroll"
+        className="fr-seed-table-scroll"
         role="region"
         aria-label="Sample report rows"
         ref={tableScrollRef}

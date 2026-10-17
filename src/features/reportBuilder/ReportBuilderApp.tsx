@@ -9,7 +9,7 @@ function ReportBuilderApp({ initialEditMode = false, ...props }: ReportBuilderAp
   const sandboxData = useSandboxData(isSandbox)
 
   if (isSandbox && !sandboxData) {
-    return <p className="report-builder-loading" role="status">Loading sample data…</p>
+    return <p className="fr-report-builder-loading" role="status">Loading sample data…</p>
   }
 
   return (

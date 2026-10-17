@@ -72,8 +72,8 @@ export default function AutocompleteInput({
   }
 
   return (
-    <div className="autocomplete" ref={containerRef}>
-      <div className="autocomplete-row">
+    <div className="fr-autocomplete" ref={containerRef}>
+      <div className="fr-autocomplete-row">
         <input
           id={id}
           type="text"
@@ -126,7 +126,7 @@ export default function AutocompleteInput({
         />
         <button
           type="button"
-          className="autocomplete-toggle"
+          className="fr-autocomplete-toggle"
           title="Show options"
           aria-label={isOpen ? 'Hide options' : 'Show options'}
           aria-expanded={isOpen}

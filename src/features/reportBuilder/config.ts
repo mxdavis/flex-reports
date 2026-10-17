@@ -25,9 +25,9 @@ export const AGGREGATION_OPTIONS: Array<{ value: AggregationMode, label: string 
 ]
 
 export const EDIT_MODE_JUMP_TARGETS = [
-  { id: 'report-columns', label: 'Columns' },
-  { id: 'report-formulas', label: 'Formulas' },
-  { id: 'report-table', label: 'Table' },
+  { id: 'fr-report-columns', label: 'Columns' },
+  { id: 'fr-report-formulas', label: 'Formulas' },
+  { id: 'fr-report-table', label: 'Table' },
 ]
 
 export function getAggregationLabel(aggregation: AggregationMode): string {

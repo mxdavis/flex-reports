@@ -91,22 +91,22 @@ function MappingPanelSection({
   onToggleCollapsed,
 }: MappingPanelSectionProps) {
   return (
-    <section id="report-columns" className="mapping-panel jump-target">
+    <section id="fr-report-columns" className="fr-mapping-panel fr-jump-target">
       <SectionTitleRow
         title="Column Mapping"
         sectionName="columns"
-        contentId="report-columns-content"
+        contentId="fr-report-columns-content"
         isCollapsed={isCollapsed}
         onToggleCollapsed={onToggleCollapsed}
       />
       {!isCollapsed && (
         <>
-          <p className="mapping-help">
+          <p className="fr-mapping-help">
             Build your report layout here. Choose what each column pulls from,
             rename the header users see, and drag cards to reorder the final output.
           </p>
           {showTips && (
-            <p className="mapping-tip">
+            <p className="fr-mapping-tip">
               <strong>Tip:</strong> Grouping nests by each column from the left and stops at the
               first number column. Put the columns you group by first, then your numbers. To
               choose how a column adds up in group totals, edit the column and set
@@ -114,7 +114,7 @@ function MappingPanelSection({
             </p>
           )}
           {!isAddingColumn && (
-            <div className="formula-add-card">
+            <div className="fr-formula-add-card">
               <button
                 type="button"
                 onClick={onStartAddColumn}
@@ -127,11 +127,11 @@ function MappingPanelSection({
             </div>
           )}
           {isAddingColumn && (
-            <div className="formula-editor" id="report-columns-content">
-              <div className="formula-editor-grid">
-                <label htmlFor="add-column-position">Column number</label>
+            <div className="fr-formula-editor" id="fr-report-columns-content">
+              <div className="fr-formula-editor-grid">
+                <label htmlFor="fr-add-column-position">Column number</label>
                 <select
-                  id="add-column-position"
+                  id="fr-add-column-position"
                   value={addColumnPosition}
                   title="Insert this new column at the selected position. Existing columns will shift right."
                   onChange={(event) => {
@@ -162,7 +162,7 @@ function MappingPanelSection({
                 onDisplayTypeChange={onAddColumnDisplayTypeChange}
                 onAggregationChange={onAddColumnAggregationChange}
               />
-              <div className="formula-editor-actions">
+              <div className="fr-formula-editor-actions">
                 <button
                   type="button"
                   onClick={onSaveNewColumn}
@@ -178,7 +178,7 @@ function MappingPanelSection({
             </div>
           )}
           {!isAddingColumn && (
-            <div className="mapping-grid" id="report-columns-content">
+            <div className="fr-mapping-grid" id="fr-report-columns-content">
               {fields.map((field, index) => (
                 <MappingFieldCard
                   key={field.id}

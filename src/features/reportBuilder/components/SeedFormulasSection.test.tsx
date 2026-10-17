@@ -38,7 +38,7 @@ describe('SeedFormulasSection', () => {
     const section = heading.closest('section')
 
     expect(section).toBeTruthy()
-    expect(section?.id).toBe('report-formulas')
+    expect(section?.id).toBe('fr-report-formulas')
   })
 
   it('forwards add-formula click', () => {
@@ -68,7 +68,7 @@ describe('SeedFormulasSection', () => {
       />,
     )
 
-    const section = container.querySelector('#report-formulas')
+    const section = container.querySelector('#fr-report-formulas')
     expect(section).toBeTruthy()
     if (!(section instanceof HTMLElement)) {
       return

@@ -38,6 +38,10 @@ Newest at top. Each entry: what we decided and why.
   every distinct rate or hour value. With no number columns, every column but the last
   is a group. A **Tip** in Column Mapping and the Grouping tooltip explain that column
   order matters (editors only; viewers never see authoring tips). Groups sort by underlying values (numbers, dates), not formatted text.
+- **Namespaced CSS classes and IDs (`fr-`).** The builder renders inside host pages, so
+  unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
+  CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.
+  CSS modules were the alternative; the prefix keeps plain CSS and readable class names.
 - **Sandbox seeds load lazily.** A dynamic `import()` keeps the sample data in its own
   chunk, fetched only when no `rows` are passed, so host bundles don't include it.
   Sandbox mode shows a short loading state while it arrives.

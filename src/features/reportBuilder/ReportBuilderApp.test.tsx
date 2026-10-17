@@ -32,8 +32,8 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('heading', { name: 'Rate (sum)' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Hours (sum)' })).toBeInTheDocument()
 
-    const stats = container.querySelector('.seed-stats')
-    const table = container.querySelector('#report-table')
+    const stats = container.querySelector('.fr-seed-stats')
+    const table = container.querySelector('#fr-report-table')
     expect(stats).toBeTruthy()
     expect(table).toBeTruthy()
     if (!stats || !table) {
@@ -143,7 +143,7 @@ describe('ReportBuilderApp', () => {
     await user.type(formulaLabelInput, 'AaaFormula')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
-    const labels = Array.from(formulasSection.querySelectorAll('.formula-card-list .editable-card-summary strong'))
+    const labels = Array.from(formulasSection.querySelectorAll('.fr-formula-card-list .fr-editable-card-summary strong'))
       .map((node) => node.textContent?.trim() ?? '')
       .filter(Boolean)
 
@@ -173,7 +173,7 @@ describe('ReportBuilderApp', () => {
     const user = userEvent.setup()
     await renderSandboxApp(<ReportBuilderApp initialEditMode />)
 
-    const formulasSection = document.getElementById('report-formulas')
+    const formulasSection = document.getElementById('fr-report-formulas')
     expect(formulasSection).toBeTruthy()
     if (!formulasSection) {
       return
@@ -184,7 +184,7 @@ describe('ReportBuilderApp', () => {
     await user.click(screen.getByRole('button', { name: 'Formulas' }))
 
     expect(scrollSpy).toHaveBeenCalled()
-    expect(window.location.hash).toBe('#report-formulas')
+    expect(window.location.hash).toBe('#fr-report-formulas')
     scrollSpy.mockRestore()
   })
 

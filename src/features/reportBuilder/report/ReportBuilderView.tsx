@@ -25,7 +25,7 @@ function ReportBuilderView() {
   const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
 
   return (
-    <div className="seed-page">
+    <div className="fr-seed-page">
       {!isTableFullscreen && <EditModeToolbar {...editModeToolbarProps} />}
 
       {!isTableFullscreen && showAuthoring && (

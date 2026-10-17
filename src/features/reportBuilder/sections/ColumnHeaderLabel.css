@@ -1,13 +1,13 @@
-.seed-table th.column-header-warning {
+.fr-seed-table th.fr-column-header-warning {
   color: #b54708;
 }
 
-.column-header-warning-icon {
+.fr-column-header-warning-icon {
   cursor: help;
 }
 
 /* Read by screen readers; the icon carries it visually. */
-.column-header-warning-text {
+.fr-column-header-warning-text {
   position: absolute;
   width: 1px;
   height: 1px;

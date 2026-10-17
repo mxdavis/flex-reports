@@ -25,16 +25,16 @@ function EditableCard({
   return (
     <article
       {...articleProps}
-      className={['editable-card', className].filter(Boolean).join(' ')}
+      className={['fr-editable-card', className].filter(Boolean).join(' ')}
     >
       {shouldShowSummary && (
-        <div className="editable-card-summary">
+        <div className="fr-editable-card-summary">
           <strong title={summaryLeftTooltip}>{summaryLeft}</strong>
-          {summaryRight && <span className="editable-card-summary-right">{summaryRight}</span>}
+          {summaryRight && <span className="fr-editable-card-summary-right">{summaryRight}</span>}
         </div>
       )}
-      {detail && <div className="editable-card-detail">{detail}</div>}
-      {actions && <div className="editable-card-actions">{actions}</div>}
+      {detail && <div className="fr-editable-card-detail">{detail}</div>}
+      {actions && <div className="fr-editable-card-actions">{actions}</div>}
     </article>
   )
 }

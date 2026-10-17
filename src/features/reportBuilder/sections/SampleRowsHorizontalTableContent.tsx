@@ -50,7 +50,7 @@ export function SampleRowsHorizontalTableContent({
           <strong>{isGrouped ? 'Grand total' : 'Total'}</strong>
         </th>
         {fields.slice(1).map((field) => (
-          <td key={`total-${field.id}`} className={isNumericTotal(field) ? 'seed-table-value-numeric' : undefined}>
+          <td key={`total-${field.id}`} className={isNumericTotal(field) ? 'fr-seed-table-value-numeric' : undefined}>
             <strong>{formatFieldTotal(previewRows, field)}</strong>
           </td>
         ))}
@@ -87,7 +87,7 @@ export function SampleRowsHorizontalTableContent({
             {fields.map((field) => (
               <td
                 key={`${row.id}-${field.id}`}
-                className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : undefined}
+                className={isNumericDisplayType(field.displayType) ? 'fr-seed-table-value-numeric' : undefined}
               >
                 {getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)}
               </td>

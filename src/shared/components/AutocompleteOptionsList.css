@@ -1,4 +1,4 @@
-.autocomplete-list {
+.fr-autocomplete-list {
   list-style: none;
   margin: 4px 0 0;
   padding: 4px;
@@ -14,7 +14,7 @@
   z-index: 30;
 }
 
-.autocomplete-list li button {
+.fr-autocomplete-list li button {
   width: 100%;
   text-align: left;
   border: 0;
@@ -25,7 +25,7 @@
   cursor: pointer;
 }
 
-.autocomplete-list li button:hover,
-.autocomplete-list li button.highlighted {
+.fr-autocomplete-list li button:hover,
+.fr-autocomplete-list li button.fr-highlighted {
   background: #f2f4f7;
 }

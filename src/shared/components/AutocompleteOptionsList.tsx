@@ -14,12 +14,12 @@ function AutocompleteOptionsList({
   onSelect,
 }: AutocompleteOptionsListProps) {
   return (
-    <ul className="autocomplete-list" role="listbox" aria-label={ariaLabel}>
+    <ul className="fr-autocomplete-list" role="listbox" aria-label={ariaLabel}>
       {options.map((option, index) => (
         <li key={option} role="option" aria-selected={index === highlightedIndex}>
           <button
             type="button"
-            className={index === highlightedIndex ? 'highlighted' : ''}
+            className={index === highlightedIndex ? 'fr-highlighted' : ''}
             onMouseDown={(event) => {
               event.preventDefault()
             }}

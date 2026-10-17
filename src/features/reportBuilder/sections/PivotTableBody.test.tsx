@@ -26,7 +26,7 @@ describe('PivotTableBody', () => {
     expect(screen.getByRole('rowheader', { name: 'North' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('title', 'Expand North')
-    expect(screen.getByRole('cell', { name: '10' })).toHaveClass('seed-table-value-numeric')
+    expect(screen.getByRole('cell', { name: '10' })).toHaveClass('fr-seed-table-value-numeric')
   })
 
   it('asks to expand a collapsed group when clicked', () => {
@@ -40,6 +40,6 @@ describe('PivotTableBody', () => {
   it('marks rows by kind for styling', () => {
     renderBody()
 
-    expect(screen.getByRole('rowheader', { name: 'North' }).closest('tr')).toHaveClass('pivot-row-collapsed')
+    expect(screen.getByRole('rowheader', { name: 'North' }).closest('tr')).toHaveClass('fr-pivot-row-collapsed')
   })
 })

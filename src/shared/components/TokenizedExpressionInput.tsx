@@ -99,7 +99,7 @@ export default function TokenizedExpressionInput({
   const shouldShowList = isOpen && triggerState && filteredOptions.length > 0
 
   return (
-    <div className="tokenized-expression" ref={wrapperRef}>
+    <div className="fr-tokenized-expression" ref={wrapperRef}>
       <input
         id={id}
         ref={inputRef}

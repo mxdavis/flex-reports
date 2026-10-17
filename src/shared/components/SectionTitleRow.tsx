@@ -14,12 +14,12 @@ function SectionTitleRow({ title, sectionName, contentId, isCollapsed, onToggleC
   const toggleLabel = `${isCollapsed ? 'Expand' : 'Collapse'} ${sectionName}`
 
   return (
-    <div className="section-title-row">
+    <div className="fr-section-title-row">
       <h2>{title}</h2>
       {onToggleCollapsed && (
         <button
           type="button"
-          className="collapse-toggle-button"
+          className="fr-collapse-toggle-button"
           onClick={onToggleCollapsed}
           aria-label={toggleLabel}
           aria-expanded={!isCollapsed}

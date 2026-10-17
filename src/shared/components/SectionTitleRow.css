@@ -1,11 +1,11 @@
-.section-title-row {
+.fr-section-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.section-title-row button {
+.fr-section-title-row button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -14,7 +14,7 @@
   cursor: pointer;
 }
 
-.collapse-toggle-button {
+.fr-collapse-toggle-button {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -23,7 +23,7 @@
   justify-content: center;
 }
 
-.collapse-toggle-button svg {
+.fr-collapse-toggle-button svg {
   width: 14px;
   height: 14px;
 }

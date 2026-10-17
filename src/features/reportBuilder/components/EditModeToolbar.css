@@ -1,10 +1,10 @@
-.workspace-toolbar {
+.fr-workspace-toolbar {
   position: sticky;
   top: 10px;
   z-index: 50;
 }
 
-.workspace-toolbar-group {
+.fr-workspace-toolbar-group {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -18,7 +18,7 @@
   width: fit-content;
 }
 
-.workspace-toolbar-button {
+.fr-workspace-toolbar-button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -30,32 +30,32 @@
   gap: 8px;
 }
 
-.workspace-toolbar-nav {
+.fr-workspace-toolbar-nav {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.workspace-toolbar-jump {
+.fr-workspace-toolbar-jump {
   padding: 6px 9px;
 }
 
-.workspace-toolbar-button svg {
+.fr-workspace-toolbar-button svg {
   display: block;
 }
 
-.workspace-toolbar-save:not(:disabled) {
+.fr-workspace-toolbar-save:not(:disabled) {
   background: #155eef;
   border-color: #155eef;
   color: #ffffff;
 }
 
-.workspace-toolbar-save:disabled {
+.fr-workspace-toolbar-save:disabled {
   cursor: default;
   opacity: 0.6;
 }
 
-.workspace-toolbar-error {
+.fr-workspace-toolbar-error {
   color: #b42318;
   font-size: 13px;
 }

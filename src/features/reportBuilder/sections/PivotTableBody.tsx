@@ -17,7 +17,7 @@ function PivotCellContent({ cell, onToggleGroup }: { cell: PivotCell, onToggleGr
   return (
     <button
       type="button"
-      className="pivot-group-toggle"
+      className="fr-pivot-group-toggle"
       aria-expanded={isExpanded}
       title={`${isExpanded ? 'Collapse' : 'Expand'} ${cell.value}`}
       onClick={() => onToggleGroup(groupKey, !isExpanded)}
@@ -32,7 +32,7 @@ function PivotTableBody({ pivotRows, onToggleGroup }: PivotTableBodyProps) {
   return (
     <tbody>
       {pivotRows.map((pivotRow) => (
-        <tr key={pivotRow.key} className={`pivot-row-${pivotRow.kind}`}>
+        <tr key={pivotRow.key} className={`fr-pivot-row-${pivotRow.kind}`}>
           {pivotRow.cells.map((cell) => {
             const Tag = cell.tag
             return (
@@ -40,7 +40,7 @@ function PivotTableBody({ pivotRows, onToggleGroup }: PivotTableBodyProps) {
                 key={`${pivotRow.key}-${cell.columnIndex}`}
                 scope={cell.scope}
                 rowSpan={cell.rowSpan}
-                className={cell.isNumeric ? 'seed-table-value-numeric' : undefined}
+                className={cell.isNumeric ? 'fr-seed-table-value-numeric' : undefined}
               >
                 <PivotCellContent cell={cell} onToggleGroup={onToggleGroup} />
               </Tag>

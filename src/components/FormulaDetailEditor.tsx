@@ -23,7 +23,7 @@ function FormulaDetailEditor({
 }: FormulaDetailEditorProps) {
   return (
     <>
-      <div className="formula-item-edit-grid">
+      <div className="fr-formula-item-edit-grid">
         <label htmlFor={labelInputId}>Label</label>
         <input
           id={labelInputId}
@@ -44,7 +44,7 @@ function FormulaDetailEditor({
           onChange={onExpressionChange}
         />
       </div>
-      {error && <p className="formula-error">{error}</p>}
+      {error && <p className="fr-formula-error">{error}</p>}
     </>
   )
 }

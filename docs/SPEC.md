@@ -117,7 +117,8 @@ formula overrides, full Excel function library, real-time collab, sandbox playgr
 - Node (latest via nvm), Vite + React (latest) + TypeScript
 - Vitest + Testing Library for unit tests, Playwright for e2e
 - oxlint
-- Per-component CSS stylesheets
+- Per-component CSS stylesheets; every class and element ID is prefixed `fr-` so the
+  builder can't clash with a host page (enforced by `npm run check:practices`)
 
 ## 9. Project structure
 

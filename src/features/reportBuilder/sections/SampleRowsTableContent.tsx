@@ -45,13 +45,13 @@ function SampleRowsTableContent({ isHorizontalTable, verticalColumns, ...tablePr
             {verticalColumns.map((column) => (
               <td
                 key={`${field.id}-${column.key}`}
-                className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+                className={isNumericDisplayType(field.displayType) ? 'fr-seed-table-value-numeric' : ''}
               >
                 {getMappedValue(column.rows[0], field.sourceKey, field.displayType, field.currencySymbol)}
               </td>
             ))}
             {showTotals && (
-              <td className={isNumericTotal(field) ? 'seed-table-value-numeric' : ''}>
+              <td className={isNumericTotal(field) ? 'fr-seed-table-value-numeric' : ''}>
                 <strong>{formatFieldTotal(previewRows, field)}</strong>
               </td>
             )}

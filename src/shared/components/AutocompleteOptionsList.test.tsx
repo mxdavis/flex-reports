@@ -19,7 +19,7 @@ describe('AutocompleteOptionsList', () => {
     const rateOption = screen.getByRole('option', { name: 'rate' })
     const rateButton = screen.getByRole('button', { name: 'rate' })
     expect(rateOption).toHaveAttribute('aria-selected', 'true')
-    expect(rateButton).toHaveClass('highlighted')
+    expect(rateButton).toHaveClass('fr-highlighted')
 
     fireEvent.click(rateButton)
     expect(onSelect).toHaveBeenCalledWith('rate')

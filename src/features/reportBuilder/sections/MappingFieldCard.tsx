@@ -64,7 +64,7 @@ function MappingFieldCard({
       draggable
       onDragStart={(event) => {
         const target = event.target as HTMLElement
-        if (target.closest('.drag-block') || target.closest('button')) {
+        if (target.closest('.fr-drag-block') || target.closest('button')) {
           event.preventDefault()
           return
         }
@@ -96,13 +96,13 @@ function MappingFieldCard({
         onSetDragOverFieldId(null)
       }}
       className={[
-        draggedFieldId === field.id ? 'dragging' : '',
-        dragOverFieldId === field.id ? 'drag-over' : '',
+        draggedFieldId === field.id ? 'fr-dragging' : '',
+        dragOverFieldId === field.id ? 'fr-drag-over' : '',
       ].filter(Boolean).join(' ')}
       summaryLeft={warning ? (
-        <span className="mapping-field-summary">
+        <span className="fr-mapping-field-summary">
           {field.label}
-          <span className="mapping-field-warning" role="note">{warning}</span>
+          <span className="fr-mapping-field-warning" role="note">{warning}</span>
         </span>
       ) : field.label}
       summaryRight={`COLUMN ${index + 1}`}

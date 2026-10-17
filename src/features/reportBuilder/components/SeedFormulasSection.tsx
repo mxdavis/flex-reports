@@ -55,25 +55,25 @@ function SeedFormulasSection({
   onToggleCollapsed,
 }: SeedFormulasSectionProps) {
   return (
-    <section id="report-formulas" className="seed-formulas jump-target">
+    <section id="fr-report-formulas" className="fr-seed-formulas fr-jump-target">
       <SectionTitleRow
         title="Formulas"
         sectionName="formulas"
-        contentId="report-formulas-content"
+        contentId="fr-report-formulas-content"
         isCollapsed={isCollapsed}
         onToggleCollapsed={onToggleCollapsed}
       />
       {!isCollapsed && (
-        <div id="report-formulas-content">
+        <div id="fr-report-formulas-content">
           <p
-            className="mapping-help formula-help"
+            className="fr-mapping-help fr-formula-help"
             title="Use {{fieldName}} for data fields and {{%Formula Label}} for formulas. Formula labels are case-insensitive."
           >
             Use {'{{fieldName}}'} for data fields and {'{{%Formula Label}}'} for formulas.
             {` Available formulas: ${formulas.map((formula) => formula.label).join(', ') || 'none yet'}.`}
           </p>
           {!isAddingFormula && (
-            <div className="formula-add-card">
+            <div className="fr-formula-add-card">
               <button
                 type="button"
                 onClick={onStartAddFormula}
@@ -87,11 +87,11 @@ function SeedFormulasSection({
           )}
 
           {isAddingFormula && (
-            <div className="formula-editor">
-              <div className="formula-editor-grid">
-                <label htmlFor="new-formula-label">Label</label>
+            <div className="fr-formula-editor">
+              <div className="fr-formula-editor-grid">
+                <label htmlFor="fr-new-formula-label">Label</label>
                 <input
-                  id="new-formula-label"
+                  id="fr-new-formula-label"
                   type="text"
                   value={newFormula.label}
                   title="Formula label. You can reference it later as {{%Your Label}}."
@@ -100,9 +100,9 @@ function SeedFormulasSection({
                   }}
                 />
 
-                <label htmlFor="new-formula-expression">Expression</label>
+                <label htmlFor="fr-new-formula-expression">Expression</label>
                 <TokenizedExpressionInput
-                  id="new-formula-expression"
+                  id="fr-new-formula-expression"
                   value={newFormula.expression}
                   title="Type an expression. Enter {{ to see available fields and formulas. Formula refs use {{%Label}}."
                   options={formulaTokenOptions}
@@ -110,7 +110,7 @@ function SeedFormulasSection({
                 />
               </div>
 
-              <div className="formula-editor-actions">
+              <div className="fr-formula-editor-actions">
                 <button
                   type="button"
                   onClick={onAddFormula}
@@ -130,11 +130,11 @@ function SeedFormulasSection({
                 Use {'{{fieldName}}'} for data fields and {'{{%Formula Label}}'} for formulas.
               </small>
 
-              {formulaError && <p className="formula-error">{formulaError}</p>}
+              {formulaError && <p className="fr-formula-error">{formulaError}</p>}
             </div>
           )}
 
-          <div className="formula-card-list">
+          <div className="fr-formula-card-list">
             {formulas.map((formula) => {
               const isEditingFormula = editingFormulaLabel === formula.label && editingFormula !== null
               const formulaDraft = isEditingFormula ? editingFormula : null
@@ -149,8 +149,8 @@ function SeedFormulasSection({
                       <FormulaDetailEditor
                         formula={formulaDraft!}
                         tokenOptions={formulaTokenOptions}
-                        labelInputId={`edit-label-${formula.label}`}
-                        expressionInputId={`edit-expression-${formula.label}`}
+                        labelInputId={`fr-edit-label-${formula.label}`}
+                        expressionInputId={`fr-edit-expression-${formula.label}`}
                         error={editingFormulaError}
                         onLabelChange={onSetEditingFormulaLabel}
                         onExpressionChange={onSetEditingFormulaExpression}

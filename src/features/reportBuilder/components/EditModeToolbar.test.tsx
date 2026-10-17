@@ -23,16 +23,16 @@ describe('EditModeToolbar', () => {
         isEditMode
         onToggle={() => undefined}
         jumpTargets={[
-          { id: 'report-columns', label: 'Columns' },
-          { id: 'report-formulas', label: 'Formulas' },
-          { id: 'report-table', label: 'Table' },
+          { id: 'fr-report-columns', label: 'Columns' },
+          { id: 'fr-report-formulas', label: 'Formulas' },
+          { id: 'fr-report-table', label: 'Table' },
         ]}
         onJumpToSection={onJumpToSection}
       />,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Formulas' }))
-    expect(onJumpToSection).toHaveBeenCalledWith('report-formulas')
+    expect(onJumpToSection).toHaveBeenCalledWith('fr-report-formulas')
   })
 
   it('hides Save when the user cannot save', () => {

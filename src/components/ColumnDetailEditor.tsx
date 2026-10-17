@@ -40,19 +40,19 @@ function ColumnDetailEditor({
   onAggregationChange,
 }: ColumnDetailEditorProps) {
   return (
-    <div className="column-detail-editor drag-block">
-      <label htmlFor={`mapping-${field.id}`}>{columnLabel}</label>
+    <div className="fr-column-detail-editor fr-drag-block">
+      <label htmlFor={`fr-mapping-${field.id}`}>{columnLabel}</label>
       <AutocompleteInput
-        id={`mapping-${field.id}`}
+        id={`fr-mapping-${field.id}`}
         value={field.sourceKey}
         options={sourceOptions}
         title="Type or choose which data endpoint fills this report column."
         onChange={onSourceChange}
       />
 
-      <label htmlFor={`label-${field.id}`}>Display label</label>
+      <label htmlFor={`fr-label-${field.id}`}>Display label</label>
       <input
-        id={`label-${field.id}`}
+        id={`fr-label-${field.id}`}
         type="text"
         value={field.label}
         title="Header text shown in the report output. You can override it."
@@ -61,9 +61,9 @@ function ColumnDetailEditor({
         }}
       />
 
-      <label htmlFor={`display-type-${field.id}`}>Display type</label>
+      <label htmlFor={`fr-display-type-${field.id}`}>Display type</label>
       <select
-        id={`display-type-${field.id}`}
+        id={`fr-display-type-${field.id}`}
         value={field.displayType}
         title="Choose how values in this column are formatted."
         onChange={(event) => {
@@ -78,13 +78,13 @@ function ColumnDetailEditor({
       </select>
 
       <label
-        htmlFor={`aggregation-${field.id}`}
+        htmlFor={`fr-aggregation-${field.id}`}
         title="How this column is totalled in summary chips, group totals, and the grand total."
       >
         Total type
       </label>
       <select
-        id={`aggregation-${field.id}`}
+        id={`fr-aggregation-${field.id}`}
         value={field.aggregation}
         title="How this column is totalled in summary chips, group totals, and the grand total."
         onChange={(event) => {

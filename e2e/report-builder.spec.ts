@@ -34,7 +34,7 @@ test('table controls expose the totals toggle and vertical header semantics', as
   await page.getByRole('button', { name: 'Vertical view' }).click()
   await expect(page.getByRole('button', { name: 'Horizontal view' })).toBeVisible()
 
-  const firstHeaderCell = page.locator('.seed-table table thead th').first()
+  const firstHeaderCell = page.locator('.fr-seed-table table thead th').first()
   await expect(firstHeaderCell).not.toHaveText('Field')
   await expect(firstHeaderCell).not.toHaveText('Column 1')
 })
@@ -127,7 +127,7 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
   })
   await formulasSection.getByRole('button', { name: 'Edit' }).first().click()
 
-  const formulaLabelInput = page.locator('#edit-label-grossFees')
+  const formulaLabelInput = page.locator('#fr-edit-label-grossFees')
   await formulaLabelInput.fill('Gross Renamed')
   await formulasSection.getByRole('button', { name: 'Save', exact: true }).click()
 
@@ -170,12 +170,12 @@ test('global currency symbol selector updates currency display values', async ({
 
   await page.getByLabel('Currency symbol').selectOption('₪')
 
-  const totalChip = page.locator('.seed-stats article', {
+  const totalChip = page.locator('.fr-seed-stats article', {
     has: page.getByRole('heading', { name: /Total \(sum\)/ }),
   })
   await expect(totalChip.locator('strong')).toContainText('₪')
 
-  await expect(page.locator('.seed-table tbody td', { hasText: '₪' }).first()).toBeVisible()
+  await expect(page.locator('.fr-seed-table tbody td', { hasText: '₪' }).first()).toBeVisible()
 })
 
 test('typing {{ in formula expression opens token suggestions', async ({ page }) => {

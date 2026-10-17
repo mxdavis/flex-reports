@@ -20,21 +20,21 @@ function SeedHeader({
   onCurrencySymbolChange,
 }: SeedHeaderProps) {
   return (
-    <header className="seed-header">
+    <header className="fr-seed-header">
       <SectionTitleRow
         title="Report Settings"
         sectionName="settings"
-        contentId="report-settings-content"
+        contentId="fr-report-settings-content"
         isCollapsed={isCollapsed}
         onToggleCollapsed={onToggleCollapsed}
       />
 
       {!isCollapsed && (
-        <div id="report-settings-content" className="seed-header-controls">
-          <div className="seed-header-sheet-name">
-            <label htmlFor="sheet-name-input">Sheet name</label>
+        <div id="fr-report-settings-content" className="fr-seed-header-controls">
+          <div className="fr-seed-header-sheet-name">
+            <label htmlFor="fr-sheet-name-input">Sheet name</label>
             <input
-              id="sheet-name-input"
+              id="fr-sheet-name-input"
               type="text"
               value={sheetName}
               onChange={(event) => {
@@ -44,10 +44,10 @@ function SeedHeader({
             />
           </div>
 
-          <div className="seed-header-currency-symbol">
-            <label htmlFor="global-currency-symbol">Currency symbol</label>
+          <div className="fr-seed-header-currency-symbol">
+            <label htmlFor="fr-global-currency-symbol">Currency symbol</label>
             <select
-              id="global-currency-symbol"
+              id="fr-global-currency-symbol"
               value={currencySymbol}
               title="Used for all currency values in this report preview."
               onChange={(event) => {

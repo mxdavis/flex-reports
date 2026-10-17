@@ -11,7 +11,7 @@ type SeedStatsProps = {
 
 function SeedStats({ items }: SeedStatsProps) {
   return (
-    <section className="seed-stats">
+    <section className="fr-seed-stats">
       {items.map((item) => (
         <article key={item.label}>
           <h2>{item.label}</h2>
