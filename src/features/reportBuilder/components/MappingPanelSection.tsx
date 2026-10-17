@@ -92,7 +92,7 @@ function MappingPanelSection({
         onToggleCollapsed={onToggleCollapsed}
       />
       {!isCollapsed && (
-        <>
+        <div id="fr-report-columns-content">
           <p className="fr-mapping-help">
             Build your report layout here. Choose what each column pulls from,
             rename the header users see, and drag cards to reorder the final output.
@@ -106,7 +106,7 @@ function MappingPanelSection({
             </p>
           )}
           {!newColumn && (
-            <div className="fr-formula-add-card">
+            <div className="fr-add-card">
               <button
                 type="button"
                 onClick={onStartAddColumn}
@@ -119,8 +119,8 @@ function MappingPanelSection({
             </div>
           )}
           {newColumn && (
-            <div className="fr-formula-editor" id="fr-report-columns-content">
-              <div className="fr-formula-editor-grid">
+            <div className="fr-editor">
+              <div className="fr-editor-grid">
                 <label htmlFor="fr-add-column-position">Column number</label>
                 <select
                   id="fr-add-column-position"
@@ -147,7 +147,7 @@ function MappingPanelSection({
                 onDisplayTypeChange={onAddColumnDisplayTypeChange}
                 onAggregationChange={onAddColumnAggregationChange}
               />
-              <div className="fr-formula-editor-actions">
+              <div className="fr-editor-actions">
                 <button
                   type="button"
                   onClick={onSaveNewColumn}
@@ -163,7 +163,7 @@ function MappingPanelSection({
             </div>
           )}
           {!newColumn && (
-            <div className="fr-mapping-grid" id="fr-report-columns-content">
+            <div className="fr-mapping-grid">
               {fields.map((field, index) => (
                 <MappingFieldCard
                   key={field.id}
@@ -194,7 +194,7 @@ function MappingPanelSection({
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
     </section>
   )

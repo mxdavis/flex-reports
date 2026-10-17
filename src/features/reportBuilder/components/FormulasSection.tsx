@@ -73,7 +73,7 @@ function FormulasSection({
             {` Available formulas: ${formulas.map((formula) => formula.label).join(', ') || 'none yet'}.`}
           </p>
           {!isAddingFormula && (
-            <div className="fr-formula-add-card">
+            <div className="fr-add-card">
               <button
                 type="button"
                 onClick={onStartAddFormula}
@@ -87,8 +87,8 @@ function FormulasSection({
           )}
 
           {isAddingFormula && (
-            <div className="fr-formula-editor">
-              <div className="fr-formula-editor-grid">
+            <div className="fr-editor">
+              <div className="fr-editor-grid">
                 <label htmlFor="fr-new-formula-label">Label</label>
                 <input
                   id="fr-new-formula-label"
@@ -110,7 +110,7 @@ function FormulasSection({
                 />
               </div>
 
-              <div className="fr-formula-editor-actions">
+              <div className="fr-editor-actions">
                 <button
                   type="button"
                   onClick={onAddFormula}
