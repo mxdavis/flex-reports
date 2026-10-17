@@ -22,12 +22,14 @@ function getMappingSection(page: Parameters<typeof test>[0]['page']) {
   })
 }
 
-test('table controls expose aggregate options and vertical header semantics', async ({ page }) => {
+test('table controls expose the totals toggle and vertical header semantics', async ({ page }) => {
   await page.goto('/')
 
-  const aggregateSelect = page.locator('#aggregate-mode')
-  await expect(aggregateSelect).toBeVisible()
-  await expect(aggregateSelect.locator('option')).toHaveText(['None', 'Sum', 'Average', 'Count', 'Distinct Count'])
+  const totalsButton = page.getByRole('button', { name: 'Totals' })
+  await expect(totalsButton).toHaveAttribute('aria-pressed', 'false')
+  await totalsButton.click()
+  await expect(totalsButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('rowheader', { name: 'Total', exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Vertical view' }).click()
   await expect(page.getByRole('button', { name: 'Horizontal view' })).toBeVisible()
@@ -41,19 +43,11 @@ test('grouping toggle enables grouped totals layout', async ({ page }) => {
   await page.goto('/')
 
   await enterEditMode(page)
-
   const mappingSection = getMappingSection(page)
+  await setColumnSource(page, mappingSection, 1, 'personName')
+  await setColumnSource(page, mappingSection, 2, 'clientName')
 
-  await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
-  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill('personName')
-  await mappingSection.getByRole('button', { name: 'Save COLUMN 1' }).click()
-
-  await mappingSection.getByRole('button', { name: 'Edit COLUMN 2' }).click()
-  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill('clientName')
-  await mappingSection.getByRole('button', { name: 'Save COLUMN 2' }).click()
-
-  const aggregateSelect = page.locator('#aggregate-mode')
-  await aggregateSelect.selectOption('sum')
+  await page.getByRole('button', { name: 'Totals' }).click()
 
   const groupedTotalHeaders = page.getByRole('rowheader', { name: / Total$/ })
   await expect(groupedTotalHeaders).toHaveCount(0)
@@ -63,100 +57,55 @@ test('grouping toggle enables grouped totals layout', async ({ page }) => {
   await expect(groupedTotalHeaders.first()).toBeVisible()
 })
 
-test('grouped count shows row count once in the left total label', async ({ page }) => {
+test('groups collapse and expand by hand and by outline level', async ({ page }) => {
   await page.goto('/')
 
   await enterEditMode(page)
-
   const mappingSection = getMappingSection(page)
+  await setColumnSource(page, mappingSection, 1, 'personName')
+  await setColumnSource(page, mappingSection, 2, 'clientName')
 
-  await mappingSection.getByRole('button', { name: 'Edit COLUMN 2' }).click()
-  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill('clientName')
-  await mappingSection.getByRole('button', { name: 'Save COLUMN 2' }).click()
-
-  await mappingSection.getByRole('button', { name: 'Edit COLUMN 3' }).click()
-  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill('originatingPersonId')
-  await mappingSection.getByRole('button', { name: 'Save COLUMN 3' }).click()
-
-  const aggregateSelect = page.locator('#aggregate-mode')
-  await aggregateSelect.selectOption('count')
-
+  await page.getByRole('button', { name: 'Totals' }).click()
   await page.getByRole('button', { name: 'Grouping' }).click()
 
-  const totalRow = page.locator('tr', {
-    has: page.getByRole('rowheader', { name: '07/01/2026 Count Total 3' }),
-  })
-  await expect(totalRow).toBeVisible()
+  const alexButton = page.getByRole('button', { name: 'Alex Rivera', exact: true })
+  await expect(alexButton).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('rowheader', { name: 'Alex Rivera Total' })).toBeVisible()
 
-  const totalCells = await totalRow.locator('td').allTextContents()
-  for (const cellValue of totalCells) {
-    expect(cellValue.trim()).toBe('')
-  }
+  await alexButton.click()
+  await expect(alexButton).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByRole('rowheader', { name: 'Alex Rivera Total' })).toHaveCount(0)
 
-  const singleSubgroupRow = page.locator('tr', {
-    has: page.getByRole('rowheader', { name: /^07\/10\/2026$/ }),
-  })
-  await expect(singleSubgroupRow).toBeVisible()
+  const outline = page.getByRole('combobox', { name: 'Show rows' })
+  await outline.selectOption('0')
+  await expect(page.getByRole('button', { name: 'Sam Patel', exact: true })).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByRole('rowheader', { name: / Total$/ })).toHaveCount(0)
 
-  const singleRowCells = (await singleSubgroupRow.locator('td').allTextContents()).map((value) => value.trim())
-  expect(singleRowCells[0]).toBe('Delta Freight')
-  expect(singleRowCells).toContain('Review')
-  expect(singleRowCells).toContain('$540.00')
+  await outline.selectOption('all')
+  await expect(alexButton).toHaveAttribute('aria-expanded', 'true')
 })
 
-test('grouped subtotals are rendered at each nested subgroup level for all aggregate modes', async ({ page }) => {
+test('groups nest up to the first number column, with a total row for every group', async ({ page }) => {
   await page.goto('/')
 
   await enterEditMode(page)
   const mappingSection = getMappingSection(page)
 
   await setColumnSource(page, mappingSection, 1, 'personName')
-  await setColumnSource(page, mappingSection, 2, 'rate')
-  await setColumnSource(page, mappingSection, 3, 'clientName')
-  await setColumnSource(page, mappingSection, 4, 'workDate')
+  await setColumnSource(page, mappingSection, 2, 'clientName')
+  await setColumnSource(page, mappingSection, 3, 'task')
+  await setColumnSource(page, mappingSection, 4, 'rate')
   await setColumnSource(page, mappingSection, 5, 'grossFees')
 
+  await page.getByRole('button', { name: 'Totals' }).click()
   await page.getByRole('button', { name: 'Grouping' }).click()
 
-  const aggregateSelect = page.locator('#aggregate-mode')
-  const modeExpectations: Array<{
-    mode: 'sum' | 'avg' | 'count' | 'distinct'
-    subgroupLabel: RegExp
-    midGroupLabel: RegExp
-    topGroupLabel: RegExp
-  }> = [
-    {
-      mode: 'sum',
-      subgroupLabel: /^Delta Freight Total$/,
-      midGroupLabel: /^\$?240(\.00)? Total$/,
-      topGroupLabel: /^Alex Rivera Total$/,
-    },
-    {
-      mode: 'avg',
-      subgroupLabel: /^Delta Freight Average$/,
-      midGroupLabel: /^\$?240(\.00)? Average$/,
-      topGroupLabel: /^Alex Rivera Average$/,
-    },
-    {
-      mode: 'count',
-      subgroupLabel: /^Delta Freight Count Total 3$/,
-      midGroupLabel: /^\$?240(\.00)? Count Total 7$/,
-      topGroupLabel: /^Alex Rivera Count Total 7$/,
-    },
-    {
-      mode: 'distinct',
-      subgroupLabel: /^Delta Freight DISTINCT COUNT$/,
-      midGroupLabel: /^\$?240(\.00)? DISTINCT COUNT$/,
-      topGroupLabel: /^Alex Rivera DISTINCT COUNT$/,
-    },
-  ]
-
-  for (const expectation of modeExpectations) {
-    await aggregateSelect.selectOption(expectation.mode)
-    await expect(page.getByRole('rowheader', { name: expectation.subgroupLabel }).first()).toBeVisible()
-    await expect(page.getByRole('rowheader', { name: expectation.midGroupLabel }).first()).toBeVisible()
-    await expect(page.getByRole('rowheader', { name: expectation.topGroupLabel }).first()).toBeVisible()
-  }
+  await expect(page.getByRole('rowheader', { name: /^Review Total$/ }).first()).toBeVisible()
+  await expect(page.getByRole('rowheader', { name: /^Delta Freight Total$/ }).first()).toBeVisible()
+  await expect(page.getByRole('rowheader', { name: /^Alex Rivera Total$/ })).toBeVisible()
+  await expect(page.getByRole('rowheader', { name: 'Grand total' })).toBeVisible()
+  // Number columns are values, never groups.
+  await expect(page.getByRole('rowheader', { name: /^\$?240(\.00)? Total$/ })).toHaveCount(0)
 })
 
 test('formula label rename syncs mapped column source', async ({ page }) => {
@@ -180,13 +129,13 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
 
   const formulaLabelInput = page.locator('#edit-label-grossFees')
   await formulaLabelInput.fill('Gross Renamed')
-  await page.getByRole('button', { name: 'Save' }).click()
+  await formulasSection.getByRole('button', { name: 'Save', exact: true }).click()
 
   await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
   await expect(column1SourceInput).toHaveValue('Gross Renamed')
 })
 
-test('add column uses shared field editor controls and persists chip type', async ({ page }) => {
+test('add column uses shared field editor controls and persists total type', async ({ page }) => {
   await page.goto('/')
 
   await enterEditMode(page)
@@ -198,12 +147,12 @@ test('add column uses shared field editor controls and persists chip type', asyn
   await expect(mappingSection.getByLabel('Data point')).toBeVisible()
   await expect(mappingSection.getByLabel('Display label')).toBeVisible()
   await expect(mappingSection.getByLabel('Display type')).toBeVisible()
-  await expect(mappingSection.getByLabel('Chip type')).toBeVisible()
+  await expect(mappingSection.getByLabel('Total type')).toBeVisible()
 
   await mappingSection.getByLabel('Data point').fill('hours')
   await mappingSection.getByLabel('Display label').fill('Hours Rounded')
   await mappingSection.getByLabel('Display type').selectOption('number')
-  await mappingSection.getByLabel('Chip type').selectOption('avg')
+  await mappingSection.getByLabel('Total type').selectOption('avg')
   await mappingSection.getByRole('button', { name: 'Save column' }).click()
 
   await expect(mappingSection.getByText('Hours Rounded')).toBeVisible()
@@ -211,7 +160,7 @@ test('add column uses shared field editor controls and persists chip type', asyn
   await mappingSection.getByRole('button', { name: 'Edit COLUMN 8' }).click()
   await expect(mappingSection.getByRole('textbox', { name: 'COLUMN' }).first()).toHaveValue('hours')
   await expect(mappingSection.getByLabel('Display type')).toHaveValue('number')
-  await expect(mappingSection.getByLabel('Chip type')).toHaveValue('avg')
+  await expect(mappingSection.getByLabel('Total type')).toHaveValue('avg')
 })
 
 test('global currency symbol selector updates currency display values', async ({ page }) => {
