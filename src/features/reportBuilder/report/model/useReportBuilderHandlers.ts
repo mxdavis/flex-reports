@@ -1,6 +1,6 @@
-import type { SeedFormula } from '../../../../services/adapters'
-import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
-import { getDefaultChipAggregation, MAX_FORMULAS } from '../../config'
+import type { ReportFormula } from '../../../../services/adapters'
+import type { ReportField } from '../../../../services/reportDefinition/types'
+import { DEFAULT_CURRENCY_SYMBOL, MAX_FORMULAS } from '../../config'
 import { getNextFormulaLabel, sortFormulasByLabel, validateFormulaInput } from '../../../../utils/reportBuilder'
 import type { UiAction } from '../../state/uiState'
 
@@ -8,16 +8,15 @@ type HandlerArgs = {
   ui: {
     editingFieldId: string | null
     editingFieldDraft: ReportField | null
-    editingFormula: SeedFormula | null
+    editingFormula: ReportFormula | null
   }
   dispatchUi: (action: UiAction) => void
   reportFields: ReportField[]
   setReportFields: (updater: (previous: ReportField[]) => ReportField[]) => void
-  formulas: SeedFormula[]
-  setFormulas: (updater: (previous: SeedFormula[]) => SeedFormula[]) => void
-  newFormula: SeedFormula
-  setNewFormula: (value: SeedFormula) => void
-  getPreferredDisplayType: (sourceKey: string) => DisplayType
+  formulas: ReportFormula[]
+  setFormulas: (updater: (previous: ReportFormula[]) => ReportFormula[]) => void
+  newFormula: ReportFormula
+  setNewFormula: (value: ReportFormula) => void
   setFormulaError: (value: string) => void
   setEditingFormulaError: (value: string) => void
   clearEditingFormulaError: () => void
@@ -33,7 +32,6 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
     setFormulas,
     newFormula,
     setNewFormula,
-    getPreferredDisplayType,
     setFormulaError,
     setEditingFormulaError,
     clearEditingFormulaError,
@@ -43,7 +41,7 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
     dispatchUi({ type: 'updateEditFieldDraft', changes: patch })
   }
 
-  function patchEditingFormulaDraft(patch: Partial<SeedFormula>): void {
+  function patchEditingFormulaDraft(patch: Partial<ReportFormula>): void {
     dispatchUi({ type: 'updateEditFormula', changes: patch })
   }
 
@@ -68,36 +66,19 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
     if (!ui.editingFieldDraft || ui.editingFieldDraft.id !== fieldId) return
     const fieldDraft = ui.editingFieldDraft
 
+    // The draft already reflects any source-driven defaults (see
+    // getSourceChangePatch), so it is saved as shown.
     setReportFields((previous) => previous.map((currentField) => {
       if (currentField.id !== fieldId) return currentField
-      const nextSourceKey = fieldDraft.sourceKey.trim() || currentField.sourceKey
-      const nextLabelInput = fieldDraft.label.trim()
-      const nextLabel = nextLabelInput || currentField.label
-      const currentDefaultDisplayType = getPreferredDisplayType(currentField.sourceKey)
-      const didUserChangeDisplayType = fieldDraft.displayType !== currentField.displayType
-      const shouldSyncDisplayType = currentField.displayType === currentDefaultDisplayType
-      const nextDisplayType = didUserChangeDisplayType
-        ? fieldDraft.displayType
-        : (shouldSyncDisplayType
-          ? getPreferredDisplayType(nextSourceKey)
-          : currentField.displayType)
-      const currentDefaultChipAggregation = getDefaultChipAggregation(currentField.displayType)
-      const didUserChangeChipAggregation = fieldDraft.chipAggregation !== currentField.chipAggregation
-      const shouldSyncChipAggregation = currentField.chipAggregation === currentDefaultChipAggregation
-      const nextChipAggregation = fieldDraft.chipAggregation ?? getDefaultChipAggregation(nextDisplayType)
-      const nextCurrencySymbol = nextDisplayType === 'currency'
-        ? (fieldDraft.currencySymbol || currentField.currencySymbol || '$')
-        : ''
-
       return {
         ...currentField,
-        sourceKey: nextSourceKey,
-        label: nextLabel,
-        displayType: nextDisplayType,
-        chipAggregation: !didUserChangeChipAggregation && shouldSyncChipAggregation
-          ? getDefaultChipAggregation(nextDisplayType)
-          : nextChipAggregation,
-        currencySymbol: nextCurrencySymbol,
+        sourceKey: fieldDraft.sourceKey.trim() || currentField.sourceKey,
+        label: fieldDraft.label.trim() || currentField.label,
+        displayType: fieldDraft.displayType,
+        aggregation: fieldDraft.aggregation,
+        currencySymbol: fieldDraft.displayType === 'currency'
+          ? (fieldDraft.currencySymbol || currentField.currencySymbol || DEFAULT_CURRENCY_SYMBOL)
+          : '',
       }
     }))
 
@@ -111,7 +92,7 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
         ? currentField.sourceKey !== ui.editingFieldDraft.sourceKey
           || currentField.label !== ui.editingFieldDraft.label
           || currentField.displayType !== ui.editingFieldDraft.displayType
-          || currentField.chipAggregation !== ui.editingFieldDraft.chipAggregation
+          || currentField.aggregation !== ui.editingFieldDraft.aggregation
         : false
 
       if (hasUnsavedChanges) {
@@ -142,7 +123,7 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
       const next = sortFormulasByLabel([...previous, candidate])
       setNewFormula({
         label: getNextFormulaLabel(next.map((formula) => formula.label)),
-        expression: '{{hours}} * {{rate}}',
+        expression: '',
       })
       return next
     })
@@ -150,7 +131,7 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
     dispatchUi({ type: 'setIsAddingFormula', value: false })
   }
 
-  function handleStartEditFormula(formula: SeedFormula): void {
+  function handleStartEditFormula(formula: ReportFormula): void {
     dispatchUi({ type: 'startEditFormula', label: formula.label, formula })
     clearEditingFormulaError()
   }

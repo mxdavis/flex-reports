@@ -2,93 +2,124 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
-import SampleRowsSection from './SampleRowsSection'
+import { plainMappedValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
+import SampleRowsSection, { type SampleRowsSectionProps } from './SampleRowsSection'
 
 const fields: ReportField[] = [
-  {
-    id: 'field1',
-    label: 'workDate',
-    sourceKey: 'workDate',
-    displayType: 'date',
-    chipAggregation: 'count',
-    currencySymbol: '',
-  },
+  { id: 'region', label: 'Region', sourceKey: 'region', displayType: 'string', aggregation: 'distinct', currencySymbol: '' },
+  { id: 'store', label: 'Store', sourceKey: 'store', displayType: 'string', aggregation: 'count', currencySymbol: '' },
+  { id: 'units', label: 'Units', sourceKey: 'units', displayType: 'number', aggregation: 'sum', currencySymbol: '' },
 ]
 
-const rows: ReportRow[] = [
-  {
-    id: 'row1',
-    workDate: '2024-01-01',
-    personId: 'person1',
-    personName: 'A',
-    clientId: 'client1',
-    clientName: 'C',
-    originatingPersonId: 'person1',
-    task: 'Task',
-    hours: 1,
-    rate: 100,
-    total: 100,
-  },
-]
+const rows: ReportRow[] = [{ id: 'row1', region: 'North', store: 'Ames', units: 3 }]
+
+function renderSection(overrides: Partial<SampleRowsSectionProps> = {}) {
+  const props: SampleRowsSectionProps = {
+    sheetName: 'Finance Sheet',
+    isTableFullscreen: false,
+    isHorizontalTable: true,
+    showTotals: false,
+    isGroupingEnabled: false,
+    expandedLevels: null,
+    showTips: true,
+    fields,
+    previewRows: rows,
+    verticalColumns: [],
+    tableScrollRef: { current: null },
+    onToggleTotals: () => undefined,
+    onToggleGrouping: () => undefined,
+    onExpandedLevelsChange: () => undefined,
+    onToggleOrientation: () => undefined,
+    onToggleFullscreen: () => undefined,
+    getMappedValue: plainMappedValue,
+    getRawValue: rawValue,
+    formatFieldTotal: simpleFieldTotal,
+    getFieldWarning: () => null,
+    isGroupExpanded: () => true,
+    onToggleGroup: () => undefined,
+    ...overrides,
+  }
+  const result = render(<SampleRowsSection {...props} />)
+  return { ...result, rerenderWith: (next: Partial<SampleRowsSectionProps>) => result.rerender(<SampleRowsSection {...props} {...next} />) }
+}
 
 describe('SampleRowsSection', () => {
-  it('renders section with chart jump target id', () => {
-    render(
-      <SampleRowsSection
-        sheetName="Finance Sheet"
-        isTableFullscreen={false}
-        isHorizontalTable
-        aggregateMode="none"
-        showTotals={false}
-        fields={fields}
-        previewRows={rows}
-        verticalColumns={[]}
-        tableScrollRef={{ current: null }}
-        onAggregateModeChange={() => undefined}
-        onToggleOrientation={() => undefined}
-        onToggleFullscreen={() => undefined}
-        getMappedValue={() => 'value'}
-        getAggregatedFieldValue={() => null}
-        formatValue={() => ''}
-      />,
-    )
+  it('renders section with table jump target id', () => {
+    renderSection()
 
-    const heading = screen.getByRole('heading', { name: 'Finance Sheet' })
-    const section = heading.closest('section')
-
-    expect(section).toBeTruthy()
-    expect(section?.id).toBe('report-chart')
+    const section = screen.getByRole('heading', { name: 'Finance Sheet' }).closest('section')
+    expect(section?.id).toBe('report-table')
   })
 
-  it('forwards aggregate mode changes', () => {
-    const onAggregateModeChange = vi.fn()
-    const { container } = render(
-      <SampleRowsSection
-        sheetName="Finance Sheet"
-        isTableFullscreen={false}
-        isHorizontalTable
-        aggregateMode="none"
-        showTotals={false}
-        fields={fields}
-        previewRows={rows}
-        verticalColumns={[]}
-        tableScrollRef={{ current: null }}
-        onAggregateModeChange={onAggregateModeChange}
-        onToggleOrientation={() => undefined}
-        onToggleFullscreen={() => undefined}
-        getMappedValue={() => 'value'}
-        getAggregatedFieldValue={() => null}
-        formatValue={() => ''}
-      />,
-    )
+  it('toggles totals and reflects the pressed state', () => {
+    const onToggleTotals = vi.fn()
+    const { rerenderWith } = renderSection({ onToggleTotals })
 
-    const select = container.querySelector('#aggregate-mode') as HTMLSelectElement | null
-    expect(select).toBeTruthy()
-    if (!select) {
-      return
-    }
-    fireEvent.change(select, { target: { value: 'sum' } })
+    const totalsButton = screen.getByRole('button', { name: 'Totals' })
+    expect(totalsButton).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(totalsButton)
+    expect(onToggleTotals).toHaveBeenCalled()
 
-    expect(onAggregateModeChange).toHaveBeenCalledWith('sum')
+    rerenderWith({ showTotals: true })
+    expect(screen.getByRole('button', { name: 'Totals' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('toggles grouping when the grouping button is clicked', () => {
+    const onToggleGrouping = vi.fn()
+    renderSection({ onToggleGrouping })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Grouping' }))
+    expect(onToggleGrouping).toHaveBeenCalled()
+  })
+
+  it('offers outline levels only while grouping is on', () => {
+    const onExpandedLevelsChange = vi.fn()
+    const { rerenderWith } = renderSection({ onExpandedLevelsChange })
+    expect(screen.queryByRole('combobox', { name: 'Show rows' })).toBeNull()
+
+    rerenderWith({ isGroupingEnabled: true })
+    const outline = screen.getByRole('combobox', { name: 'Show rows' })
+    const options = Array.from(outline.querySelectorAll('option')).map((option) => option.textContent)
+    expect(options).toEqual(['Region', 'Region › Store', 'All rows'])
+    expect(outline).toHaveValue('all')
+
+    fireEvent.change(outline, { target: { value: '0' } })
+    expect(onExpandedLevelsChange).toHaveBeenCalledWith(0)
+    fireEvent.change(outline, { target: { value: 'all' } })
+    expect(onExpandedLevelsChange).toHaveBeenCalledWith(null)
+  })
+
+  it('treats an outline level past the last group as all rows', () => {
+    renderSection({ isGroupingEnabled: true, expandedLevels: 5 })
+
+    expect(screen.getByRole('combobox', { name: 'Show rows' })).toHaveValue('all')
+  })
+
+  it('locks body scroll while fullscreen is active and releases it on unmount', () => {
+    const { rerenderWith, unmount } = renderSection()
+    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(false)
+
+    rerenderWith({ isTableFullscreen: true })
+    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(true)
+
+    unmount()
+    expect(document.body.classList.contains('seed-table-fullscreen-lock')).toBe(false)
+  })
+
+  it('shows the grouping tip to editors only', () => {
+    const { rerenderWith } = renderSection()
+    expect(screen.getByRole('button', { name: 'Grouping' }).getAttribute('title')).toMatch(/^Tip:/)
+
+    rerenderWith({ showTips: false })
+    expect(screen.getByRole('button', { name: 'Grouping' }).getAttribute('title')).not.toMatch(/Tip/)
+  })
+
+  it('disables grouping toggle in vertical view', () => {
+    renderSection({ isHorizontalTable: false })
+
+    const groupingButton = screen.getByRole('button', { name: 'Grouping' })
+    expect(groupingButton).toBeDisabled()
+    expect(groupingButton).toHaveAttribute('aria-pressed', 'false')
+    expect(groupingButton.closest('.grouping-toggle-wrapper')).toHaveAttribute('title', 'Switch to horizontal view to use grouping.')
   })
 })

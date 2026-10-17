@@ -1,10 +1,11 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
 import MappingFieldCard from '../sections/MappingFieldCard'
 import type {
-  ChipAggregationMode,
+  AggregationMode,
   DisplayType,
   ReportField,
 } from '../../../services/reportDefinition/types'
+import SectionTitleRow from '../../../shared/components/SectionTitleRow'
 import './MappingPanelSection.css'
 
 export type MappingPanelSectionProps = {
@@ -14,8 +15,10 @@ export type MappingPanelSectionProps = {
   addColumnSourceKey: string
   addColumnLabel: string
   addColumnDisplayType: DisplayType
-  addColumnChipAggregation: ChipAggregationMode
+  addColumnAggregation: AggregationMode
   maxColumns: number
+  showTips: boolean
+  getFieldWarning: (field: ReportField) => string | null
   minColumns: number
   draggedFieldId: string | null
   dragOverFieldId: string | null
@@ -23,14 +26,14 @@ export type MappingPanelSectionProps = {
   editingFieldDraft: ReportField | null
   sourceOptions: string[]
   displayTypeOptions: Array<{ value: DisplayType, label: string }>
-  chipAggregationOptions: Array<{ value: ChipAggregationMode, label: string }>
+  aggregationOptions: Array<{ value: AggregationMode, label: string }>
   onStartAddColumn: () => void
   onCancelAddColumn: () => void
   onAddColumnPositionChange: (value: number) => void
   onAddColumnSourceKeyChange: (value: string) => void
   onAddColumnLabelChange: (value: string) => void
   onAddColumnDisplayTypeChange: (value: DisplayType) => void
-  onAddColumnChipAggregationChange: (value: ChipAggregationMode) => void
+  onAddColumnAggregationChange: (value: AggregationMode) => void
   onSaveNewColumn: () => void
   onMoveField: (sourceId: string, targetId: string) => void
   onStartEditField: (field: ReportField) => void
@@ -42,7 +45,9 @@ export type MappingPanelSectionProps = {
   onSetEditingFieldSourceKey: (value: string) => void
   onSetEditingFieldLabel: (value: string) => void
   onSetEditingFieldDisplayType: (value: DisplayType) => void
-  onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => void
+  onSetEditingFieldAggregation: (value: AggregationMode) => void
+  isCollapsed?: boolean
+  onToggleCollapsed?: () => void
 }
 function MappingPanelSection({
   fields,
@@ -51,8 +56,10 @@ function MappingPanelSection({
   addColumnSourceKey,
   addColumnLabel,
   addColumnDisplayType,
-  addColumnChipAggregation,
+  addColumnAggregation,
   maxColumns,
+  showTips,
+  getFieldWarning,
   minColumns,
   draggedFieldId,
   dragOverFieldId,
@@ -60,14 +67,14 @@ function MappingPanelSection({
   editingFieldDraft,
   sourceOptions,
   displayTypeOptions,
-  chipAggregationOptions,
+  aggregationOptions,
   onStartAddColumn,
   onCancelAddColumn,
   onAddColumnPositionChange,
   onAddColumnSourceKeyChange,
   onAddColumnLabelChange,
   onAddColumnDisplayTypeChange,
-  onAddColumnChipAggregationChange,
+  onAddColumnAggregationChange,
   onSaveNewColumn,
   onMoveField,
   onStartEditField,
@@ -79,108 +86,131 @@ function MappingPanelSection({
   onSetEditingFieldSourceKey,
   onSetEditingFieldLabel,
   onSetEditingFieldDisplayType,
-  onSetEditingFieldChipAggregation,
+  onSetEditingFieldAggregation,
+  isCollapsed = false,
+  onToggleCollapsed,
 }: MappingPanelSectionProps) {
   return (
     <section id="report-columns" className="mapping-panel jump-target">
-      <h2>Column Mapping</h2>
-      <p className="mapping-help">
-        Build your report layout here. Choose what each column pulls from,
-        rename the header users see, and drag cards to reorder the final output.
-      </p>
-      {!isAddingColumn && (
-        <div className="formula-add-card">
-          <button
-            type="button"
-            onClick={onStartAddColumn}
-            disabled={fields.length >= maxColumns}
-            title="Add a new column."
-          >
-            Add column
-          </button>
-          <small>{fields.length}/{maxColumns} columns</small>
-        </div>
+      <SectionTitleRow
+        title="Column Mapping"
+        sectionName="columns"
+        contentId="report-columns-content"
+        isCollapsed={isCollapsed}
+        onToggleCollapsed={onToggleCollapsed}
+      />
+      {!isCollapsed && (
+        <>
+          <p className="mapping-help">
+            Build your report layout here. Choose what each column pulls from,
+            rename the header users see, and drag cards to reorder the final output.
+          </p>
+          {showTips && (
+            <p className="mapping-tip">
+              <strong>Tip:</strong> Grouping nests by each column from the left and stops at the
+              first number column. Put the columns you group by first, then your numbers. To
+              choose how a column adds up in group totals, edit the column and set
+              its <strong>Total type</strong> (for example Sum for hours, Average for a rate).
+            </p>
+          )}
+          {!isAddingColumn && (
+            <div className="formula-add-card">
+              <button
+                type="button"
+                onClick={onStartAddColumn}
+                disabled={fields.length >= maxColumns}
+                title="Add a new column."
+              >
+                Add column
+              </button>
+              <small>{fields.length}/{maxColumns} columns</small>
+            </div>
+          )}
+          {isAddingColumn && (
+            <div className="formula-editor" id="report-columns-content">
+              <div className="formula-editor-grid">
+                <label htmlFor="add-column-position">Column number</label>
+                <select
+                  id="add-column-position"
+                  value={addColumnPosition}
+                  title="Insert this new column at the selected position. Existing columns will shift right."
+                  onChange={(event) => {
+                    onAddColumnPositionChange(Number(event.target.value))
+                  }}
+                >
+                  {Array.from({ length: fields.length + 1 }, (_, index) => {
+                    const position = index + 1
+                    return <option key={position} value={position}>{position}</option>
+                  })}
+                </select>
+              </div>
+              <ColumnDetailEditor
+                field={{
+                  id: 'add-column',
+                  sourceKey: addColumnSourceKey,
+                  label: addColumnLabel,
+                  displayType: addColumnDisplayType,
+                  aggregation: addColumnAggregation,
+                  currencySymbol: '',
+                }}
+                columnLabel="Data point"
+                sourceOptions={sourceOptions}
+                displayTypeOptions={displayTypeOptions}
+                aggregationOptions={aggregationOptions}
+                onSourceChange={onAddColumnSourceKeyChange}
+                onLabelChange={onAddColumnLabelChange}
+                onDisplayTypeChange={onAddColumnDisplayTypeChange}
+                onAggregationChange={onAddColumnAggregationChange}
+              />
+              <div className="formula-editor-actions">
+                <button
+                  type="button"
+                  onClick={onSaveNewColumn}
+                  disabled={fields.length >= maxColumns}
+                >
+                  Save column
+                </button>
+                <button type="button" onClick={onCancelAddColumn}>Cancel</button>
+              </div>
+              <small>
+                Column numbers are fixed after insert. To reorder existing columns, drag and drop cards.
+              </small>
+            </div>
+          )}
+          {!isAddingColumn && (
+            <div className="mapping-grid" id="report-columns-content">
+              {fields.map((field, index) => (
+                <MappingFieldCard
+                  key={field.id}
+                  field={field}
+                  warning={getFieldWarning(field)}
+                  index={index}
+                  fieldsLength={fields.length}
+                  draggedFieldId={draggedFieldId}
+                  dragOverFieldId={dragOverFieldId}
+                  editingFieldId={editingFieldId}
+                  editingFieldDraft={editingFieldDraft}
+                  sourceOptions={sourceOptions}
+                  displayTypeOptions={displayTypeOptions}
+                  aggregationOptions={aggregationOptions}
+                  minColumns={minColumns}
+                  onMoveField={onMoveField}
+                  onStartEditField={onStartEditField}
+                  onCancelEditField={onCancelEditField}
+                  onSaveEditField={onSaveEditField}
+                  onRemoveField={onRemoveField}
+                  onSetDraggedFieldId={onSetDraggedFieldId}
+                  onSetDragOverFieldId={onSetDragOverFieldId}
+                  onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
+                  onSetEditingFieldLabel={onSetEditingFieldLabel}
+                  onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
+                  onSetEditingFieldAggregation={onSetEditingFieldAggregation}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
-      {isAddingColumn && (
-        <div className="formula-editor">
-          <div className="formula-editor-grid">
-            <label htmlFor="add-column-position">Column number</label>
-            <select
-              id="add-column-position"
-              value={addColumnPosition}
-              title="Insert this new column at the selected position. Existing columns will shift right."
-              onChange={(event) => {
-                onAddColumnPositionChange(Number(event.target.value))
-              }}
-            >
-              {Array.from({ length: fields.length + 1 }, (_, index) => {
-                const position = index + 1
-                return <option key={position} value={position}>{position}</option>
-              })}
-            </select>
-          </div>
-          <ColumnDetailEditor
-            field={{
-              id: 'add-column',
-              sourceKey: addColumnSourceKey,
-              label: addColumnLabel,
-              displayType: addColumnDisplayType,
-              chipAggregation: addColumnChipAggregation,
-              currencySymbol: '',
-            }}
-            columnLabel="Data point"
-            sourceOptions={sourceOptions}
-            displayTypeOptions={displayTypeOptions}
-            chipAggregationOptions={chipAggregationOptions}
-            onSourceChange={onAddColumnSourceKeyChange}
-            onLabelChange={onAddColumnLabelChange}
-            onDisplayTypeChange={onAddColumnDisplayTypeChange}
-            onChipAggregationChange={onAddColumnChipAggregationChange}
-          />
-          <div className="formula-editor-actions">
-            <button
-              type="button"
-              onClick={onSaveNewColumn}
-              disabled={fields.length >= maxColumns}
-            >
-              Save column
-            </button>
-            <button type="button" onClick={onCancelAddColumn}>Cancel</button>
-          </div>
-          <small>
-            Column numbers are fixed after insert. To reorder existing columns, drag and drop cards.
-          </small>
-        </div>
-      )}
-      <div className="mapping-grid">
-        {fields.map((field, index) => (
-          <MappingFieldCard
-            key={field.id}
-            field={field}
-            index={index}
-            fieldsLength={fields.length}
-            draggedFieldId={draggedFieldId}
-            dragOverFieldId={dragOverFieldId}
-            editingFieldId={editingFieldId}
-            editingFieldDraft={editingFieldDraft}
-            sourceOptions={sourceOptions}
-            displayTypeOptions={displayTypeOptions}
-            chipAggregationOptions={chipAggregationOptions}
-            minColumns={minColumns}
-            onMoveField={onMoveField}
-            onStartEditField={onStartEditField}
-            onCancelEditField={onCancelEditField}
-            onSaveEditField={onSaveEditField}
-            onRemoveField={onRemoveField}
-            onSetDraggedFieldId={onSetDraggedFieldId}
-            onSetDragOverFieldId={onSetDragOverFieldId}
-            onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
-            onSetEditingFieldLabel={onSetEditingFieldLabel}
-            onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
-            onSetEditingFieldChipAggregation={onSetEditingFieldChipAggregation}
-          />
-        ))}
-      </div>
     </section>
   )
 }

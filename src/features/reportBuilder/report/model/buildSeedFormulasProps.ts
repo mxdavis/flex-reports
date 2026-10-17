@@ -1,24 +1,24 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { SeedFormula } from '../../../../services/adapters'
+import type { ReportFormula } from '../../../../services/adapters'
 import { MAX_FORMULAS } from '../../config'
 import { sortFormulasByLabel } from '../../../../utils/reportBuilder'
 
 type BuildSeedFormulasPropsArgs = {
-  formulas: SeedFormula[]
+  formulas: ReportFormula[]
   isAddingFormula: boolean
-  newFormula: SeedFormula
+  newFormula: ReportFormula
   formulaError: string
   editingFormulaLabel: string | null
-  editingFormula: SeedFormula | null
+  editingFormula: ReportFormula | null
   editingFormulaError: string
   formulaTokenOptions: string[]
   setFormulaError: (value: string) => void
   setIsAddingFormula: (value: boolean) => void
-  setNewFormula: Dispatch<SetStateAction<SeedFormula>>
-  setFormulas: Dispatch<SetStateAction<SeedFormula[]>>
-  patchEditingFormulaDraft: (patch: Partial<SeedFormula>) => void
+  setNewFormula: Dispatch<SetStateAction<ReportFormula>>
+  setFormulas: Dispatch<SetStateAction<ReportFormula[]>>
+  patchEditingFormulaDraft: (patch: Partial<ReportFormula>) => void
   handleAddFormula: () => void
-  handleStartEditFormula: (formula: SeedFormula) => void
+  handleStartEditFormula: (formula: ReportFormula) => void
   handleCancelEditFormula: () => void
   handleSaveEditFormula: (label: string) => void
 }

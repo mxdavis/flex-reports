@@ -31,7 +31,14 @@
     { "id": "t17", "workDate": "2026-07-09", "personId": "p3", "clientId": "c3", "task": "Review", "timeWorked": 2, "rate": 210, "total": 420 },
     { "id": "t18", "workDate": "2026-07-09", "personId": "p4", "clientId": "c4", "task": "Drafting", "timeWorked": 3.25, "rate": 235, "total": 763.75 },
     { "id": "t19", "workDate": "2026-07-10", "personId": "p1", "clientId": "c2", "task": "Review", "timeWorked": 2.25, "rate": 240, "total": 540 },
-    { "id": "t20", "workDate": "2026-07-10", "personId": "p2", "clientId": "c1", "task": "Drafting", "timeWorked": 2.75, "rate": 260, "total": 715 }
+    { "id": "t20", "workDate": "2026-07-10", "personId": "p2", "clientId": "c1", "task": "Drafting", "timeWorked": 2.75, "rate": 260, "total": 715 },
+    { "id": "t21", "workDate": "2026-07-04", "personId": "p1", "clientId": "c2", "task": "Conference", "timeWorked": 1.25, "rate": 240, "total": 300 },
+    { "id": "t22", "workDate": "2026-07-04", "personId": "p2", "clientId": "c4", "task": "Review", "timeWorked": 1.75, "rate": 240, "total": 420 },
+    { "id": "t23", "workDate": "2026-07-06", "personId": "p3", "clientId": "c1", "task": "Review", "timeWorked": 2, "rate": 210, "total": 420 },
+    { "id": "t24", "workDate": "2026-07-06", "personId": "p3", "clientId": "c3", "task": "Research", "timeWorked": 1, "rate": 240, "total": 240 },
+    { "id": "t25", "workDate": "2026-07-08", "personId": "p4", "clientId": "c2", "task": "Conference", "timeWorked": 2, "rate": 260, "total": 520 },
+    { "id": "t26", "workDate": "2026-07-08", "personId": "p4", "clientId": "c4", "task": "Review", "timeWorked": 1, "rate": 260, "total": 260 },
+    { "id": "t27", "workDate": "2026-07-01", "personId": "p3", "clientId": "c1", "task": "Conference", "timeWorked": 1, "rate": 240, "total": 240 }
   ],
   "formulas": [
     { "label": "grossFees", "expression": "{{hours}} * {{rate}}" },

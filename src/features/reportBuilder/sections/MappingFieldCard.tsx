@@ -1,7 +1,7 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
 import EditableCard from '../../../components/EditableCard'
 import type {
-  ChipAggregationMode,
+  AggregationMode,
   DisplayType,
   ReportField,
 } from '../../../services/reportDefinition/types'
@@ -9,6 +9,7 @@ import './MappingFieldCard.css'
 
 type MappingFieldCardProps = {
   field: ReportField
+  warning?: string | null
   index: number
   fieldsLength: number
   draggedFieldId: string | null
@@ -17,7 +18,7 @@ type MappingFieldCardProps = {
   editingFieldDraft: ReportField | null
   sourceOptions: string[]
   displayTypeOptions: Array<{ value: DisplayType, label: string }>
-  chipAggregationOptions: Array<{ value: ChipAggregationMode, label: string }>
+  aggregationOptions: Array<{ value: AggregationMode, label: string }>
   minColumns: number
   onMoveField: (sourceId: string, targetId: string) => void
   onStartEditField: (field: ReportField) => void
@@ -29,11 +30,12 @@ type MappingFieldCardProps = {
   onSetEditingFieldSourceKey: (value: string) => void
   onSetEditingFieldLabel: (value: string) => void
   onSetEditingFieldDisplayType: (value: DisplayType) => void
-  onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => void
+  onSetEditingFieldAggregation: (value: AggregationMode) => void
 }
 
 function MappingFieldCard({
   field,
+  warning,
   index,
   fieldsLength,
   draggedFieldId,
@@ -42,7 +44,7 @@ function MappingFieldCard({
   editingFieldDraft,
   sourceOptions,
   displayTypeOptions,
-  chipAggregationOptions,
+  aggregationOptions,
   minColumns,
   onMoveField,
   onStartEditField,
@@ -54,7 +56,7 @@ function MappingFieldCard({
   onSetEditingFieldSourceKey,
   onSetEditingFieldLabel,
   onSetEditingFieldDisplayType,
-  onSetEditingFieldChipAggregation,
+  onSetEditingFieldAggregation,
 }: MappingFieldCardProps) {
   return (
     <EditableCard
@@ -97,7 +99,12 @@ function MappingFieldCard({
         draggedFieldId === field.id ? 'dragging' : '',
         dragOverFieldId === field.id ? 'drag-over' : '',
       ].filter(Boolean).join(' ')}
-      summaryLeft={field.label}
+      summaryLeft={warning ? (
+        <span className="mapping-field-summary">
+          {field.label}
+          <span className="mapping-field-warning" role="note">{warning}</span>
+        </span>
+      ) : field.label}
       summaryRight={`COLUMN ${index + 1}`}
       detail={editingFieldId === field.id && editingFieldDraft ? (
         <ColumnDetailEditor
@@ -105,11 +112,11 @@ function MappingFieldCard({
           columnLabel={`COLUMN ${index + 1}`}
           sourceOptions={sourceOptions}
           displayTypeOptions={displayTypeOptions}
-          chipAggregationOptions={chipAggregationOptions}
+          aggregationOptions={aggregationOptions}
           onSourceChange={onSetEditingFieldSourceKey}
           onLabelChange={onSetEditingFieldLabel}
           onDisplayTypeChange={onSetEditingFieldDisplayType}
-          onChipAggregationChange={onSetEditingFieldChipAggregation}
+          onAggregationChange={onSetEditingFieldAggregation}
         />
       ) : null}
       actions={

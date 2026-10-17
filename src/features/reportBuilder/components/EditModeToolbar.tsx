@@ -3,24 +3,28 @@ import ViewIcon from '../../../shared/icons/ViewIcon'
 import './EditModeToolbar.css'
 
 export type EditModeToolbarProps = {
-  canEditReport: boolean
   isEditMode: boolean
   onToggle: () => void
   jumpTargets?: Array<{ id: string, label: string }>
   onJumpToSection?: (id: string) => void
+  canSave?: boolean
+  isDirty?: boolean
+  isSaving?: boolean
+  saveError?: string
+  onSave?: () => void
 }
 
 function EditModeToolbar({
-  canEditReport,
   isEditMode,
   onToggle,
   jumpTargets = [],
   onJumpToSection,
+  canSave = false,
+  isDirty = false,
+  isSaving = false,
+  saveError = '',
+  onSave,
 }: EditModeToolbarProps) {
-  if (!canEditReport) {
-    return null
-  }
-
   return (
     <div className="workspace-toolbar">
       <div className="workspace-toolbar-group">
@@ -49,6 +53,18 @@ function EditModeToolbar({
             ))}
           </nav>
         )}
+        {canSave && (
+          <button
+            type="button"
+            className="workspace-toolbar-button workspace-toolbar-save"
+            onClick={onSave}
+            disabled={!isDirty || isSaving}
+            title={isDirty ? 'Save this report as the default view for everyone.' : 'No unsaved changes.'}
+          >
+            {isSaving ? 'Saving…' : 'Save report'}
+          </button>
+        )}
+        {saveError && <span className="workspace-toolbar-error" role="alert">{saveError}</span>}
       </div>
     </div>
   )

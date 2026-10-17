@@ -1,37 +1,40 @@
-import type { SeedFormula } from '../../../services/adapters'
-import type { ReportField } from '../../../services/reportDefinition/types'
-import type { AggregateMode, TableOrientation } from '../types'
+import type { ReportFormula } from '../../../services/adapters'
+import type { ReportField, ReportView } from '../../../services/reportDefinition/types'
+import type { TableOrientation } from '../types'
 
 export type UiState = {
   isAddingFormula: boolean
   editingFormulaLabel: string | null
-  editingFormula: SeedFormula | null
+  editingFormula: ReportFormula | null
   editingFieldId: string | null
   editingFieldDraft: ReportField | null
   addColumnPosition: number
   isAddingColumn: boolean
   isEditMode: boolean
   tableOrientation: TableOrientation
-  aggregateMode: AggregateMode
+  showTotals: boolean
+  isGroupingEnabled: boolean
+  expandedLevels: number | null
+  // Groups the user opened or closed by hand, keyed by group path. Session
+  // only: never saved, cleared whenever the outline level changes.
+  groupOverrides: Record<string, boolean>
   draggedFieldId: string | null
   dragOverFieldId: string | null
   isTableFullscreen: boolean
 }
 
 export type UiInitArgs = {
-  canEditReport: boolean
   initialEditMode: boolean
-  initialTableOrientation: TableOrientation
-  initialAggregateMode: AggregateMode
+  initialView: ReportView
 }
 
 export type UiAction =
   | { type: 'setIsEditMode', value: boolean }
   | { type: 'toggleEditMode' }
   | { type: 'setIsAddingFormula', value: boolean }
-  | { type: 'startEditFormula', label: string, formula: SeedFormula }
-  | { type: 'setEditingFormulaState', value: SeedFormula | null }
-  | { type: 'updateEditFormula', changes: Partial<SeedFormula> }
+  | { type: 'startEditFormula', label: string, formula: ReportFormula }
+  | { type: 'setEditingFormulaState', value: ReportFormula | null }
+  | { type: 'updateEditFormula', changes: Partial<ReportFormula> }
   | { type: 'stopEditFormula' }
   | { type: 'startEditField', field: ReportField }
   | { type: 'setEditingFieldDraftState', value: ReportField | null }
@@ -40,7 +43,10 @@ export type UiAction =
   | { type: 'setAddColumnPosition', value: number }
   | { type: 'setIsAddingColumn', value: boolean }
   | { type: 'setTableOrientation', value: TableOrientation }
-  | { type: 'setAggregateMode', value: AggregateMode }
+  | { type: 'setShowTotals', value: boolean }
+  | { type: 'setIsGroupingEnabled', value: boolean }
+  | { type: 'setExpandedLevels', value: number | null }
+  | { type: 'setGroupExpanded', groupKey: string, isExpanded: boolean }
   | { type: 'setDraggedFieldId', value: string | null }
   | { type: 'setDragOverFieldId', value: string | null }
   | { type: 'clearDrag' }
@@ -56,9 +62,12 @@ export function createInitialUiState(args: UiInitArgs): UiState {
     editingFieldDraft: null,
     addColumnPosition: 1,
     isAddingColumn: false,
-    isEditMode: args.canEditReport && args.initialEditMode,
-    tableOrientation: args.initialTableOrientation,
-    aggregateMode: args.initialAggregateMode,
+    isEditMode: args.initialEditMode,
+    tableOrientation: args.initialView.orientation,
+    showTotals: args.initialView.showTotals,
+    isGroupingEnabled: args.initialView.isGroupingEnabled,
+    expandedLevels: args.initialView.expandedLevels,
+    groupOverrides: {},
     draggedFieldId: null,
     dragOverFieldId: null,
     isTableFullscreen: false,
@@ -155,10 +164,26 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
         ...state,
         tableOrientation: action.value,
       }
-    case 'setAggregateMode':
+    case 'setShowTotals':
       return {
         ...state,
-        aggregateMode: action.value,
+        showTotals: action.value,
+      }
+    case 'setExpandedLevels':
+      return {
+        ...state,
+        expandedLevels: action.value,
+        groupOverrides: {},
+      }
+    case 'setGroupExpanded':
+      return {
+        ...state,
+        groupOverrides: { ...state.groupOverrides, [action.groupKey]: action.isExpanded },
+      }
+    case 'setIsGroupingEnabled':
+      return {
+        ...state,
+        isGroupingEnabled: action.value,
       }
     case 'setDraggedFieldId':
       return {

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import EditModeToolbar from '../components/EditModeToolbar'
 import MappingPanelSection from '../components/MappingPanelSection'
 import SampleRowsSection from '../components/SampleRowsSection'
@@ -17,23 +18,46 @@ function ReportBuilderView({
   seedFormulasProps,
   sampleRowsProps,
 }: ReportBuilderViewProps) {
+  const isTableFullscreen = sampleRowsProps.isTableFullscreen
+  const [isSettingsCollapsed, setIsSettingsCollapsed] = useState(false)
+  const [isColumnsCollapsed, setIsColumnsCollapsed] = useState(false)
+  const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
+
   return (
     <div className="seed-page">
-      <EditModeToolbar {...editModeToolbarProps} />
+      {!isTableFullscreen && <EditModeToolbar {...editModeToolbarProps} />}
 
-      {showAuthoring && (
-        <SeedHeader {...seedHeaderProps} />
+      {!isTableFullscreen && showAuthoring && (
+        <SeedHeader
+          {...seedHeaderProps}
+          isCollapsed={isSettingsCollapsed}
+          onToggleCollapsed={() => {
+            setIsSettingsCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
-      {showAuthoring && (
-        <MappingPanelSection {...mappingPanelProps} />
+      {!isTableFullscreen && showAuthoring && (
+        <MappingPanelSection
+          {...mappingPanelProps}
+          isCollapsed={isColumnsCollapsed}
+          onToggleCollapsed={() => {
+            setIsColumnsCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
-      {showAuthoring && (
-        <SeedFormulasSection {...seedFormulasProps} />
+      {!isTableFullscreen && showAuthoring && (
+        <SeedFormulasSection
+          {...seedFormulasProps}
+          isCollapsed={isFormulasCollapsed}
+          onToggleCollapsed={() => {
+            setIsFormulasCollapsed((previous) => !previous)
+          }}
+        />
       )}
 
-      {summaryItems.length > 0 && (
+      {!isTableFullscreen && summaryItems.length > 0 && (
         <SeedStats items={summaryItems} />
       )}
 

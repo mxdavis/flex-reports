@@ -3,16 +3,8 @@ import ReportBuilderView from './report/ReportBuilderView'
 import { useReportBuilderController } from './report/useReportBuilderController'
 import './ReportBuilderApp.css'
 
-function ReportBuilderApp({
-  initialTableOrientation = 'horizontal',
-  initialAggregateMode = 'none',
-  initialEditMode = false,
-}: ReportBuilderAppProps) {
-  const controller = useReportBuilderController({
-    initialTableOrientation,
-    initialAggregateMode,
-    initialEditMode,
-  })
+function ReportBuilderApp({ initialEditMode = false, ...props }: ReportBuilderAppProps) {
+  const controller = useReportBuilderController({ ...props, initialEditMode })
 
   return <ReportBuilderView {...controller} />
 }

@@ -1,9 +1,9 @@
 import TokenizedExpressionInput from '../shared/components/TokenizedExpressionInput'
-import type { SeedFormula } from '../services/adapters'
+import type { ReportFormula } from '../services/adapters'
 import './FormulaDetailEditor.css'
 
 type FormulaDetailEditorProps = {
-  formula: SeedFormula
+  formula: ReportFormula
   tokenOptions: string[]
   onLabelChange: (nextValue: string) => void
   onExpressionChange: (nextValue: string) => void

@@ -1,6 +1,10 @@
 import type { ReportRow } from '../../../services/adapters'
-import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
-import type { AggregateMode } from '../types'
+import { isNumericDisplayType, isNumericTotal } from '../report/model/fieldTotals'
+import {
+  SampleRowsHorizontalTableContent,
+  type SampleRowsHorizontalTableContentProps,
+} from './SampleRowsHorizontalTableContent'
+import ColumnHeaderLabel from './ColumnHeaderLabel'
 import './SampleRowsTableContent.css'
 
 type VerticalColumn = {
@@ -9,93 +13,17 @@ type VerticalColumn = {
   rows: ReportRow[]
 }
 
-type SampleRowsTableContentProps = {
+export type SampleRowsTableContentProps = SampleRowsHorizontalTableContentProps & {
   isHorizontalTable: boolean
-  showTotals: boolean
-  aggregateMode: AggregateMode
-  fields: ReportField[]
-  previewRows: ReportRow[]
   verticalColumns: VerticalColumn[]
-  getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, currencySymbol?: string) => string
-  getAggregatedFieldValue: (rowsToAggregate: ReportRow[], sourceKey: string, mode: AggregateMode) => number | null
-  formatValue: (value: number | null, displayType: DisplayType, currencySymbol?: string) => string
 }
 
-function isNumericDisplayType(displayType: DisplayType): boolean {
-  return displayType === 'number' || displayType === 'decimal' || displayType === 'currency'
-}
-
-function SampleRowsTableContent({
-  isHorizontalTable,
-  showTotals,
-  aggregateMode,
-  fields,
-  previewRows,
-  verticalColumns,
-  getMappedValue,
-  getAggregatedFieldValue,
-  formatValue,
-}: SampleRowsTableContentProps) {
+function SampleRowsTableContent({ isHorizontalTable, verticalColumns, ...tableProps }: SampleRowsTableContentProps) {
   if (isHorizontalTable) {
-    return (
-      <>
-        <thead>
-          <tr>
-            {fields.map((field) => {
-              return <th key={field.id}>{field.label}</th>
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {previewRows.map((row) => (
-            <tr key={row.id}>
-              {fields.map((field) => {
-                const mappedValue = getMappedValue(
-                  row,
-                  field.sourceKey,
-                  field.displayType,
-                  field.currencySymbol,
-                )
-                return (
-                  <td
-                    key={`${row.id}-${field.id}`}
-                    className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
-                  >
-                    {mappedValue}
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-        {showTotals && fields.length > 0 && (
-          <tfoot>
-            <tr>
-              {fields.map((field, index) => {
-                if (index === 0) {
-                  return <th key={`total-label-${field.id}`}><strong>Total</strong></th>
-                }
-
-                const aggregatedValue = getAggregatedFieldValue(
-                  previewRows,
-                  field.sourceKey,
-                  aggregateMode,
-                )
-                return (
-                  <td
-                    key={`total-value-${field.id}`}
-                    className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
-                  >
-                    <strong>{formatValue(aggregatedValue, field.displayType, field.currencySymbol)}</strong>
-                  </td>
-                )
-              })}
-            </tr>
-          </tfoot>
-        )}
-      </>
-    )
+    return <SampleRowsHorizontalTableContent {...tableProps} />
   }
+
+  const { showTotals, fields, previewRows, getMappedValue, formatFieldTotal, getFieldWarning } = tableProps
 
   return (
     <>
@@ -113,55 +41,18 @@ function SampleRowsTableContent({
       <tbody>
         {fields.slice(1).map((field) => (
           <tr key={`row-view-${field.id}`}>
-            <th>{field.label}</th>
-            {verticalColumns.map((column) => {
-              const mappedValue = column.rows.length > 1
-                ? (() => {
-                  const aggregatedValue = getAggregatedFieldValue(
-                    column.rows,
-                    field.sourceKey,
-                    aggregateMode,
-                  )
-                  if (aggregatedValue === null) {
-                    return getMappedValue(
-                      column.rows[0],
-                      field.sourceKey,
-                      field.displayType,
-                      field.currencySymbol,
-                    )
-                  }
-
-                  return formatValue(aggregatedValue, field.displayType, field.currencySymbol)
-                })()
-                : getMappedValue(
-                  column.rows[0],
-                  field.sourceKey,
-                  field.displayType,
-                  field.currencySymbol,
-                )
-
-              return (
-                <td
-                  key={`${field.id}-${column.key}`}
-                  className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
-                >
-                  {mappedValue}
-                </td>
-              )
-            })}
+            <ColumnHeaderLabel field={field} warning={getFieldWarning(field)} />
+            {verticalColumns.map((column) => (
+              <td
+                key={`${field.id}-${column.key}`}
+                className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
+              >
+                {getMappedValue(column.rows[0], field.sourceKey, field.displayType, field.currencySymbol)}
+              </td>
+            ))}
             {showTotals && (
-              <td className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}>
-                <strong>
-                  {formatValue(
-                    getAggregatedFieldValue(
-                      previewRows,
-                      field.sourceKey,
-                      aggregateMode,
-                    ),
-                    field.displayType,
-                    field.currencySymbol,
-                  )}
-                </strong>
+              <td className={isNumericTotal(field) ? 'seed-table-value-numeric' : ''}>
+                <strong>{formatFieldTotal(previewRows, field)}</strong>
               </td>
             )}
           </tr>

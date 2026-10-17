@@ -4,16 +4,18 @@
 
 Give non-technical users a self-serve way to build custom reports over data that lives in
 a host application (first target: a billing app replacing Sage Timeslips). Users work in a
-familiar spreadsheet-style editor, then save a clean pivot + chart "report view" they can
-filter. The tool is sold as a self-hosted, one-time-fee package with optional support.
+familiar spreadsheet-style editor, then save a clean table "report view" they can
+filter and group. The tool is sold as a self-hosted, one-time-fee package with optional support.
 
 Secondary goal: the engine is reusable enough to become a standalone product later
-(free/paid tiers), so it is kept decoupled from any single host app.
+(free/paid tiers), so it is kept decoupled from any single host app and works with any
+data shape.
 
 ## 2. Core principles
 
-- **Reporting-only.** Flex Reports never owns the data. It connects to a host schema and
-  fetches rows at report-run time. It persists only **report definitions** (JSON).
+- **Reporting-only.** Flex Reports never owns the data. The host passes its schema and
+  rows in at run time. Its only output is the **report definition** (JSON), which the host
+  persists.
 - **No hosted service.** No phone-home, no license server. Whoever installs it hosts it.
   A self-hosted install keeps working forever with no recurring cost.
 - **Permissive dependencies only.** Every third-party dependency must be MIT/Apache/BSD so
@@ -23,92 +25,117 @@ Secondary goal: the engine is reusable enough to become a standalone product lat
 
 Four layers, kept small and testable.
 
-### 3.1 Data-source adapter (pluggable)
-A small interface the host implements once:
-- `getSchema()` → entities/fields with types (drives `{{data.attribute}}` autocomplete).
-- `fetchRows(query)` → array of row objects.
-
-REST, GraphQL, and SQL are all just adapters. Direct DB/SQL adapters must run server-side
-(never ship DB credentials to the browser); REST/GraphQL adapters may run in the browser
-with an auth token.
+### 3.1 Host data (props)
+The host passes plain data to the component. Flex Reports does no fetching:
+- `schema` → columns with types (drives `{{field}}` autocomplete and default formatting).
+  Optional; inferred from the first row when omitted (with a console warning).
+- `rows` → array of `{ id, ...anything }`. Any shape works; nothing is domain-specific.
+- **Sandbox mode:** when `rows` is omitted, the builder loads mock seed data so local
+  development and repro never depend on a host.
 
 ### 3.2 Report definition (the only persisted artifact, JSON)
-- source dataset
-- `columns[]` — each is either a **field** ref or a **formula**
-- `pivot` — row dimensions, column dimensions, measures (+ aggregator)
-- `filters[]` — e.g. date range, person in [...]
-- `chart` — type + axes/series
+One versioned object, passed in as `reportDefinition` and returned through `onSave`:
+- `version`, `sheetName`, `currencySymbol`
+- `fields[]` — each column points at a schema key **or** a formula label, with a display
+  label, display type, aggregation (how it totals in chips, group totals, and the grand
+  total), and currency symbol
+- `formulas[]` — `{ label, expression }`
+- `view` — the saved default view: `orientation`, `showTotals`, `isGroupingEnabled`,
+  `expandedLevels` (outline level; `null` = fully expanded)
+
+Invalid or partial definitions are repaired to schema-driven defaults with a console
+error. See README → "Report definition".
 
 ### 3.3 Formula layer (headless)
-- Refs: `{{data.attr}}` (source field) and `{{colId}}` (another column).
+- Refs: `{{field}}` (source field) and `{{%Formula Label}}` (another formula).
 - Operators: `+  -  /  *  %  ( )`. `%` means **percent-of** (÷100), not modulo.
 - **Column-defined, row-evaluated:** one formula per column, computed for every row.
-- Column dependency graph → topological order → cycle detection.
+- Dependency resolution with cycle detection (cycles evaluate to NaN).
 - Evaluated with a tiny safe expression evaluator (no `eval`).
 
-### 3.4 Pivot / aggregation engine (headless)
-- Group rows by dimensions; aggregate measures (sum/avg/count/min/max).
-- Pure functions, unit-tested against known pivots.
+### 3.4 Aggregation / grouping (headless)
+- Aggregates: sum, average, count, distinct count, or none, set **per column**, so a rate
+  can average while hours sum.
+- Grouping nests left to right and stops at the first number column; columns from there
+  on are per-row values. With no number columns, every column but the last is a group.
+- When totals are on, every group gets a total row (even a single-row group), plus a
+  grand total. Groups sort by underlying values, not formatted text.
+- Groups collapse to a single row showing their totals. The outline level ("show down to
+  Person / Person › Client / All rows") is saved; groups toggled by hand are session-only.
+- Pure functions, unit-tested.
 
 ## 4. UI
 
-- **Edit view** — looks like Excel. Columns A/B/C…, click a column header to bind it to a
-  schema field or enter a formula (`={{col C}}*40%`), with autocomplete. Values fill down
-  automatically. Live preview from a sample fetch.
-- **Report (saved) view** — looks like a clean web page: filters (date range, multi-select),
-  a pivot table, and a chart (Nivo). Export to CSV / print.
+- **View mode** — a clean table with summary chips, a totals toggle, grouping with
+  collapsible groups and an outline level,
+  horizontal/vertical orientation, and fullscreen. Table-only; no chart.
+- **Edit mode** — report settings (sheet name, currency), column mapping (add, remove,
+  reorder, relabel, display type), and formula authoring with `{{` autocomplete.
+  Values fill down automatically from the live rows.
+- **Save** — explicit "Save report" button for editors, disabled until something changes,
+  plus the browser's leave-page warning while changes are unsaved. No autosave.
+- **Roles** — `editor` can save; `viewer` can explore everything (including edit mode)
+  but never saves, and a refresh resets them to the saved default view.
 
 Each component has its own stylesheet. Edit view = spreadsheet aesthetic; saved view =
 polished web page.
 
 ## 5. Distribution & integration
 
-- Shipped as an **npm package** the host app imports (`<ReportBuilder adapter={...} />`).
-- The host implements the adapter + provides two small endpoints to save/load definition
-  JSON. Nothing about the package changes per customer — only the adapter does.
-- Standalone repo now; integrate with the billing app later.
+- The host renders `<ReportBuilderApp schema rows reportDefinition role onSave />`.
+- The host stores the definition JSON however it likes (DB, service API) and **enforces
+  permissions inside `onSave`**. The `role` prop only controls the UI.
+- Nothing about the package changes per customer; only the props do.
+- Packaging as an npm library is not set up yet (see TODO).
 
 ## 6. Licensing (seam now, enforcement later)
 
-- A `licenseKey` config exists from day one but is **non-enforcing** (no-op / console warning).
-- Future model: **signed offline keys** verified locally with an embedded public key — works
+- A `licenseKey` config is planned as **non-enforcing** (no-op / console warning).
+- Future model: **signed offline keys** verified locally with an embedded public key; works
   offline forever. "Free-for-life" = a perpetual signed key. No metering, no hosting.
 - Deferred: payments, key-issuing tool, seat enforcement.
 
 ## 7. POC scope
 
 Included:
-- Mock REST adapter with Timeslips-shaped sample data (demo needs no backend).
-- Edit view: define field/formula columns with live preview.
+- Sandbox mode on seed data (demo needs no backend).
+- Host mode via props: schema, rows, report definition, role, onSave.
+- Edit mode: field/formula columns with live preview.
 - Formula engine: `+ - / * % ( )`, `{{refs}}`, per-row, cycle detection.
-- Report view: dimensions/measures, filters, one Nivo chart + pivot table.
-- Persistence to localStorage (same seam as a future save/load API).
-- CSV export.
-- Tests for the formula and pivot engines.
-- `licenseKey` no-op seam.
+- View mode: aggregates, grouping with subtotals, orientation toggle, filters (todo).
+- Explicit save; localStorage only in sandbox mode.
+- CSV export (todo).
+- Tests for formula, aggregation, definition, and UI behavior.
+- `licenseKey` no-op seam (todo).
 
-Deferred (not in POC): real billing adapter, auth, backend persistence, payments/license
-issuer, PDF export, per-cell formula overrides, full Excel function library, real-time collab.
+Deferred (not in POC): auth, payments/license issuer, PDF export, charts, per-cell
+formula overrides, full Excel function library, real-time collab, sandbox playground
+(paste JSON data and switch roles).
 
 ## 8. Tech stack
 
 - Node (latest via nvm), Vite + React (latest) + TypeScript
-- Vitest for tests
-- Nivo for charts (swappable)
+- Vitest + Testing Library for unit tests, Playwright for e2e
+- oxlint
 - Per-component CSS stylesheets
 
-## 9. Project structure (MVC-flavored)
+## 9. Project structure
 
 ```
 src/
-  models/        # domain types + pure logic (like Rails models)
-  services/      # engine + IO
-    formula/     # tokenize, dependencyGraph, evaluate, formulaService
-    pivot/       # aggregate, pivotService
-    adapters/    # dataSource interface + mockRestAdapter
-    persistence/ # reportStore (localStorage for POC)
-    export/      # csv
-    license/     # licenseKey (no-op)
-  controllers/   # hooks orchestrating model <-> view
-  views/         # React components (EditView, ReportView, shared)
+  features/reportBuilder/
+    ReportBuilderApp.tsx  # public component (props API)
+    types.ts              # ReportBuilderAppProps, ReportRole
+    report/               # controller/model hooks (state, save, computed values)
+    components/           # toolbar, settings, mapping, formulas, table section
+    sections/             # table bodies (horizontal/grouped, vertical)
+    state/                # UI reducer
+  services/
+    adapters/             # row/schema types + sandbox data access
+    formula/              # safe expression evaluator
+    reportDefinition/     # definition types, defaults/normalization, sandbox storage
+  seeds/                  # sandbox-only mock data
+  shared/                 # reusable components + icons
+  components/             # shared editors (column, formula, card)
+  utils/                  # formatting + formula helpers
 ```

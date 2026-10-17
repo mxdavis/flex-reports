@@ -2,20 +2,71 @@
 
 Newest at top. Each entry: what we decided and why.
 
+## Host integration & scope (PR #10)
+
+- **Plain data props, not an adapter.** The host renders
+  `<ReportBuilderApp schema rows reportDefinition role onSave />` and does its own
+  fetching. Simpler for hosts than implementing an async adapter; revisit only if large
+  datasets need server-side filtering. Replaces the `DataSource` factory and
+  `VITE_DATA_SOURCE` toggle.
+- **Sandbox mode = no `rows` prop.** The builder loads the seed data and keeps the
+  definition in `localStorage`. localStorage exists only for sandbox; it is never used
+  in host mode.
+- **Generic data, no domain layer.** Rows are `{ id, ...anything }` and columns map
+  straight to the host's schema keys, with editable labels. No semantic-field mapping
+  layer. Hosts that want starter reports generate a `reportDefinition` with their own keys.
+- **No value-template columns.** Columns are source keys or formulas. Outside constants
+  (quotas, targets) belong on the rows, where they can vary per row.
+- **Table-only report view; no chart library.** Nivo is dropped. Charts are parked as a
+  future idea.
+- **Roles: `editor` | `viewer`, passed as a prop.** Viewers can explore everything
+  (including edit mode) but never save; a refresh resets them to the saved default view.
+  The prop is a convenience, not security: the host's `onSave` must check the user's
+  permissions in its own backend.
+- **Explicit Save, not autosave.** A saved report is the default view everyone sees, so
+  half-finished edits must not go live. Save is disabled until something changes; the
+  browser's leave-page warning fires while changes are unsaved. Timed autosave was
+  rejected: it publishes partial edits and still leaves users unsure what was saved.
+- **One versioned `reportDefinition` object** (`version`, `sheetName`, `currencySymbol`,
+  `fields`, `formulas`, `view`). The saved default view (orientation, totals on/off,
+  grouping, outline level) is part of it. Invalid input is repaired to schema defaults with a console
+  error, never silently.
+- **No data migrations yet.** The product has never shipped, so stored shapes change
+  freely. The `version` field is there for when that stops being true.
+- **Grouping nests left to right and stops at the first number column.** Number columns
+  are measures, so they stay per-row values; grouping by them produced a total row for
+  every distinct rate or hour value. With no number columns, every column but the last
+  is a group. A **Tip** in Column Mapping and the Grouping tooltip explain that column
+  order matters (editors only; viewers never see authoring tips). Groups sort by underlying values (numbers, dates), not formatted text.
+- **Columns with a missing source stay put.** They render blank, with a warning for
+  editors and in the console, instead of being silently pointed at another field (which
+  changed the report behind the user's back and made it look unsaved on open).
+- **Every group gets a total row** when totals are on, including single-row groups, so
+  the layout stays consistent and every group can collapse to its total.
+- **Each column totals by its own aggregation** (the column's "Total type", which also
+  drives its summary chip). The old table-wide Sum/Avg/Count dropdown is now a Totals
+  on/off toggle, because one mode for every column gave meaningless totals (summed rates).
+- **Collapsible groups with a saved outline level.** Like Excel's 1/2/3 outline buttons,
+  `view.expandedLevels` saves how far groups open by default. It survives data changes,
+  unlike saving individual groups by value. Groups opened or closed by hand are
+  session-only. The collapse state lives in report state so future PDF/XLSX exports can
+  reflect what's on screen (XLSX can use native row outlines); CSV will always export
+  every row.
+
 ## Product & architecture
 
 - **Reporting-only layer, not a data store.** Flex Reports connects to the host's schema and
   fetches data at run time; it persists only report definitions (JSON). Avoids re-importing
   data into spreadsheets and keeps the host as the source of truth.
-- **Pluggable data-source adapter** (`getSchema` + `fetchRows`). REST/GraphQL/SQL are just
-  adapters, so the package stays host-agnostic. SQL adapters run server-side only.
+- ~~**Pluggable data-source adapter** (`getSchema` + `fetchRows`).~~ Superseded by plain
+  data props (see Host integration & scope).
 - **Column-defined, row-evaluated formulas.** One formula per column, applied to every row.
   Simpler than free-form Excel and matches the "goes all the way down" mental model. No
   per-cell overrides in the POC.
 - **Operators limited to `+ - / * % ( )`.** `%` means percent-of (÷100), not modulo. Keeps
   the formula engine tiny and avoids a heavyweight/GPL formula library.
-- **Custom lightweight pivot + chart** (Nivo), not react-pivottable (stale/buggy) or
-  WebDataRocks (proprietary + bulky).
+- **Custom lightweight pivot**, not react-pivottable (stale/buggy) or WebDataRocks
+  (proprietary + bulky). ~~Nivo chart~~ dropped (see Host integration & scope).
 
 ## Licensing & distribution
 
@@ -41,5 +92,5 @@ Newest at top. Each entry: what we decided and why.
 ## Process
 
 - Work on branches, open PRs; nothing hits `main` without review.
-- Stop and ask when unsure.
+- Stop and ask whenever any question or clarification comes up.
 - Keep docs (SPEC, DECISIONS, PRACTICES, TODO) current as we go.

@@ -1,0 +1,32 @@
+.pivot-group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px -4px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pivot-group-toggle:hover,
+.pivot-group-toggle:focus-visible {
+  background: #f2f4f7;
+}
+
+.pivot-group-toggle svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: #667085;
+}
+
+.pivot-row-collapsed > * {
+  background: #f9fafb;
+}

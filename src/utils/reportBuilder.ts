@@ -1,4 +1,4 @@
-import type { SeedFormula } from '../services/adapters'
+import type { ReportFormula } from '../services/adapters'
 import type { DisplayType } from '../services/reportDefinition/types'
 
 type FormatCellOptions = {
@@ -98,8 +98,8 @@ export function getNextFormulaLabel(existingLabels: string[]): string {
 }
 
 export function validateFormulaInput(
-  formulas: SeedFormula[],
-  candidate: SeedFormula,
+  formulas: ReportFormula[],
+  candidate: ReportFormula,
   options?: { ignoreLabel?: string },
 ): string {
   const label = candidate.label.trim()
@@ -131,7 +131,7 @@ export function validateFormulaInput(
   return ''
 }
 
-export function sortFormulasByLabel(items: SeedFormula[]): SeedFormula[] {
+export function sortFormulasByLabel(items: ReportFormula[]): ReportFormula[] {
   return [...items].sort((left, right) => {
     return left.label.localeCompare(right.label, undefined, { sensitivity: 'base' })
   })

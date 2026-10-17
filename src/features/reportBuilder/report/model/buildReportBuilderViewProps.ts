@@ -1,4 +1,3 @@
-import type { RefObject } from 'react'
 import type { EditModeToolbarProps } from '../../components/EditModeToolbar'
 import type { MappingPanelSectionProps } from '../../components/MappingPanelSection'
 import type { SampleRowsSectionProps } from '../../components/SampleRowsSection'
@@ -6,14 +5,12 @@ import type { SeedFormulasSectionProps } from '../../components/SeedFormulasSect
 import type { SeedHeaderProps } from '../../components/SeedHeader'
 import type { SummaryItem } from '../../components/SeedStats'
 import { DEFAULT_SHEET_NAME, EDIT_MODE_JUMP_TARGETS } from '../../config'
-import type { AggregateMode } from '../../types'
-import type { ReportRow } from '../../../../services/adapters'
-import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
 
 type BuildReportBuilderViewPropsArgs = {
   showAuthoring: boolean
   summaryItems: SummaryItem[]
-  canEditReport: boolean
+  canSave: boolean
+  saveState: { isDirty: boolean, isSaving: boolean, saveError: string, save: () => Promise<void> }
   isEditMode: boolean
   onJumpToSection: (sectionId: string) => void
   onToggleEditMode: () => void
@@ -23,26 +20,14 @@ type BuildReportBuilderViewPropsArgs = {
   onCurrencySymbolChange: (value: string) => void
   mappingPanelProps: MappingPanelSectionProps
   seedFormulasProps: SeedFormulasSectionProps
-  isTableFullscreen: boolean
-  isHorizontalTable: boolean
-  aggregateMode: AggregateMode
-  showTotals: boolean
-  fields: ReportField[]
-  previewRows: ReportRow[]
-  verticalColumns: Array<{ key: string, headerValue: string, rows: ReportRow[] }>
-  tableScrollRef: RefObject<HTMLDivElement | null>
-  onAggregateModeChange: (value: AggregateMode) => void
-  onToggleOrientation: () => void
-  onToggleFullscreen: () => void
-  getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, localCurrencySymbol?: string) => string
-  getAggregatedFieldValue: (rowsToAggregate: ReportRow[], sourceKey: string, mode: AggregateMode) => number | null
-  formatValue: (value: number | null, displayType: DisplayType) => string
+  sampleRowsProps: Omit<SampleRowsSectionProps, 'sheetName'>
 }
 
 export function buildReportBuilderViewProps({
   showAuthoring,
   summaryItems,
-  canEditReport,
+  canSave,
+  saveState,
   isEditMode,
   onJumpToSection,
   onToggleEditMode,
@@ -52,24 +37,17 @@ export function buildReportBuilderViewProps({
   onCurrencySymbolChange,
   mappingPanelProps,
   seedFormulasProps,
-  isTableFullscreen,
-  isHorizontalTable,
-  aggregateMode,
-  showTotals,
-  fields,
-  previewRows,
-  verticalColumns,
-  tableScrollRef,
-  onAggregateModeChange,
-  onToggleOrientation,
-  onToggleFullscreen,
-  getMappedValue,
-  getAggregatedFieldValue,
-  formatValue,
+  sampleRowsProps: tableSectionProps,
 }: BuildReportBuilderViewPropsArgs) {
   const editModeToolbarProps: EditModeToolbarProps = {
-    canEditReport,
     isEditMode,
+    canSave,
+    isDirty: saveState.isDirty,
+    isSaving: saveState.isSaving,
+    saveError: saveState.saveError,
+    onSave: () => {
+      void saveState.save()
+    },
     jumpTargets: EDIT_MODE_JUMP_TARGETS,
     onJumpToSection,
     onToggle: onToggleEditMode,
@@ -81,21 +59,8 @@ export function buildReportBuilderViewProps({
     onCurrencySymbolChange,
   }
   const sampleRowsProps: SampleRowsSectionProps = {
+    ...tableSectionProps,
     sheetName: sheetName.trim().length > 0 ? sheetName : DEFAULT_SHEET_NAME,
-    isTableFullscreen,
-    isHorizontalTable,
-    aggregateMode,
-    showTotals,
-    fields,
-    previewRows,
-    verticalColumns,
-    tableScrollRef,
-    onAggregateModeChange,
-    onToggleOrientation,
-    onToggleFullscreen,
-    getMappedValue,
-    getAggregatedFieldValue,
-    formatValue,
   }
 
   return {

@@ -43,3 +43,19 @@
 .workspace-toolbar-button svg {
   display: block;
 }
+
+.workspace-toolbar-save:not(:disabled) {
+  background: #155eef;
+  border-color: #155eef;
+  color: #ffffff;
+}
+
+.workspace-toolbar-save:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.workspace-toolbar-error {
+  color: #b42318;
+  font-size: 13px;
+}
