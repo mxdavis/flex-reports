@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react'
 import type { ReportField } from '../../../services/reportDefinition/types'
 import { getDefaultCurrencySymbol } from '../../../services/reportDefinition/displayType'
 import { getNextFieldId } from '../../../utils/reportBuilder'
@@ -46,37 +47,38 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     clearEditingFormulaError: () => state.setEditingFormulaError(''),
   })
 
+  // Stable callbacks (dispatch never changes), so memoized sections such as
+  // the table skip re-rendering when unrelated state changes.
+  const tableActions = useMemo(() => ({
+    setExpandedLevels: (value: number | null) => dispatchUi({ type: 'setExpandedLevels', value }),
+    toggleTotals: () => dispatchUi({ type: 'toggleShowTotals' }),
+    toggleGrouping: () => dispatchUi({ type: 'toggleGrouping' }),
+    toggleFullscreen: () => dispatchUi({ type: 'toggleIsTableFullscreen' }),
+    toggleOrientation: () => dispatchUi({ type: 'toggleOrientation' }),
+    setGroupExpanded: (groupKey: string, isExpanded: boolean) => {
+      dispatchUi({ type: 'setGroupExpanded', groupKey, isExpanded })
+    },
+  }), [dispatchUi])
+
+  // A hand-toggled group wins; otherwise the outline level decides.
+  const { groupOverrides, expandedLevels } = ui
+  const isGroupExpanded = useCallback((level: number, groupKey: string): boolean => {
+    return groupOverrides[groupKey] ?? (expandedLevels === null || level < expandedLevels)
+  }, [expandedLevels, groupOverrides])
+
   const actions = {
+    ...tableActions,
+    isGroupExpanded,
     setIsAddingFormula: (value: boolean) => setUiValue('setIsAddingFormula', value),
     setIsAddingColumn: (value: boolean) => setUiValue('setIsAddingColumn', value),
     setAddColumnPosition: (value: number) => setUiValue('setAddColumnPosition', value),
     setDraggedFieldId: (value: string | null) => setUiValue('setDraggedFieldId', value),
     setDragOverFieldId: (value: string | null) => setUiValue('setDragOverFieldId', value),
-    setExpandedLevels: (value: number | null) => setUiValue('setExpandedLevels', value),
-    toggleTotals: () => setUiValue('setShowTotals', !ui.showTotals),
-    toggleGrouping: () => setUiValue('setIsGroupingEnabled', !ui.isGroupingEnabled),
-    toggleFullscreen: () => setUiValue('setIsTableFullscreen', !ui.isTableFullscreen),
-    // Grouping only exists horizontally, so turning vertical switches it off.
-    toggleOrientation: () => {
-      if (ui.tableOrientation === 'horizontal') {
-        setUiValue('setIsGroupingEnabled', false)
-        setUiValue('setTableOrientation', 'vertical')
-        return
-      }
-      setUiValue('setTableOrientation', 'horizontal')
-    },
     toggleEditMode: () => {
       setUiValue('setIsEditMode', !ui.isEditMode)
       setUiValue('setIsAddingFormula', false)
       setUiValue('setIsAddingColumn', false)
       state.setFormulaError('')
-    },
-    setGroupExpanded: (groupKey: string, isExpanded: boolean) => {
-      dispatchUi({ type: 'setGroupExpanded', groupKey, isExpanded })
-    },
-    // A hand-toggled group wins; otherwise the outline level decides.
-    isGroupExpanded: (level: number, groupKey: string): boolean => {
-      return ui.groupOverrides[groupKey] ?? (ui.expandedLevels === null || level < ui.expandedLevels)
     },
     addColumnAtPosition: () => {
       state.setFields((previous) => {

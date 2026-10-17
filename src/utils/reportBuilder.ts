@@ -5,6 +5,12 @@ type FormatCellOptions = {
   currencySymbol?: string
 }
 
+// Built once: constructing Intl formatters per cell dominated render time on
+// large reports.
+const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })
+const TWO_DECIMALS_FORMAT = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const WHOLE_NUMBER_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
+
 export function formatCellValue(
   value: unknown,
   displayType: DisplayType,
@@ -28,34 +34,22 @@ export function formatCellValue(
       return String(value)
     }
 
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(parsedDate)
+    return DATE_FORMAT.format(parsedDate)
   }
 
   if (typeof value !== 'number') {
     return String(value)
   }
 
-  const fixedTwoDecimals = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-  const wholeNumber = new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 0,
-  })
-
   switch (displayType) {
     case 'currency':
-      return `${value < 0 ? '-' : ''}${options?.currencySymbol || '$'}${fixedTwoDecimals.format(Math.abs(value))}`
+      return `${value < 0 ? '-' : ''}${options?.currencySymbol || '$'}${TWO_DECIMALS_FORMAT.format(Math.abs(value))}`
     case 'number':
-      return wholeNumber.format(value)
+      return WHOLE_NUMBER_FORMAT.format(value)
     case 'decimal':
-      return fixedTwoDecimals.format(value)
+      return TWO_DECIMALS_FORMAT.format(value)
     case 'percent':
-      return `${fixedTwoDecimals.format(value * 100)}%`
+      return `${TWO_DECIMALS_FORMAT.format(value * 100)}%`
     default:
       return String(value)
   }

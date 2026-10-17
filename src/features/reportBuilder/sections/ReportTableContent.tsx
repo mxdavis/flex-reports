@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { ReportRow } from '../../../services/adapters'
 import { isNumericDisplayType, isNumericTotal } from '../report/model/fieldTotals'
 import {
@@ -62,4 +63,6 @@ function ReportTableContent({ isHorizontalTable, verticalColumns, ...tableProps 
   )
 }
 
-export default ReportTableContent
+// Memoized: the table is the expensive part of the page, and its props only
+// change when the data or the table view does (not while typing in edit mode).
+export default memo(ReportTableContent)

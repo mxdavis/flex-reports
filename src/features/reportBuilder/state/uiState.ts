@@ -44,6 +44,9 @@ export type UiAction =
   | { type: 'setIsAddingColumn', value: boolean }
   | { type: 'setTableOrientation', value: TableOrientation }
   | { type: 'setShowTotals', value: boolean }
+  | { type: 'toggleShowTotals' }
+  | { type: 'toggleGrouping' }
+  | { type: 'toggleOrientation' }
   | { type: 'setIsGroupingEnabled', value: boolean }
   | { type: 'setExpandedLevels', value: number | null }
   | { type: 'setGroupExpanded', groupKey: string, isExpanded: boolean }
@@ -169,6 +172,15 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
         ...state,
         showTotals: action.value,
       }
+    case 'toggleShowTotals':
+      return { ...state, showTotals: !state.showTotals }
+    case 'toggleGrouping':
+      return { ...state, isGroupingEnabled: !state.isGroupingEnabled }
+    // Grouping only exists horizontally, so turning vertical switches it off.
+    case 'toggleOrientation':
+      return state.tableOrientation === 'horizontal'
+        ? { ...state, tableOrientation: 'vertical', isGroupingEnabled: false }
+        : { ...state, tableOrientation: 'horizontal' }
     case 'setExpandedLevels':
       return {
         ...state,

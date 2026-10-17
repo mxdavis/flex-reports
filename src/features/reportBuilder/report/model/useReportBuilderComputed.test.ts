@@ -129,4 +129,30 @@ describe('useReportBuilderComputed', () => {
       { label: 'Rate (sum)', value: '$480.00' },
     ])
   })
+
+  it('refreshes cached cell values when the currency symbol or a formula changes', () => {
+    const rate = fieldWith('rate', 'sum')
+    const { result, rerender } = renderHook(
+      ({ currencySymbol, formulas }) => useReportBuilderComputed({
+        rows: repeatedValueRows,
+        sourceColumns,
+        reportFields,
+        formulas,
+        currencySymbol,
+        tableOrientation: 'horizontal',
+        showTips: true,
+      }),
+      { initialProps: { currencySymbol: '$', formulas: [{ label: 'doubleRate', expression: '{{rate}} * 2' }] } },
+    )
+    const row = repeatedValueRows[0]
+
+    expect(result.current.getMappedValue(row, 'rate', 'currency')).toBe('$240.00')
+    expect(result.current.getMappedRawValue(row, 'doubleRate')).toBe(480)
+
+    rerender({ currencySymbol: '€', formulas: [{ label: 'doubleRate', expression: '{{rate}} * 3' }] })
+
+    expect(result.current.getMappedValue(row, 'rate', 'currency')).toBe('€240.00')
+    expect(result.current.getMappedRawValue(row, 'doubleRate')).toBe(720)
+    expect(result.current.formatFieldTotal(repeatedValueRows, rate)).toBe('€480.00')
+  })
 })
