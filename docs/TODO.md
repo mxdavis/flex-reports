@@ -56,7 +56,7 @@ Status tags used in each item:
 - [x] (in-pr) Grouped reports open at the deepest Show rows level under `maxVisibleRows` (default 1,000)
 - [x] (in-pr) Vertical view limited to 100 rows, without totals (disabled with an explanation above that)
 - [ ] (todo) Beyond ~100k rows: group off the main thread (Web Worker) or accept pre-aggregated data from the host
-- [ ] (todo) Per-instance element IDs (React `useId`) so two builders can share a page
+- [x] (in-pr) Per-instance element IDs (React `useId`) so two builders can share a page
 - [x] (in-pr) PR #10: host props API (`schema`, `rows`, `reportDefinition`, `role`, `onSave`); sandbox mode on seed data when `rows` is omitted
 - [x] (in-pr) PR #10: explicit "Save report" button + leave-page warning (no autosave)
 - [x] (in-pr) PR #10: single versioned `reportDefinition` (fields, formulas, settings, saved default view); localStorage only in sandbox mode

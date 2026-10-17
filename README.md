@@ -32,7 +32,8 @@ Open **http://localhost:6060**. The local app runs the builder in
 ## Add it to your app
 
 Render `ReportBuilderApp` and pass your data in as props. Styles are included with the
-component.
+component, and you can put more than one builder on a page. It never changes your page's
+URL.
 
 > Flex Reports isn't published to npm yet. For now, copy or link the `src/` folder into
 > your project and import the component from there.

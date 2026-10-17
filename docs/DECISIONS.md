@@ -63,6 +63,9 @@ Newest at top. Each entry: what we decided and why.
   unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
   CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.
   CSS modules were the alternative; the prefix keeps plain CSS and readable class names.
+- **The builder doesn't touch the host page's URL or global IDs.** Jump links only scroll
+  (writing a `#hash` with `replaceState` wiped the host router's state), and every element
+  ID is prefixed per builder via `useId()` (`useElementId`), so two builders can share a page.
 - **Sandbox mode is an explicit `sandbox` prop.** It used to switch on whenever `rows` was
   undefined, which is also how hosts look while loading (`rows={data?.rows}`): the builder
   then built its report from the sample data and kept it after the real rows arrived, so
