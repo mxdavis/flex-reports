@@ -1,4 +1,5 @@
 import type { ReportFormula } from '../adapters'
+import { sortFormulasByLabel } from '../../utils/reportBuilder'
 import {
   DEFAULT_CURRENCY_SYMBOL,
   getDefaultAggregation,
@@ -54,7 +55,9 @@ export function generateDefaultReportDefinition(
     sheetName: DEFAULT_SHEET_NAME,
     currencySymbol: DEFAULT_CURRENCY_SYMBOL,
     fields: generateDefaultFields(sourceColumns),
-    formulas,
+    // Sorted here, the one place definitions are built, so the saved baseline
+    // matches the builder's (sorted) state and a fresh report isn't "unsaved".
+    formulas: sortFormulasByLabel(formulas),
     view: { ...DEFAULT_VIEW },
   }
 }
@@ -96,7 +99,7 @@ function normalizeFormulas(raw: unknown): ReportFormula[] {
     seenLabels.add(label.toLowerCase())
     formulas.push({ label, expression })
   }
-  return formulas
+  return sortFormulasByLabel(formulas)
 }
 
 function normalizeView(raw: unknown): ReportView {

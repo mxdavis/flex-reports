@@ -272,6 +272,19 @@ describe('ReportBuilderApp sandbox mode', () => {
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
+  it('opens clean: no unsaved changes before any edit', async () => {
+    await renderSandboxApp(<ReportBuilderApp />)
+
+    // The seed's formulas aren't alphabetical; the builder sorts them, and the
+    // saved baseline must match or the report would open as unsaved.
+    expect(getSaveButton()).toBeDisabled()
+    const leaveEvent = new Event('beforeunload', { cancelable: true })
+    act(() => {
+      window.dispatchEvent(leaveEvent)
+    })
+    expect(leaveEvent.defaultPrevented).toBe(false)
+  })
+
   it('shows a loading state until the sample data arrives', async () => {
     render(<ReportBuilderApp />)
 
