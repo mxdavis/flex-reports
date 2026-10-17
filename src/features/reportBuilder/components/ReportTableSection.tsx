@@ -80,7 +80,7 @@ function ReportTableSection({
   return (
     <section
       id="fr-report-table"
-      className={`fr-report-table fr-jump-target ${isTableFullscreen ? 'fr-fullscreen' : ''}`}
+      className={isTableFullscreen ? 'fr-report-table fr-jump-target fr-fullscreen' : 'fr-report-table fr-jump-target'}
     >
       <div className="fr-report-table-header">
         <h2>{sheetName}</h2>

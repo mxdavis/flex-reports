@@ -126,28 +126,23 @@ function FormulasSection({
                 </button>
               </div>
 
-              <small>
-                Use {'{{fieldName}}'} for data fields and {'{{%Formula Label}}'} for formulas.
-              </small>
-
               {formulaError && <p className="fr-formula-error">{formulaError}</p>}
             </div>
           )}
 
           <div className="fr-formula-card-list">
             {formulas.map((formula) => {
-              const isEditingFormula = editingFormulaLabel === formula.label && editingFormula !== null
-              const formulaDraft = isEditingFormula ? editingFormula : null
+              const formulaDraft = editingFormulaLabel === formula.label ? editingFormula : null
 
               return (
                 <EditableCard
                   key={formula.label}
                   summaryLeft={formula.label}
                   summaryRight={<code>{formula.expression}</code>}
-                  detail={isEditingFormula
+                  detail={formulaDraft
                     ? (
                       <FormulaDetailEditor
-                        formula={formulaDraft!}
+                        formula={formulaDraft}
                         tokenOptions={formulaTokenOptions}
                         labelInputId={`fr-edit-label-${formula.label}`}
                         expressionInputId={`fr-edit-expression-${formula.label}`}
@@ -158,7 +153,7 @@ function FormulasSection({
                     )
                     : null}
                   actions={
-                    isEditingFormula
+                    formulaDraft
                       ? (
                         <>
                           <button

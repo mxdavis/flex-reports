@@ -4,32 +4,27 @@ import './EditableCard.css'
 type EditableCardProps = ComponentPropsWithoutRef<'article'> & {
   summaryLeft: ReactNode
   summaryRight?: ReactNode
-  summaryLeftTooltip?: string
+  // Replaces the summary while shown, e.g. an editor.
   detail?: ReactNode
-  showSummaryWhenDetail?: boolean
   actions?: ReactNode
 }
 
 function EditableCard({
   summaryLeft,
   summaryRight,
-  summaryLeftTooltip,
   detail,
-  showSummaryWhenDetail = false,
   actions,
   className,
   ...articleProps
 }: EditableCardProps) {
-  const shouldShowSummary = !detail || showSummaryWhenDetail
-
   return (
     <article
       {...articleProps}
       className={['fr-editable-card', className].filter(Boolean).join(' ')}
     >
-      {shouldShowSummary && (
+      {!detail && (
         <div className="fr-editable-card-summary">
-          <strong title={summaryLeftTooltip}>{summaryLeft}</strong>
+          <strong>{summaryLeft}</strong>
           {summaryRight && <span className="fr-editable-card-summary-right">{summaryRight}</span>}
         </div>
       )}

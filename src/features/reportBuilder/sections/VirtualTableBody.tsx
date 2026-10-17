@@ -20,19 +20,17 @@ function VirtualTableBody({ rowCount, columnCount, scrollContainerRef, renderRow
     rows.push(renderRow(index, index === start ? measureRow : undefined))
   }
 
+  const spacer = (height: number) => height > 0 && (
+    <tr className="fr-spacer-row" aria-hidden="true" style={{ height }}>
+      <td colSpan={columnCount} />
+    </tr>
+  )
+
   return (
     <tbody>
-      {paddingTop > 0 && (
-        <tr className="fr-spacer-row" aria-hidden="true" style={{ height: paddingTop }}>
-          <td colSpan={columnCount} />
-        </tr>
-      )}
+      {spacer(paddingTop)}
       {rows}
-      {paddingBottom > 0 && (
-        <tr className="fr-spacer-row" aria-hidden="true" style={{ height: paddingBottom }}>
-          <td colSpan={columnCount} />
-        </tr>
-      )}
+      {spacer(paddingBottom)}
     </tbody>
   )
 }

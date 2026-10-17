@@ -1,3 +1,4 @@
+import type { DragEvent } from 'react'
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
 import EditableCard from '../../../components/EditableCard'
 import type {
@@ -58,9 +59,21 @@ function MappingFieldCard({
   onSetEditingFieldDisplayType,
   onSetEditingFieldAggregation,
 }: MappingFieldCardProps) {
+  const columnLabel = `COLUMN ${index + 1}`
+  const isEditing = editingFieldId === field.id
+
+  // Entering or hovering over a card marks it as the drop target.
+  const markDropTarget = (event: DragEvent) => {
+    event.preventDefault()
+    if (draggedFieldId && draggedFieldId !== field.id) onSetDragOverFieldId(field.id)
+  }
+  const clearDrag = () => {
+    onSetDraggedFieldId(null)
+    onSetDragOverFieldId(null)
+  }
+
   return (
     <EditableCard
-      key={field.id}
       draggable
       onDragStart={(event) => {
         const target = event.target as HTMLElement
@@ -68,48 +81,31 @@ function MappingFieldCard({
           event.preventDefault()
           return
         }
-
         onSetDraggedFieldId(field.id)
       }}
-      onDragEnter={(event) => {
-        event.preventDefault()
-        if (draggedFieldId && draggedFieldId !== field.id) {
-          onSetDragOverFieldId(field.id)
-        }
-      }}
-      onDragOver={(event) => {
-        event.preventDefault()
-        if (draggedFieldId && draggedFieldId !== field.id) {
-          onSetDragOverFieldId(field.id)
-        }
-      }}
+      onDragEnter={markDropTarget}
+      onDragOver={markDropTarget}
       onDrop={(event) => {
         event.preventDefault()
-        if (draggedFieldId) {
-          onMoveField(draggedFieldId, field.id)
-        }
-        onSetDraggedFieldId(null)
-        onSetDragOverFieldId(null)
+        if (draggedFieldId) onMoveField(draggedFieldId, field.id)
+        clearDrag()
       }}
-      onDragEnd={() => {
-        onSetDraggedFieldId(null)
-        onSetDragOverFieldId(null)
-      }}
+      onDragEnd={clearDrag}
       className={[
-        draggedFieldId === field.id ? 'fr-dragging' : '',
-        dragOverFieldId === field.id ? 'fr-drag-over' : '',
-      ].filter(Boolean).join(' ')}
+        draggedFieldId === field.id && 'fr-dragging',
+        dragOverFieldId === field.id && 'fr-drag-over',
+      ].filter(Boolean).join(' ') || undefined}
       summaryLeft={warning ? (
         <span className="fr-mapping-field-summary">
           {field.label}
           <span className="fr-mapping-field-warning" role="note">{warning}</span>
         </span>
       ) : field.label}
-      summaryRight={`COLUMN ${index + 1}`}
-      detail={editingFieldId === field.id && editingFieldDraft ? (
+      summaryRight={columnLabel}
+      detail={isEditing && editingFieldDraft ? (
         <ColumnDetailEditor
           field={editingFieldDraft}
-          columnLabel={`COLUMN ${index + 1}`}
+          columnLabel={columnLabel}
           sourceOptions={sourceOptions}
           displayTypeOptions={displayTypeOptions}
           aggregationOptions={aggregationOptions}
@@ -121,13 +117,13 @@ function MappingFieldCard({
       ) : null}
       actions={
         <>
-          {editingFieldId === field.id ? (
+          {isEditing ? (
             <>
               <button
                 type="button"
                 onClick={() => onSaveEditField(field.id)}
                 title="Save this column edit."
-                aria-label={`Save COLUMN ${index + 1}`}
+                aria-label={`Save ${columnLabel}`}
               >
                 Save
               </button>
@@ -135,7 +131,7 @@ function MappingFieldCard({
                 type="button"
                 onClick={onCancelEditField}
                 title="Cancel this column edit."
-                aria-label={`Cancel COLUMN ${index + 1}`}
+                aria-label={`Cancel ${columnLabel}`}
               >
                 Cancel
               </button>
@@ -145,7 +141,7 @@ function MappingFieldCard({
               type="button"
               onClick={() => onStartEditField(field)}
               title="Open column editor."
-              aria-label={`Edit COLUMN ${index + 1}`}
+              aria-label={`Edit ${columnLabel}`}
             >
               Edit
             </button>

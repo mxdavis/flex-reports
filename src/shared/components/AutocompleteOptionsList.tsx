@@ -19,7 +19,7 @@ function AutocompleteOptionsList({
         <li key={option} role="option" aria-selected={index === highlightedIndex}>
           <button
             type="button"
-            className={index === highlightedIndex ? 'fr-highlighted' : ''}
+            className={index === highlightedIndex ? 'fr-highlighted' : undefined}
             onMouseDown={(event) => {
               event.preventDefault()
             }}
