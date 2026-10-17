@@ -32,7 +32,7 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('heading', { name: 'Rate (sum)' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Hours (sum)' })).toBeInTheDocument()
 
-    const stats = container.querySelector('.fr-seed-stats')
+    const stats = container.querySelector('.fr-summary-chips')
     const table = container.querySelector('#fr-report-table')
     expect(stats).toBeTruthy()
     expect(table).toBeTruthy()

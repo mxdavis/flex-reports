@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
 import { plainMappedValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
-import { getGroupKey } from '../report/model/sampleRowsPivot'
-import SampleRowsTableContent, { type SampleRowsTableContentProps } from './SampleRowsTableContent'
+import { getGroupKey } from '../report/model/pivotLayout'
+import ReportTableContent, { type ReportTableContentProps } from './ReportTableContent'
 
 function field(id: string, label: string, aggregation: ReportField['aggregation'], displayType: ReportField['displayType'] = 'number'): ReportField {
   return { id, label, sourceKey: id, displayType, aggregation, currencySymbol: '' }
@@ -25,13 +25,13 @@ const groupedRows: ReportRow[] = [
   { id: 's1', region: 'South', store: 'Cary', price: 40, units: 4 },
 ]
 
-function renderTable(overrides: Partial<SampleRowsTableContentProps> = {}) {
-  const props: SampleRowsTableContentProps = {
+function renderTable(overrides: Partial<ReportTableContentProps> = {}) {
+  const props: ReportTableContentProps = {
     isHorizontalTable: true,
     showTotals: true,
     isGroupingEnabled: true,
     fields: groupedFields,
-    previewRows: groupedRows,
+    rows: groupedRows,
     verticalColumns: [],
     getMappedValue: plainMappedValue,
     getRawValue: rawValue,
@@ -41,7 +41,7 @@ function renderTable(overrides: Partial<SampleRowsTableContentProps> = {}) {
     onToggleGroup: () => undefined,
     ...overrides,
   }
-  return render(<table><SampleRowsTableContent {...props} /></table>)
+  return render(<table><ReportTableContent {...props} /></table>)
 }
 
 function rowCells(rowHeaderName: string): string[] {
@@ -49,7 +49,7 @@ function rowCells(rowHeaderName: string): string[] {
   return Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent ?? '')
 }
 
-describe('SampleRowsTableContent', () => {
+describe('ReportTableContent', () => {
   it('renders plain rows with a Total footer when grouping is off', () => {
     renderTable({ isGroupingEnabled: false })
 

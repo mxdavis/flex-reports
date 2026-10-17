@@ -34,7 +34,7 @@ test('table controls expose the totals toggle and vertical header semantics', as
   await page.getByRole('button', { name: 'Vertical view' }).click()
   await expect(page.getByRole('button', { name: 'Horizontal view' })).toBeVisible()
 
-  const firstHeaderCell = page.locator('.fr-seed-table table thead th').first()
+  const firstHeaderCell = page.locator('.fr-report-table table thead th').first()
   await expect(firstHeaderCell).not.toHaveText('Field')
   await expect(firstHeaderCell).not.toHaveText('Column 1')
 })
@@ -170,12 +170,12 @@ test('global currency symbol selector updates currency display values', async ({
 
   await page.getByLabel('Currency symbol').selectOption('₪')
 
-  const totalChip = page.locator('.fr-seed-stats article', {
+  const totalChip = page.locator('.fr-summary-chips article', {
     has: page.getByRole('heading', { name: /Total \(sum\)/ }),
   })
   await expect(totalChip.locator('strong')).toContainText('₪')
 
-  await expect(page.locator('.fr-seed-table tbody td', { hasText: '₪' }).first()).toBeVisible()
+  await expect(page.locator('.fr-report-table tbody td', { hasText: '₪' }).first()).toBeVisible()
 })
 
 test('typing {{ in formula expression opens token suggestions', async ({ page }) => {

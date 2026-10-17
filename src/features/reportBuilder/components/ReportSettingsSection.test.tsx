@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import SeedHeader from './SeedHeader'
+import ReportSettingsSection from './ReportSettingsSection'
 
-describe('SeedHeader', () => {
+describe('ReportSettingsSection', () => {
   it('renders sheet and currency controls', () => {
     render(
-      <SeedHeader
+      <ReportSettingsSection
         sheetName="Ops Sheet"
         currencySymbol="$"
         onSheetNameChange={() => undefined}

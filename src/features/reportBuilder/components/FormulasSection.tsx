@@ -3,9 +3,9 @@ import FormulaDetailEditor from '../../../components/FormulaDetailEditor'
 import TokenizedExpressionInput from '../../../shared/components/TokenizedExpressionInput'
 import type { ReportFormula } from '../../../services/adapters'
 import SectionTitleRow from '../../../shared/components/SectionTitleRow'
-import './SeedFormulasSection.css'
+import './FormulasSection.css'
 
-export type SeedFormulasSectionProps = {
+export type FormulasSectionProps = {
   formulas: ReportFormula[]
   isAddingFormula: boolean
   maxFormulas: number
@@ -30,7 +30,7 @@ export type SeedFormulasSectionProps = {
   onToggleCollapsed?: () => void
 }
 
-function SeedFormulasSection({
+function FormulasSection({
   formulas,
   isAddingFormula,
   maxFormulas,
@@ -53,9 +53,9 @@ function SeedFormulasSection({
   onSetEditingFormulaExpression,
   isCollapsed = false,
   onToggleCollapsed,
-}: SeedFormulasSectionProps) {
+}: FormulasSectionProps) {
   return (
-    <section id="fr-report-formulas" className="fr-seed-formulas fr-jump-target">
+    <section id="fr-report-formulas" className="fr-formulas-section fr-jump-target">
       <SectionTitleRow
         title="Formulas"
         sectionName="formulas"
@@ -193,7 +193,7 @@ function SeedFormulasSection({
                             onClick={() => {
                               onRemoveFormula(formula.label)
                             }}
-                            title="Remove this formula from the saved seed list."
+                            title="Remove this formula from the report."
                           >
                             Remove
                           </button>
@@ -210,4 +210,4 @@ function SeedFormulasSection({
   )
 }
 
-export default SeedFormulasSection
+export default FormulasSection

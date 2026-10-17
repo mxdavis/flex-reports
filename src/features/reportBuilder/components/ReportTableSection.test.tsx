@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
 import { plainMappedValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
-import SampleRowsSection, { type SampleRowsSectionProps } from './SampleRowsSection'
+import ReportTableSection, { type ReportTableSectionProps } from './ReportTableSection'
 
 const fields: ReportField[] = [
   { id: 'region', label: 'Region', sourceKey: 'region', displayType: 'string', aggregation: 'distinct', currencySymbol: '' },
@@ -13,8 +13,8 @@ const fields: ReportField[] = [
 
 const rows: ReportRow[] = [{ id: 'row1', region: 'North', store: 'Ames', units: 3 }]
 
-function renderSection(overrides: Partial<SampleRowsSectionProps> = {}) {
-  const props: SampleRowsSectionProps = {
+function renderSection(overrides: Partial<ReportTableSectionProps> = {}) {
+  const props: ReportTableSectionProps = {
     sheetName: 'Finance Sheet',
     isTableFullscreen: false,
     isHorizontalTable: true,
@@ -23,7 +23,7 @@ function renderSection(overrides: Partial<SampleRowsSectionProps> = {}) {
     expandedLevels: null,
     showTips: true,
     fields,
-    previewRows: rows,
+    rows: rows,
     verticalColumns: [],
     tableScrollRef: { current: null },
     onToggleTotals: () => undefined,
@@ -39,11 +39,11 @@ function renderSection(overrides: Partial<SampleRowsSectionProps> = {}) {
     onToggleGroup: () => undefined,
     ...overrides,
   }
-  const result = render(<SampleRowsSection {...props} />)
-  return { ...result, rerenderWith: (next: Partial<SampleRowsSectionProps>) => result.rerender(<SampleRowsSection {...props} {...next} />) }
+  const result = render(<ReportTableSection {...props} />)
+  return { ...result, rerenderWith: (next: Partial<ReportTableSectionProps>) => result.rerender(<ReportTableSection {...props} {...next} />) }
 }
 
-describe('SampleRowsSection', () => {
+describe('ReportTableSection', () => {
   it('renders section with table jump target id', () => {
     renderSection()
 
@@ -97,13 +97,13 @@ describe('SampleRowsSection', () => {
 
   it('locks body scroll while fullscreen is active and releases it on unmount', () => {
     const { rerenderWith, unmount } = renderSection()
-    expect(document.body.classList.contains('fr-seed-table-fullscreen-lock')).toBe(false)
+    expect(document.body.classList.contains('fr-fullscreen-lock')).toBe(false)
 
     rerenderWith({ isTableFullscreen: true })
-    expect(document.body.classList.contains('fr-seed-table-fullscreen-lock')).toBe(true)
+    expect(document.body.classList.contains('fr-fullscreen-lock')).toBe(true)
 
     unmount()
-    expect(document.body.classList.contains('fr-seed-table-fullscreen-lock')).toBe(false)
+    expect(document.body.classList.contains('fr-fullscreen-lock')).toBe(false)
   })
 
   it('shows the grouping tip to editors only', () => {

@@ -1,11 +1,11 @@
 import { useEffect, type RefObject } from 'react'
 import SideArrowIcon from '../../../shared/icons/SideArrowIcon'
 import UpDownArrowIcon from '../../../shared/icons/UpDownArrowIcon'
-import { getGroupLevelCount } from '../report/model/sampleRowsPivot'
-import SampleRowsTableContent, { type SampleRowsTableContentProps } from '../sections/SampleRowsTableContent'
-import './SampleRowsSection.css'
+import { getGroupLevelCount } from '../report/model/pivotLayout'
+import ReportTableContent, { type ReportTableContentProps } from '../sections/ReportTableContent'
+import './ReportTableSection.css'
 
-export type SampleRowsSectionProps = SampleRowsTableContentProps & {
+export type ReportTableSectionProps = ReportTableContentProps & {
   sheetName: string
   isTableFullscreen: boolean
   expandedLevels: number | null
@@ -20,7 +20,7 @@ export type SampleRowsSectionProps = SampleRowsTableContentProps & {
 
 const ALL_ROWS = 'all'
 
-function SampleRowsSection({
+function ReportTableSection({
   sheetName,
   isTableFullscreen,
   expandedLevels,
@@ -32,7 +32,7 @@ function SampleRowsSection({
   onToggleOrientation,
   onToggleFullscreen,
   ...tableProps
-}: SampleRowsSectionProps) {
+}: ReportTableSectionProps) {
   const { isHorizontalTable, isGroupingEnabled, showTotals, fields } = tableProps
   const isGroupingUnavailable = !isHorizontalTable
   const isGroupingActive = isHorizontalTable && isGroupingEnabled
@@ -53,20 +53,20 @@ function SampleRowsSection({
       return
     }
 
-    document.body.classList.add('fr-seed-table-fullscreen-lock')
+    document.body.classList.add('fr-fullscreen-lock')
     return () => {
-      document.body.classList.remove('fr-seed-table-fullscreen-lock')
+      document.body.classList.remove('fr-fullscreen-lock')
     }
   }, [isTableFullscreen])
 
   return (
     <section
       id="fr-report-table"
-      className={`fr-seed-table fr-sample-rows-jump-target ${isTableFullscreen ? 'fr-fullscreen' : ''}`}
+      className={`fr-report-table fr-jump-target ${isTableFullscreen ? 'fr-fullscreen' : ''}`}
     >
-      <div className="fr-seed-table-header">
+      <div className="fr-report-table-header">
         <h2>{sheetName}</h2>
-        <div className="fr-seed-table-actions">
+        <div className="fr-report-table-actions">
           <button
             type="button"
             className="fr-totals-toggle-button"
@@ -124,17 +124,17 @@ function SampleRowsSection({
         </div>
       </div>
       <div
-        className="fr-seed-table-scroll"
+        className="fr-report-table-scroll"
         role="region"
-        aria-label="Sample report rows"
+        aria-label="Report table"
         ref={tableScrollRef}
       >
         <table>
-          <SampleRowsTableContent {...tableProps} />
+          <ReportTableContent {...tableProps} />
         </table>
       </div>
     </section>
   )
 }
 
-export default SampleRowsSection
+export default ReportTableSection

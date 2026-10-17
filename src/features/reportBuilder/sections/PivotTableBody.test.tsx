@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { PivotRenderRow } from '../report/model/sampleRowsPivot'
+import type { PivotRenderRow } from '../report/model/pivotLayout'
 import PivotTableBody from './PivotTableBody'
 
 const pivotRows: PivotRenderRow[] = [
@@ -26,7 +26,7 @@ describe('PivotTableBody', () => {
     expect(screen.getByRole('rowheader', { name: 'North' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('title', 'Expand North')
-    expect(screen.getByRole('cell', { name: '10' })).toHaveClass('fr-seed-table-value-numeric')
+    expect(screen.getByRole('cell', { name: '10' })).toHaveClass('fr-numeric-cell')
   })
 
   it('asks to expand a collapsed group when clicked', () => {

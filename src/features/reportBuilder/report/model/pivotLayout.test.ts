@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ReportRow } from '../../../../services/adapters'
 import type { ReportField } from '../../../../services/reportDefinition/types'
 import { rawValue, simpleFieldTotal } from '../../../../test/simpleFieldTotal'
-import { buildPivotRenderRows, compareRawValues, getGroupKey, getGroupLevelCount } from './sampleRowsPivot'
+import { buildPivotRenderRows, compareRawValues, getGroupKey, getGroupLevelCount } from './pivotLayout'
 
 function field(sourceKey: string, displayType: ReportField['displayType'], aggregation: ReportField['aggregation'] = 'none'): ReportField {
   return { id: sourceKey, label: sourceKey, sourceKey, displayType, aggregation, currencySymbol: '$' }
@@ -10,7 +10,7 @@ function field(sourceKey: string, displayType: ReportField['displayType'], aggre
 
 function build(rows: ReportRow[], fields: ReportField[], options: { showTotals?: boolean, collapsed?: string[] } = {}) {
   return buildPivotRenderRows({
-    previewRows: rows,
+    rows: rows,
     fields,
     showTotals: options.showTotals ?? false,
     getMappedValue: (row, sourceKey) => String(row[sourceKey]),
@@ -62,7 +62,7 @@ describe('buildPivotRenderRows', () => {
     ]
 
     const pivotRows = buildPivotRenderRows({
-      previewRows: rows,
+      rows: rows,
       fields: [field('price', 'string'), field('region', 'string')],
       showTotals: false,
       getMappedValue: (row, sourceKey) => (sourceKey === 'price' ? `$${Number(row.price).toLocaleString('en-US')}.00` : String(row[sourceKey])),

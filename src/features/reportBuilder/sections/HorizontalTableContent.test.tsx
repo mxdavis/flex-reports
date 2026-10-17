@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
 import { plainMappedValue, rawValue, simpleFieldTotal } from '../../../test/simpleFieldTotal'
-import { SampleRowsHorizontalTableContent } from './SampleRowsHorizontalTableContent'
+import { HorizontalTableContent } from './HorizontalTableContent'
 
 const fields: ReportField[] = [
   { id: 'region', label: 'Region', sourceKey: 'region', displayType: 'string', aggregation: 'none', currencySymbol: '' },
@@ -19,11 +19,11 @@ const rows: ReportRow[] = [
 function renderTable(isGroupingEnabled: boolean) {
   return render(
     <table>
-      <SampleRowsHorizontalTableContent
+      <HorizontalTableContent
         showTotals
         isGroupingEnabled={isGroupingEnabled}
         fields={fields}
-        previewRows={rows}
+        rows={rows}
         getMappedValue={plainMappedValue}
         getRawValue={rawValue}
         formatFieldTotal={simpleFieldTotal}
@@ -35,7 +35,7 @@ function renderTable(isGroupingEnabled: boolean) {
   )
 }
 
-describe('SampleRowsHorizontalTableContent', () => {
+describe('HorizontalTableContent', () => {
   it('renders one body row per data row with a total footer when not grouped', () => {
     const { container } = renderTable(false)
 

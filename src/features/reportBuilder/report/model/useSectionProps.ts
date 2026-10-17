@@ -1,6 +1,6 @@
 import type { EditModeToolbarProps } from '../../components/EditModeToolbar'
-import type { SampleRowsSectionProps } from '../../components/SampleRowsSection'
-import type { SeedHeaderProps } from '../../components/SeedHeader'
+import type { ReportTableSectionProps } from '../../components/ReportTableSection'
+import type { ReportSettingsSectionProps } from '../../components/ReportSettingsSection'
 import { DEFAULT_SHEET_NAME, EDIT_MODE_JUMP_TARGETS } from '../../config'
 import { useReportBuilder } from '../useReportBuilder'
 
@@ -21,7 +21,7 @@ export function useToolbarProps(): EditModeToolbarProps {
   }
 }
 
-export function useReportSettingsProps(): Omit<SeedHeaderProps, 'isCollapsed' | 'onToggleCollapsed'> {
+export function useReportSettingsProps(): Omit<ReportSettingsSectionProps, 'isCollapsed' | 'onToggleCollapsed'> {
   const { state } = useReportBuilder()
   return {
     sheetName: state.sheetName,
@@ -31,7 +31,7 @@ export function useReportSettingsProps(): Omit<SeedHeaderProps, 'isCollapsed' | 
   }
 }
 
-export function useTableSectionProps(): SampleRowsSectionProps {
+export function useTableSectionProps(): ReportTableSectionProps {
   const { state, computed, actions } = useReportBuilder()
   const { ui } = state
   return {
@@ -43,7 +43,7 @@ export function useTableSectionProps(): SampleRowsSectionProps {
     expandedLevels: ui.expandedLevels,
     showTips: state.showTips,
     fields: state.fields,
-    previewRows: computed.previewRows,
+    rows: computed.rows,
     verticalColumns: computed.verticalColumns,
     tableScrollRef: state.tableScrollRef,
     onToggleTotals: actions.toggleTotals,

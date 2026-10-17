@@ -1,9 +1,9 @@
-import type { SeedFormulasSectionProps } from '../../components/SeedFormulasSection'
+import type { FormulasSectionProps } from '../../components/FormulasSection'
 import { MAX_FORMULAS } from '../../config'
 import { sortFormulasByLabel } from '../../../../utils/reportBuilder'
 import { useReportBuilder } from '../useReportBuilder'
 
-type FormulasPanelProps = Omit<SeedFormulasSectionProps, 'isCollapsed' | 'onToggleCollapsed'>
+type FormulasPanelProps = Omit<FormulasSectionProps, 'isCollapsed' | 'onToggleCollapsed'>
 
 export function useFormulasPanelProps(): FormulasPanelProps {
   const { state, computed, handlers, actions } = useReportBuilder()

@@ -70,7 +70,6 @@ export function useReportBuilderComputed({
     return `Source "${field.sourceKey}" isn't in the data or formulas. Edit the column to pick another source.`
   }
 
-  const previewRows = rows
   const isHorizontalTable = tableOrientation === 'horizontal'
 
   function getPreferredDisplayType(sourceKey: string): DisplayType {
@@ -191,19 +190,19 @@ export function useReportBuilderComputed({
   const verticalColumns = useMemo(() => {
     const firstField = reportFields[0]
     if (!firstField) return [] as Array<{ key: string, headerValue: string, rows: ReportRow[] }>
-    return previewRows.map((row) => ({
+    return rows.map((row) => ({
       key: row.id,
       headerValue: getMappedValue(row, firstField.sourceKey, firstField.displayType),
       rows: [row],
     }))
-  }, [getMappedValue, previewRows, reportFields])
+  }, [getMappedValue, rows, reportFields])
 
   const summaryItems = buildSummaryItems({ fields: reportFields, rows, formatFieldTotal })
 
   return {
     sourceOptions,
     formulaTokenOptions,
-    previewRows,
+    rows,
     isHorizontalTable,
     summaryItems,
     verticalColumns,

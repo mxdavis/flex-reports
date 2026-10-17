@@ -46,7 +46,7 @@ export function compareRawValues(left: unknown, right: unknown): number {
 }
 
 type BuildPivotRenderRowsArgs = {
-  previewRows: ReportRow[]
+  rows: ReportRow[]
   fields: ReportField[]
   showTotals: boolean
   getMappedValue: GetMappedValue
@@ -76,7 +76,7 @@ export function getGroupKey(path: string[]): string {
 // total rows but stops before the group's own total row. A collapsed group
 // renders as a single row: its value plus its totals.
 export function buildPivotRenderRows({
-  previewRows,
+  rows,
   fields,
   showTotals,
   getMappedValue,
@@ -85,15 +85,15 @@ export function buildPivotRenderRows({
   isGroupExpanded,
 }: BuildPivotRenderRowsArgs): PivotRenderRow[] {
   const groupLevelCount = getGroupLevelCount(fields)
-  if (groupLevelCount === 0 || previewRows.length === 0) return []
+  if (groupLevelCount === 0 || rows.length === 0) return []
 
-  const mapped = previewRows.map((row) =>
+  const mapped = rows.map((row) =>
     fields.map((field) => getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)),
   )
 
-  const raw = previewRows.map((row) => fields.map((field) => getRawValue(row, field.sourceKey)))
+  const raw = rows.map((row) => fields.map((field) => getRawValue(row, field.sourceKey)))
 
-  const order = previewRows.map((_, index) => index).sort((left, right) => {
+  const order = rows.map((_, index) => index).sort((left, right) => {
     for (let column = 0; column < fields.length; column += 1) {
       const comparison = compareRawValues(raw[left][column], raw[right][column])
       if (comparison !== 0) return comparison
@@ -101,7 +101,7 @@ export function buildPivotRenderRows({
     return 0
   })
 
-  const sortedRows = order.map((index) => previewRows[index])
+  const sortedRows = order.map((index) => rows[index])
   const sortedMapped = order.map((index) => mapped[index])
 
   const buildTotalCells = (level: number, indices: number[]): PivotCell[] => {

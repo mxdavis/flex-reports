@@ -1,16 +1,16 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReportFormula } from '../../../services/adapters'
-import SeedFormulasSection from './SeedFormulasSection'
+import FormulasSection from './FormulasSection'
 
 const formulas: ReportFormula[] = [
   { label: 'grossFees', expression: '{{hours}} * {{rate}}' },
 ]
 
-describe('SeedFormulasSection', () => {
+describe('FormulasSection', () => {
   it('renders formulas section with anchor id', () => {
     render(
-      <SeedFormulasSection
+      <FormulasSection
         formulas={formulas}
         isAddingFormula={false}
         maxFormulas={25}
@@ -44,7 +44,7 @@ describe('SeedFormulasSection', () => {
   it('forwards add-formula click', () => {
     const onStartAddFormula = vi.fn()
     const { container } = render(
-      <SeedFormulasSection
+      <FormulasSection
         formulas={formulas}
         isAddingFormula={false}
         maxFormulas={25}

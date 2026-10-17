@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import SeedStats from './SeedStats'
+import SummaryChips from './SummaryChips'
 
-describe('SeedStats', () => {
+describe('SummaryChips', () => {
   it('renders summary values', () => {
     render(
-      <SeedStats
+      <SummaryChips
         items={[
           { label: 'People (count)', value: '4' },
           { label: 'Clients (count)', value: '3' },

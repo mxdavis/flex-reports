@@ -1,16 +1,16 @@
 import type { ReportRow } from '../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
 import { isNumericDisplayType, isNumericTotal } from '../report/model/fieldTotals'
-import { buildPivotRenderRows, getGroupLevelCount } from '../report/model/sampleRowsPivot'
+import { buildPivotRenderRows, getGroupLevelCount } from '../report/model/pivotLayout'
 import ColumnHeaderLabel from './ColumnHeaderLabel'
 import PivotTableBody from './PivotTableBody'
-import './SampleRowsHorizontalTableContent.css'
+import './HorizontalTableContent.css'
 
-export type SampleRowsHorizontalTableContentProps = {
+export type HorizontalTableContentProps = {
   showTotals: boolean
   isGroupingEnabled: boolean
   fields: ReportField[]
-  previewRows: ReportRow[]
+  rows: ReportRow[]
   getMappedValue: (row: ReportRow, sourceKey: string, displayType: DisplayType, currencySymbol?: string) => string
   getRawValue: (row: ReportRow, sourceKey: string) => unknown
   formatFieldTotal: (rows: ReportRow[], field: ReportField) => string
@@ -19,18 +19,18 @@ export type SampleRowsHorizontalTableContentProps = {
   onToggleGroup: (groupKey: string, isExpanded: boolean) => void
 }
 
-export function SampleRowsHorizontalTableContent({
+export function HorizontalTableContent({
   showTotals,
   isGroupingEnabled,
   fields,
-  previewRows,
+  rows,
   getMappedValue,
   getRawValue,
   formatFieldTotal,
   getFieldWarning,
   isGroupExpanded,
   onToggleGroup,
-}: SampleRowsHorizontalTableContentProps) {
+}: HorizontalTableContentProps) {
   const isGrouped = isGroupingEnabled && getGroupLevelCount(fields) > 0
 
   const header = (
@@ -50,8 +50,8 @@ export function SampleRowsHorizontalTableContent({
           <strong>{isGrouped ? 'Grand total' : 'Total'}</strong>
         </th>
         {fields.slice(1).map((field) => (
-          <td key={`total-${field.id}`} className={isNumericTotal(field) ? 'fr-seed-table-value-numeric' : undefined}>
-            <strong>{formatFieldTotal(previewRows, field)}</strong>
+          <td key={`total-${field.id}`} className={isNumericTotal(field) ? 'fr-numeric-cell' : undefined}>
+            <strong>{formatFieldTotal(rows, field)}</strong>
           </td>
         ))}
       </tr>
@@ -60,7 +60,7 @@ export function SampleRowsHorizontalTableContent({
 
   if (isGrouped) {
     const pivotRows = buildPivotRenderRows({
-      previewRows,
+      rows,
       fields,
       showTotals,
       getMappedValue,
@@ -82,12 +82,12 @@ export function SampleRowsHorizontalTableContent({
     <>
       {header}
       <tbody>
-        {previewRows.map((row) => (
+        {rows.map((row) => (
           <tr key={row.id}>
             {fields.map((field) => (
               <td
                 key={`${row.id}-${field.id}`}
-                className={isNumericDisplayType(field.displayType) ? 'fr-seed-table-value-numeric' : undefined}
+                className={isNumericDisplayType(field.displayType) ? 'fr-numeric-cell' : undefined}
               >
                 {getMappedValue(row, field.sourceKey, field.displayType, field.currencySymbol)}
               </td>

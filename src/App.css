@@ -1,4 +1,4 @@
-.fr-seed-page {
+.fr-report-builder {
   width: min(1100px, 96%);
   margin: 24px auto;
   display: grid;
@@ -7,8 +7,8 @@
 }
 
 .fr-mapping-panel,
-.fr-seed-formulas,
-.fr-seed-table {
+.fr-formulas-section,
+.fr-report-table {
   background: #ffffff;
   border: 1px solid #e4e7ec;
   border-radius: 12px;
@@ -80,12 +80,12 @@
   font-size: 12px;
 }
 
-.fr-seed-formulas {
+.fr-formulas-section {
   padding: 16px;
 }
 
-.fr-seed-formulas h2,
-.fr-seed-table h2 {
+.fr-formulas-section h2,
+.fr-report-table h2 {
   margin: 0 0 12px;
   font-size: 20px;
 }
@@ -201,7 +201,7 @@
   padding: 8px 10px;
 }
 
-.fr-seed-formulas code {
+.fr-formulas-section code {
   background: #f2f4f7;
   border-radius: 6px;
   padding: 3px 8px;
@@ -210,12 +210,12 @@
 }
 
 
-.fr-seed-table {
+.fr-report-table {
   padding: 16px;
   overflow-x: hidden;
 }
 
-.fr-seed-table-header {
+.fr-report-table-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -223,11 +223,11 @@
   margin-bottom: 10px;
 }
 
-.fr-seed-table-header h2 {
+.fr-report-table-header h2 {
   margin: 0;
 }
 
-.fr-seed-table-actions {
+.fr-report-table-actions {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -246,7 +246,7 @@
   pointer-events: none;
 }
 
-.fr-seed-table-header button {
+.fr-report-table-header button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -258,13 +258,13 @@
   gap: 8px;
 }
 
-.fr-seed-table-header button[aria-pressed='true'] {
+.fr-report-table-header button[aria-pressed='true'] {
   background: #ecfdf3;
   border-color: #12b76a;
   color: #027a48;
 }
 
-.fr-seed-table-actions select {
+.fr-report-table-actions select {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -272,7 +272,7 @@
   font: inherit;
 }
 
-.fr-seed-table-scroll {
+.fr-report-table-scroll {
   overflow-x: auto;
   overflow-y: hidden;
   max-width: 100%;
@@ -283,14 +283,14 @@
   scroll-behavior: smooth;
 }
 
-.fr-seed-table table {
+.fr-report-table table {
   width: max-content;
   min-width: 100%;
   border-collapse: collapse;
 }
 
-.fr-seed-table th,
-.fr-seed-table td {
+.fr-report-table th,
+.fr-report-table td {
   text-align: left;
   border-bottom: 1px solid #eaecf0;
   padding: 8px 10px;
@@ -298,7 +298,7 @@
   white-space: nowrap;
 }
 
-.fr-seed-table th {
+.fr-report-table th {
   color: #475467;
   font-size: 12px;
   text-transform: uppercase;
@@ -308,11 +308,11 @@
   z-index: 1;
 }
 
-body.fr-seed-table-fullscreen-lock {
+body.fr-fullscreen-lock {
   overflow: hidden;
 }
 
-.fr-seed-table.fr-fullscreen {
+.fr-report-table.fr-fullscreen {
   position: fixed;
   inset: 16px;
   z-index: 30;
@@ -322,11 +322,11 @@ body.fr-seed-table-fullscreen-lock {
   flex-direction: column;
 }
 
-.fr-seed-table.fr-fullscreen .fr-seed-table-scroll {
+.fr-report-table.fr-fullscreen .fr-report-table-scroll {
   flex: 1;
 }
 
-.fr-seed-table.fr-fullscreen .fr-seed-table-header h2 {
+.fr-report-table.fr-fullscreen .fr-report-table-header h2 {
   display: none;
 }
 
@@ -336,12 +336,12 @@ body.fr-seed-table-fullscreen-lock {
     gap: 4px;
   }
 
-  .fr-seed-table.fr-fullscreen {
+  .fr-report-table.fr-fullscreen {
     inset: 8px;
   }
 
-  .fr-seed-table th,
-  .fr-seed-table td {
+  .fr-report-table th,
+  .fr-report-table td {
     min-width: 130px;
   }
 }

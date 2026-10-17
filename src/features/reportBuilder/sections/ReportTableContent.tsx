@@ -1,11 +1,11 @@
 import type { ReportRow } from '../../../services/adapters'
 import { isNumericDisplayType, isNumericTotal } from '../report/model/fieldTotals'
 import {
-  SampleRowsHorizontalTableContent,
-  type SampleRowsHorizontalTableContentProps,
-} from './SampleRowsHorizontalTableContent'
+  HorizontalTableContent,
+  type HorizontalTableContentProps,
+} from './HorizontalTableContent'
 import ColumnHeaderLabel from './ColumnHeaderLabel'
-import './SampleRowsTableContent.css'
+import './ReportTableContent.css'
 
 type VerticalColumn = {
   key: string
@@ -13,17 +13,17 @@ type VerticalColumn = {
   rows: ReportRow[]
 }
 
-export type SampleRowsTableContentProps = SampleRowsHorizontalTableContentProps & {
+export type ReportTableContentProps = HorizontalTableContentProps & {
   isHorizontalTable: boolean
   verticalColumns: VerticalColumn[]
 }
 
-function SampleRowsTableContent({ isHorizontalTable, verticalColumns, ...tableProps }: SampleRowsTableContentProps) {
+function ReportTableContent({ isHorizontalTable, verticalColumns, ...tableProps }: ReportTableContentProps) {
   if (isHorizontalTable) {
-    return <SampleRowsHorizontalTableContent {...tableProps} />
+    return <HorizontalTableContent {...tableProps} />
   }
 
-  const { showTotals, fields, previewRows, getMappedValue, formatFieldTotal, getFieldWarning } = tableProps
+  const { showTotals, fields, rows, getMappedValue, formatFieldTotal, getFieldWarning } = tableProps
 
   return (
     <>
@@ -45,14 +45,14 @@ function SampleRowsTableContent({ isHorizontalTable, verticalColumns, ...tablePr
             {verticalColumns.map((column) => (
               <td
                 key={`${field.id}-${column.key}`}
-                className={isNumericDisplayType(field.displayType) ? 'fr-seed-table-value-numeric' : ''}
+                className={isNumericDisplayType(field.displayType) ? 'fr-numeric-cell' : ''}
               >
                 {getMappedValue(column.rows[0], field.sourceKey, field.displayType, field.currencySymbol)}
               </td>
             ))}
             {showTotals && (
-              <td className={isNumericTotal(field) ? 'fr-seed-table-value-numeric' : ''}>
-                <strong>{formatFieldTotal(previewRows, field)}</strong>
+              <td className={isNumericTotal(field) ? 'fr-numeric-cell' : ''}>
+                <strong>{formatFieldTotal(rows, field)}</strong>
               </td>
             )}
           </tr>
@@ -62,4 +62,4 @@ function SampleRowsTableContent({ isHorizontalTable, verticalColumns, ...tablePr
   )
 }
 
-export default SampleRowsTableContent
+export default ReportTableContent

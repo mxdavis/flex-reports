@@ -1,17 +1,17 @@
-import './SeedStats.css'
+import './SummaryChips.css'
 
 export type SummaryItem = {
   label: string
   value: string
 }
 
-type SeedStatsProps = {
+type SummaryChipsProps = {
   items: SummaryItem[]
 }
 
-function SeedStats({ items }: SeedStatsProps) {
+function SummaryChips({ items }: SummaryChipsProps) {
   return (
-    <section className="fr-seed-stats">
+    <section className="fr-summary-chips">
       {items.map((item) => (
         <article key={item.label}>
           <h2>{item.label}</h2>
@@ -22,4 +22,4 @@ function SeedStats({ items }: SeedStatsProps) {
   )
 }
 
-export default SeedStats
+export default SummaryChips

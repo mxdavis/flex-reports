@@ -1,8 +1,8 @@
-import './SeedHeader.css'
+import './ReportSettingsSection.css'
 import { CURRENCY_SYMBOL_OPTIONS } from '../../../utils/currencySymbols'
 import SectionTitleRow from '../../../shared/components/SectionTitleRow'
 
-export type SeedHeaderProps = {
+export type ReportSettingsSectionProps = {
   sheetName: string
   currencySymbol: string
   isCollapsed?: boolean
@@ -11,16 +11,16 @@ export type SeedHeaderProps = {
   onCurrencySymbolChange: (nextValue: string) => void
 }
 
-function SeedHeader({
+function ReportSettingsSection({
   sheetName,
   currencySymbol,
   isCollapsed = false,
   onToggleCollapsed,
   onSheetNameChange,
   onCurrencySymbolChange,
-}: SeedHeaderProps) {
+}: ReportSettingsSectionProps) {
   return (
-    <header className="fr-seed-header">
+    <header className="fr-report-settings">
       <SectionTitleRow
         title="Report Settings"
         sectionName="settings"
@@ -30,8 +30,8 @@ function SeedHeader({
       />
 
       {!isCollapsed && (
-        <div id="fr-report-settings-content" className="fr-seed-header-controls">
-          <div className="fr-seed-header-sheet-name">
+        <div id="fr-report-settings-content" className="fr-report-settings-controls">
+          <div className="fr-report-settings-sheet-name">
             <label htmlFor="fr-sheet-name-input">Sheet name</label>
             <input
               id="fr-sheet-name-input"
@@ -44,12 +44,12 @@ function SeedHeader({
             />
           </div>
 
-          <div className="fr-seed-header-currency-symbol">
+          <div className="fr-report-settings-currency-symbol">
             <label htmlFor="fr-global-currency-symbol">Currency symbol</label>
             <select
               id="fr-global-currency-symbol"
               value={currencySymbol}
-              title="Used for all currency values in this report preview."
+              title="Used for all currency values in this report."
               onChange={(event) => {
                 onCurrencySymbolChange(event.target.value)
               }}
@@ -65,4 +65,4 @@ function SeedHeader({
   )
 }
 
-export default SeedHeader
+export default ReportSettingsSection

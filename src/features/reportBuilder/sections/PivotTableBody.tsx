@@ -1,5 +1,5 @@
 import ChevronToggleIcon from '../../../shared/icons/ChevronToggleIcon'
-import type { PivotCell, PivotRenderRow } from '../report/model/sampleRowsPivot'
+import type { PivotCell, PivotRenderRow } from '../report/model/pivotLayout'
 import './PivotTableBody.css'
 
 type PivotTableBodyProps = {
@@ -40,7 +40,7 @@ function PivotTableBody({ pivotRows, onToggleGroup }: PivotTableBodyProps) {
                 key={`${pivotRow.key}-${cell.columnIndex}`}
                 scope={cell.scope}
                 rowSpan={cell.rowSpan}
-                className={cell.isNumeric ? 'fr-seed-table-value-numeric' : undefined}
+                className={cell.isNumeric ? 'fr-numeric-cell' : undefined}
               >
                 <PivotCellContent cell={cell} onToggleGroup={onToggleGroup} />
               </Tag>

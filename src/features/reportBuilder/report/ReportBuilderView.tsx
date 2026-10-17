@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import EditModeToolbar from '../components/EditModeToolbar'
 import MappingPanelSection from '../components/MappingPanelSection'
-import SampleRowsSection from '../components/SampleRowsSection'
-import SeedFormulasSection from '../components/SeedFormulasSection'
-import SeedHeader from '../components/SeedHeader'
-import SeedStats from '../components/SeedStats'
+import ReportTableSection from '../components/ReportTableSection'
+import FormulasSection from '../components/FormulasSection'
+import ReportSettingsSection from '../components/ReportSettingsSection'
+import SummaryChips from '../components/SummaryChips'
 import { useFormulasPanelProps } from './model/useFormulasPanelProps'
 import { useMappingPanelProps } from './model/useMappingPanelProps'
 import { useReportSettingsProps, useTableSectionProps, useToolbarProps } from './model/useSectionProps'
@@ -13,10 +13,10 @@ import { useReportBuilder } from './useReportBuilder'
 function ReportBuilderView() {
   const { state, computed } = useReportBuilder()
   const editModeToolbarProps = useToolbarProps()
-  const seedHeaderProps = useReportSettingsProps()
+  const reportSettingsProps = useReportSettingsProps()
   const mappingPanelProps = useMappingPanelProps()
-  const seedFormulasProps = useFormulasPanelProps()
-  const sampleRowsProps = useTableSectionProps()
+  const formulasProps = useFormulasPanelProps()
+  const tableSectionProps = useTableSectionProps()
   const { summaryItems } = computed
   const showAuthoring = state.ui.isEditMode
   const isTableFullscreen = state.ui.isTableFullscreen
@@ -25,12 +25,12 @@ function ReportBuilderView() {
   const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
 
   return (
-    <div className="fr-seed-page">
+    <div className="fr-report-builder">
       {!isTableFullscreen && <EditModeToolbar {...editModeToolbarProps} />}
 
       {!isTableFullscreen && showAuthoring && (
-        <SeedHeader
-          {...seedHeaderProps}
+        <ReportSettingsSection
+          {...reportSettingsProps}
           isCollapsed={isSettingsCollapsed}
           onToggleCollapsed={() => {
             setIsSettingsCollapsed((previous) => !previous)
@@ -49,8 +49,8 @@ function ReportBuilderView() {
       )}
 
       {!isTableFullscreen && showAuthoring && (
-        <SeedFormulasSection
-          {...seedFormulasProps}
+        <FormulasSection
+          {...formulasProps}
           isCollapsed={isFormulasCollapsed}
           onToggleCollapsed={() => {
             setIsFormulasCollapsed((previous) => !previous)
@@ -59,10 +59,10 @@ function ReportBuilderView() {
       )}
 
       {!isTableFullscreen && summaryItems.length > 0 && (
-        <SeedStats items={summaryItems} />
+        <SummaryChips items={summaryItems} />
       )}
 
-      <SampleRowsSection {...sampleRowsProps} />
+      <ReportTableSection {...tableSectionProps} />
     </div>
   )
 }
