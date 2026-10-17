@@ -1,7 +1,7 @@
 import { AGGREGATION_OPTIONS, DISPLAY_TYPE_OPTIONS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS, getDefaultAggregation } from '../../config'
 import type { MappingPanelSectionProps } from '../../components/MappingPanelSection'
 import type { AggregationMode, DisplayType, ReportField } from '../../../../services/reportDefinition/types'
-import { getNextFieldId } from '../../../../utils/reportBuilder'
+import { getNextSequencedName } from '../../../../utils/reportBuilder'
 import { useReportBuilder } from '../useReportBuilder'
 import { getSourceChangePatch } from './columnDraft'
 
@@ -87,7 +87,7 @@ export function useMappingPanelProps(): MappingPanelProps {
       const next = [...previous]
       next.splice(Math.min(Math.max(position - 1, 0), previous.length), 0, {
         ...draft,
-        id: getNextFieldId(previous.map((field) => field.id)),
+        id: getNextSequencedName('field-', previous.map((field) => field.id)),
         label: draft.label.trim() || sourceKey,
         sourceKey,
       })

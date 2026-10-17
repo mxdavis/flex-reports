@@ -1,4 +1,5 @@
 import type { ReportFormula } from '../services/adapters'
+import { DEFAULT_CURRENCY_SYMBOL } from '../services/reportDefinition/displayType'
 import type { DisplayType } from '../services/reportDefinition/types'
 
 type FormatCellOptions = {
@@ -21,7 +22,8 @@ export function formatCellValue(
   }
 
   if (typeof value === 'number' && Number.isNaN(value)) {
-    return 'NaN'
+    // Broken formulas evaluate to NaN; totals show the same label.
+    return 'Invalid formula'
   }
 
   if (displayType === 'string') {
@@ -43,7 +45,7 @@ export function formatCellValue(
 
   switch (displayType) {
     case 'currency':
-      return `${value < 0 ? '-' : ''}${options?.currencySymbol || '$'}${TWO_DECIMALS_FORMAT.format(Math.abs(value))}`
+      return `${value < 0 ? '-' : ''}${options?.currencySymbol || DEFAULT_CURRENCY_SYMBOL}${TWO_DECIMALS_FORMAT.format(Math.abs(value))}`
     case 'number':
       return WHOLE_NUMBER_FORMAT.format(value)
     case 'decimal':
@@ -55,40 +57,16 @@ export function formatCellValue(
   }
 }
 
-export function getNextFieldId(existingIds: string[]): string {
+// The next name in a numbered series: ['field-1', 'field-4'] with prefix
+// 'field-' gives 'field-5'. Names outside the series are ignored.
+export function getNextSequencedName(prefix: string, existingNames: string[]): string {
   let maxSequence = 0
-
-  for (const id of existingIds) {
-    const match = /^field-(\d+)$/.exec(id)
-    if (!match) {
-      continue
-    }
-
-    const sequence = Number(match[1])
-    if (Number.isFinite(sequence) && sequence > maxSequence) {
-      maxSequence = sequence
-    }
+  for (const name of existingNames) {
+    if (!name.startsWith(prefix)) continue
+    const sequence = Number(name.slice(prefix.length))
+    if (Number.isInteger(sequence) && sequence > maxSequence) maxSequence = sequence
   }
-
-  return `field-${maxSequence + 1}`
-}
-
-export function getNextFormulaLabel(existingLabels: string[]): string {
-  let maxSequence = 0
-
-  for (const label of existingLabels) {
-    const match = /^formula(\d+)$/.exec(label)
-    if (!match) {
-      continue
-    }
-
-    const sequence = Number(match[1])
-    if (Number.isFinite(sequence) && sequence > maxSequence) {
-      maxSequence = sequence
-    }
-  }
-
-  return `formula${maxSequence + 1}`
+  return `${prefix}${maxSequence + 1}`
 }
 
 export function validateFormulaInput(

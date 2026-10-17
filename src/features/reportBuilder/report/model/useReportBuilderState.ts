@@ -10,7 +10,7 @@ import {
 } from '../../../../services/reportDefinition/types'
 import { createInitialUiState, uiReducer } from '../../state/uiState'
 import type { ReportBuilderAppProps } from '../../types'
-import { getNextFormulaLabel } from '../../../../utils/reportBuilder'
+import { getNextSequencedName } from '../../../../utils/reportBuilder'
 import { resolveReportSource } from './resolveReportSource'
 import { useReportSave } from './useReportSave'
 
@@ -45,7 +45,7 @@ export function useReportBuilderState({
   const [sheetName, setSheetName] = useState(initialDefinition.sheetName)
   const [currencySymbol, setCurrencySymbol] = useState(initialDefinition.currencySymbol)
   const [newFormula, setNewFormula] = useState<ReportFormula>(() => ({
-    label: getNextFormulaLabel(initialDefinition.formulas.map((formula) => formula.label)),
+    label: getNextSequencedName('formula', initialDefinition.formulas.map((formula) => formula.label)),
     expression: '',
   }))
   const [formulaError, setFormulaError] = useState('')

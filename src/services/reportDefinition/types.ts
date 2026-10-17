@@ -7,10 +7,12 @@ export type SourceColumn = {
   dataType: SchemaDataType
 }
 
-export type DisplayType = 'currency' | 'number' | 'decimal' | 'percent' | 'date' | 'string'
+export const DISPLAY_TYPES = ['currency', 'number', 'decimal', 'percent', 'date', 'string'] as const
+export type DisplayType = typeof DISPLAY_TYPES[number]
 
 // How a column is totalled: in summary chips, group totals, and the grand total.
-export type AggregationMode = 'none' | 'sum' | 'avg' | 'count' | 'distinct'
+export const AGGREGATION_MODES = ['none', 'sum', 'avg', 'count', 'distinct'] as const
+export type AggregationMode = typeof AGGREGATION_MODES[number]
 
 export type TableOrientation = 'horizontal' | 'vertical'
 

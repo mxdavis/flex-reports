@@ -1,6 +1,7 @@
 import './ReportSettingsSection.css'
 import { CURRENCY_SYMBOL_OPTIONS } from '../../../utils/currencySymbols'
 import SectionTitleRow from '../../../shared/components/SectionTitleRow'
+import { DEFAULT_SHEET_NAME } from '../config'
 
 export type ReportSettingsSectionProps = {
   sheetName: string
@@ -40,7 +41,7 @@ function ReportSettingsSection({
               onChange={(event) => {
                 onSheetNameChange(event.target.value)
               }}
-              placeholder="Report"
+              placeholder={DEFAULT_SHEET_NAME}
             />
           </div>
 

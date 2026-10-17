@@ -1,6 +1,6 @@
 import type { FormulasSectionProps } from '../../components/FormulasSection'
 import { MAX_FORMULAS } from '../../config'
-import { getNextFormulaLabel, sortFormulasByLabel, validateFormulaInput } from '../../../../utils/reportBuilder'
+import { getNextSequencedName, sortFormulasByLabel, validateFormulaInput } from '../../../../utils/reportBuilder'
 import { useReportBuilder } from '../useReportBuilder'
 
 type FormulasPanelProps = Omit<FormulasSectionProps, 'isCollapsed' | 'onToggleCollapsed'>
@@ -32,7 +32,7 @@ export function useFormulasPanelProps(): FormulasPanelProps {
 
     const next = sortFormulasByLabel([...formulas, candidate])
     setFormulas(next)
-    setNewFormula({ label: getNextFormulaLabel(next.map((formula) => formula.label)), expression: '' })
+    setNewFormula({ label: getNextSequencedName('formula', next.map((formula) => formula.label)), expression: '' })
     setFormulaError('')
     setIsAddingFormula(false)
   }

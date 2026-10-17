@@ -6,6 +6,8 @@ import {
   getDefaultDisplayType,
 } from './displayType'
 import {
+  AGGREGATION_MODES,
+  DISPLAY_TYPES,
   REPORT_DEFINITION_VERSION,
   type AggregationMode,
   type DisplayType,
@@ -17,8 +19,6 @@ import {
 
 export const DEFAULT_SHEET_NAME = 'Report'
 
-const DISPLAY_TYPES: DisplayType[] = ['currency', 'number', 'decimal', 'percent', 'date', 'string']
-const AGGREGATION_MODES: AggregationMode[] = ['none', 'sum', 'avg', 'count', 'distinct']
 const DEFAULT_VIEW: ReportView = { orientation: 'horizontal', showTotals: false, isGroupingEnabled: false, expandedLevels: null }
 
 type UnknownRecord = Record<string, unknown>
