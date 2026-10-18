@@ -65,29 +65,29 @@ export function getGroupKey(path: string[]): string {
   return JSON.stringify(path)
 }
 
-type BuildTreeRowsArgs = {
+export type GroupNode = {
+  label: string
+  level: number
+  groupKey: string
+  // Every data row in the group, sorted.
   rows: ReportRow[]
-  fields: ReportField[]
-  showTotals: boolean
-  getFieldValue: GetFieldValue
-  getRawValue: GetRawValue
-  formatFieldTotal: (rows: ReportRow[], field: ReportField) => string
-  isGroupExpanded: (level: number, groupKey: string) => boolean
+  // Nested groups; empty for the deepest groups, whose rows are the detail rows.
+  children: GroupNode[]
 }
 
-export function buildTreeRows({
-  rows,
-  fields,
-  showTotals,
-  getFieldValue,
-  getRawValue,
-  formatFieldTotal,
-  isGroupExpanded,
-}: BuildTreeRowsArgs): TreeRow[] {
+type GroupTreeArgs = {
+  rows: ReportRow[]
+  fields: ReportField[]
+  getFieldValue: GetFieldValue
+  getRawValue: GetRawValue
+}
+
+// Sorts and nests the rows by the group columns (see getTreeLayout). Shared by
+// the on-screen table and the Excel export, so both group the same way.
+export function buildGroupTree({ rows, fields, getFieldValue, getRawValue }: GroupTreeArgs): GroupNode[] {
   const { groupCount, labelIndex } = getTreeLayout(fields)
   if (groupCount === 0 || rows.length === 0) return []
 
-  const valueFields = fields.slice(labelIndex + 1)
   const sortFields = fields.slice(0, labelIndex + 1)
   const raw = rows.map((row) => sortFields.map((field) => getRawValue(row, field.sourceKey)))
   const order = rows.map((_, index) => index).sort((left, right) => {
@@ -98,61 +98,83 @@ export function buildTreeRows({
     return left - right
   })
   const sortedRows = order.map((index) => rows[index])
-  const mappedAt = (row: ReportRow, column: number) => getFieldValue(row, fields[column])
 
-  const output: TreeRow[] = []
-
-  const pushDetailRows = (block: ReportRow[], level: number) => {
-    for (const row of block) {
-      output.push({
-        kind: 'detail',
-        key: `detail-${row.id}`,
-        level,
-        label: mappedAt(row, labelIndex),
-        values: valueFields.map((field, offset) => ({
-          value: mappedAt(row, labelIndex + 1 + offset),
-          isNumeric: isNumericDisplayType(field.displayType),
-        })),
-      })
-    }
-  }
-
-  const pushGroups = (block: ReportRow[], level: number, parentPath: string[]) => {
-    if (level === groupCount) {
-      pushDetailRows(block, level)
-      return
-    }
-
+  const group = (block: ReportRow[], level: number, parentPath: string[]): GroupNode[] => {
+    const nodes: GroupNode[] = []
     let cursor = 0
     while (cursor < block.length) {
-      const label = mappedAt(block[cursor], level)
+      const label = getFieldValue(block[cursor], fields[level])
       let end = cursor + 1
-      while (end < block.length && mappedAt(block[end], level) === label) end += 1
-
+      while (end < block.length && getFieldValue(block[end], fields[level]) === label) end += 1
       const groupRows = block.slice(cursor, end)
       const path = [...parentPath, label]
-      const groupKey = getGroupKey(path)
-      const isExpanded = isGroupExpanded(level, groupKey)
+      nodes.push({
+        label,
+        level,
+        groupKey: getGroupKey(path),
+        rows: groupRows,
+        children: level + 1 < groupCount ? group(groupRows, level + 1, path) : [],
+      })
+      cursor = end
+    }
+    return nodes
+  }
+
+  return group(sortedRows, 0, [])
+}
+
+type BuildTreeRowsArgs = GroupTreeArgs & {
+  showTotals: boolean
+  formatFieldTotal: (rows: ReportRow[], field: ReportField) => string
+  isGroupExpanded: (level: number, groupKey: string) => boolean
+}
+
+// The on-screen grouped table: group rows with their totals, and the rows of
+// expanded groups below them.
+export function buildTreeRows({ showTotals, formatFieldTotal, isGroupExpanded, ...treeArgs }: BuildTreeRowsArgs): TreeRow[] {
+  const { fields, getFieldValue } = treeArgs
+  const { groupCount, labelIndex } = getTreeLayout(fields)
+  const valueFields = fields.slice(labelIndex + 1)
+  const output: TreeRow[] = []
+
+  const walk = (nodes: GroupNode[]) => {
+    for (const node of nodes) {
+      const isExpanded = isGroupExpanded(node.level, node.groupKey)
       // A collapsed group always shows its totals; otherwise the Totals toggle decides.
       const showGroupTotals = showTotals || !isExpanded
       output.push({
         kind: 'group',
-        key: `group-${groupKey}`,
-        level,
-        label,
-        groupKey,
+        key: `group-${node.groupKey}`,
+        level: node.level,
+        label: node.label,
+        groupKey: node.groupKey,
         isExpanded,
         values: valueFields.map((field) => ({
-          value: showGroupTotals ? formatFieldTotal(groupRows, field) : '',
+          value: showGroupTotals ? formatFieldTotal(node.rows, field) : '',
           isNumeric: isNumericTotal(field),
         })),
       })
-      if (isExpanded) pushGroups(groupRows, level + 1, path)
-      cursor = end
+      if (!isExpanded) continue
+      if (node.children.length > 0) {
+        walk(node.children)
+        continue
+      }
+      for (const row of node.rows) {
+        output.push({
+          kind: 'detail',
+          key: `detail-${row.id}`,
+          level: groupCount,
+          label: getFieldValue(row, fields[labelIndex]),
+          values: valueFields.map((field) => ({
+            value: getFieldValue(row, field),
+            isNumeric: isNumericDisplayType(field.displayType),
+          })),
+        })
+      }
     }
   }
 
-  pushGroups(sortedRows, 0, [])
+  walk(buildGroupTree(treeArgs))
   return output
 }
 

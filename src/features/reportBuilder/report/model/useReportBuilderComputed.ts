@@ -206,12 +206,17 @@ export function useReportBuilderComputed({
   // Each column totals by its own aggregation setting, wherever totals appear
   // (summary chips, group totals, grand total), so e.g. a rate can average
   // while hours sum.
+  // A column's total as a number (NaN for a broken formula, null for none).
+  const getFieldTotal = useCallback((rowsToAggregate: ReportRow[], field: ReportField): number | null => {
+    return getAggregatedFieldValue(rowsToAggregate, field.sourceKey, field.aggregation)
+  }, [getAggregatedFieldValue])
+
   const formatFieldTotal = useCallback((rowsToAggregate: ReportRow[], field: ReportField): string => {
-    const value = getAggregatedFieldValue(rowsToAggregate, field.sourceKey, field.aggregation)
+    const value = getFieldTotal(rowsToAggregate, field)
     if (value === null) return ''
     if (Number.isNaN(value)) return 'Invalid formula'
     return formatCellValue(value, getTotalDisplayType(field), formatOptions)
-  }, [formatOptions, getAggregatedFieldValue])
+  }, [formatOptions, getFieldTotal])
 
   const verticalColumns = useMemo<VerticalColumn[]>(() => {
     const firstField = reportFields[0]
@@ -235,6 +240,7 @@ export function useReportBuilderComputed({
     getPreferredDisplayType,
     getFieldValue,
     getMappedRawValue,
+    getFieldTotal,
     formatFieldTotal,
     getFieldWarning,
   }
