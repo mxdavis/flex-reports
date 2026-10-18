@@ -130,6 +130,7 @@ Viewers can try anything without risk, and they don't see authoring tips.
 | `onSave` | `(definition) => void \| Promise<void>` | — | Required for editors. Without it the Save button is hidden and an error is logged. |
 | `initialEditMode` | `boolean` | `false` | Open straight into edit mode. |
 | `sandbox` | `boolean` | `false` | Run on built-in sample data for local development and demos (see [Sandbox mode](#sandbox-mode)). Host apps don't set this. |
+| `exports` | `boolean \| ('print' \| 'pdf' \| 'xlsx' \| 'csv')[]` | all | Which export formats appear in the **Export** menu, for viewers and editors alike. `false` hides the menu. |
 | `maxVisibleRows` | `number` | `1000` | Grouped reports that would show more rows than this fully expanded open at the deepest **Show rows** level that fits. Ungrouped tables aren't capped. |
 
 ### Report definition

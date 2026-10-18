@@ -8,6 +8,7 @@ For running and integrating the package, see the [README](../README.md).
 - [Grouping](#grouping)
 - [Collapsing groups](#collapsing-groups)
 - [Vertical view and full screen](#vertical-view-and-full-screen)
+- [Exporting](#exporting)
 - [Summary chips](#summary-chips)
 - [Edit mode](#edit-mode)
 - [Formulas](#formulas)
@@ -30,6 +31,7 @@ The toolbar above it has:
 | **Grouping** | Nests rows into groups. Horizontal view only. |
 | **Show rows** | Appears while grouping is on. Picks how far groups open. |
 | **Vertical view** / **Horizontal view** | Switches the table's orientation. Vertical view is for reports of up to 100 rows. |
+| **Export** | Prints or downloads the report. See [Exporting](#exporting). |
 | **Full screen** | Expands the table to fill the window. Press `Esc` to exit. |
 
 ## Totals
@@ -133,6 +135,18 @@ rows side by side, so:
 **Full screen** expands the table to fill the window and hides the rest of the page,
 keeping the toolbar, column headers, and total. Press `Esc` or click **Exit full screen** to
 return.
+
+## Exporting
+
+**Export** in the table toolbar prints or downloads the report. It's available to
+viewers and editors, and the host app can limit the formats or turn it off.
+
+| Format | What you get |
+|---|---|
+| **CSV** | Every data row, with the report's columns and headers, values formatted as on screen. No group or total rows. Opens correctly in Excel, including symbols like €. |
+
+Text that would run as a spreadsheet formula (starting with `=`, `+`, `-`, or `@`) is
+saved with a leading `'`, so opening the file never runs anything from your data.
 
 ## Summary chips
 
