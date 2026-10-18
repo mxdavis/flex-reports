@@ -63,6 +63,11 @@ Newest at top. Each entry: what we decided and why.
   unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
   CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.
   CSS modules were the alternative; the prefix keeps plain CSS and readable class names.
+- **PDF goes through the browser's print dialog.** Print and "Save as PDF" share one print
+  layout (`@media print`), so there's no PDF library to ship or keep in sync. Before any
+  print, the table switches off windowing (synchronously, on `beforeprint`) so every row
+  is on paper. Our Print button hides the rest of the host page for that one print
+  (`fr-print-isolate`), and suggests the report name as the PDF file name.
 - **Untouched default columns follow the schema.** Columns were built once at mount, so a
   host that mounted with empty rows (or an empty schema) while loading was stuck with zero
   columns. Without a saved definition, the defaults are rebuilt when the schema changes,
