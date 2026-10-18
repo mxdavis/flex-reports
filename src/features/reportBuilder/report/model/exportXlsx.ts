@@ -96,6 +96,15 @@ export async function buildXlsx(args: XlsxExportArgs): Promise<ArrayBuffer> {
   header.font = { bold: true }
   header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F4F7' } }
 
+  // Column number formats for the data cells. Set before any rows: ExcelJS also
+  // applies a column format to cells already written, which would overwrite the
+  // per-cell formats of group and total rows (e.g. a count in a currency column).
+  ;[...(args.isGrouped ? [] : [labelField]), ...valueFields].forEach((field, index) => {
+    const column = sheet.getColumn(args.isGrouped ? index + 2 : index + 1)
+    const format = numberFormat(field.displayType, currencySymbol)
+    if (format) column.numFmt = format
+  })
+
   const valueCells = (row: ReportRow) => valueFields.map((field) => toCellValue(getRawValue(row, field.sourceKey), field.displayType))
   const totalCells = (groupRows: ReportRow[]) => valueFields.map((field) => toTotalValue(getFieldTotal(groupRows, field)))
   const formatTotals = (row: Row) => valueFields.forEach((field, index) => {
@@ -124,14 +133,6 @@ export async function buildXlsx(args: XlsxExportArgs): Promise<ArrayBuffer> {
       sheet.addRow([toCellValue(getRawValue(row, labelField.sourceKey), labelField.displayType), ...valueCells(row)])
     }
   }
-
-  // Number formats for the data cells; total rows set their own above and below.
-  ;[...(args.isGrouped ? [] : [labelField]), ...valueFields].forEach((field, index) => {
-    const column = sheet.getColumn(args.isGrouped ? index + 2 : index + 1)
-    const format = numberFormat(field.displayType, currencySymbol)
-    if (format) column.numFmt = format
-  })
-  // Group and total rows were formatted per cell, which takes precedence.
 
   if (args.showTotals) {
     const totalRow = addStyledRow(sheet, [args.isGrouped ? 'Grand total' : 'Total', ...totalCells(rows)], { bold: true })

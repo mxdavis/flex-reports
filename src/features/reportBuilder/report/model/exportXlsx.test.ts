@@ -100,4 +100,22 @@ describe('buildXlsx', () => {
     expect(rowValues(sheet, 1)).toEqual(['Region › Store', 'Units'])
     expect(sheet.getRow(3).getCell(1).alignment).toMatchObject({ indent: 1 })
   })
+
+  it('keeps each total\'s own format: a count in a currency column is a plain count', async () => {
+    const countedPrices = [field('region', 'string'), field('store', 'string'), { ...field('price', 'currency'), aggregation: 'count' as const }]
+    const counts = (groupRows: ReportRow[]) => groupRows.length
+    const sheet = await exportAndRead({ fields: countedPrices, isGrouped: true, getFieldTotal: counts })
+
+    const formatOf = (label: string) => {
+      for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber += 1) {
+        const row = sheet.getRow(rowNumber)
+        if (row.getCell(1).value === label) return row.getCell(2).numFmt
+      }
+      return 'missing'
+    }
+    // Group totals and the grand total are counts; detail rows keep the currency format.
+    expect(formatOf('North')).toBe('#,##0')
+    expect(formatOf('Grand total')).toBe('#,##0')
+    expect(formatOf('Ames')).toBe('"€"#,##0.00;-"€"#,##0.00')
+  })
 })
