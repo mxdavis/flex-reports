@@ -363,7 +363,6 @@ body.fr-fullscreen-lock {
   }
 
   /* The report's ancestors stop offsetting it, so it starts at the page top. */
-  body.fr-print-isolate :has(> .fr-print-target),
   body.fr-print-isolate :has(.fr-print-target) {
     position: static !important;
     margin: 0 !important;

@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { PrintModeContext } from '../../../shared/hooks/usePrintMode'
 import VirtualTableBody from './VirtualTableBody'
 
 function renderBody(rowCount: number) {
@@ -20,6 +21,24 @@ describe('VirtualTableBody', () => {
     const { container } = renderBody(10)
 
     expect(container.querySelectorAll('tbody tr')).toHaveLength(10)
+    expect(container.querySelector('.fr-spacer-row')).toBeNull()
+  })
+
+  it('draws every row while printing', () => {
+    const { container } = render(
+      <PrintModeContext.Provider value>
+        <table>
+          <VirtualTableBody
+            rowCount={2000}
+            columnCount={1}
+            scrollContainerRef={{ current: null }}
+            renderRow={(index) => <tr key={index}><td>Row {index}</td></tr>}
+          />
+        </table>
+      </PrintModeContext.Provider>,
+    )
+
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(2000)
     expect(container.querySelector('.fr-spacer-row')).toBeNull()
   })
 

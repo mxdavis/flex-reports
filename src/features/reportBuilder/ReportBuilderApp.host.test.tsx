@@ -421,6 +421,30 @@ describe('ReportBuilderApp host mode', () => {
       expect(csv.replace('\uFEFF', '').split('\r\n')).toEqual(['Warehouse,Units', 'Austin,12.00', 'Boston,30.00', ''])
     })
 
+    it('prints from the Export menu, offering Save as PDF through the same dialog', async () => {
+      const user = userEvent.setup()
+      const titles: string[] = []
+      vi.spyOn(window, 'print').mockImplementation(() => {
+        titles.push(document.title)
+      })
+      render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} role="viewer" />)
+
+      await user.click(screen.getByRole('button', { name: 'Export' }))
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Print…', 'Save as PDF…', 'Download CSV'])
+      await user.click(screen.getByRole('menuitem', { name: 'Save as PDF…' }))
+
+      expect(titles).toEqual(['Inventory'])
+    })
+
+    it('offers only the formats the host lists', async () => {
+      const user = userEvent.setup()
+      render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} exports={['csv', 'print']} />)
+
+      await user.click(screen.getByRole('button', { name: 'Export' }))
+
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Print…', 'Download CSV'])
+    })
+
     it('hides the Export button when the host turns exports off', () => {
       render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} exports={false} />)
 
