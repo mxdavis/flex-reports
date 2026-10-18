@@ -105,7 +105,7 @@ export function useTableSectionProps({ onPrint }: { onPrint: () => void }): Repo
           getFieldTotal: computed.getFieldTotal,
           isGroupExpanded,
         })
-          .then((workbook) => downloadFile(toFileName(sheetName, 'xlsx'), workbook, XLSX_MIME_TYPE))
+          .then((fileContents) => downloadFile(toFileName(sheetName, 'xlsx'), fileContents, XLSX_MIME_TYPE))
           .catch((error: unknown) => console.error('[flex-reports] Could not build the Excel file.', error))
       },
     },
