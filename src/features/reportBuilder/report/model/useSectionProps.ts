@@ -9,6 +9,7 @@ import type { ExportOption } from '../../components/ExportMenu'
 import type { ExportFormat } from '../../types'
 import { useReportBuilder } from '../useReportBuilder'
 import { buildCsv } from './exportCsv'
+import { buildXlsx, XLSX_MIME_TYPE } from './exportXlsx'
 import { countOutlineRows, getEffectiveExpandedLevels, getTreeLayout, type OutlineRowCounts } from './pivotLayout'
 
 // Only scrolls: the URL belongs to the host app (writing a #hash would clobber
@@ -88,6 +89,26 @@ export function useTableSectionProps({ onPrint }: { onPrint: () => void }): Repo
   const allExportOptions: Array<ExportOption & { id: ExportFormat }> = [
     { id: 'print', label: 'Print…', onSelect: onPrint },
     { id: 'pdf', label: 'Save as PDF…', onSelect: onPrint },
+    {
+      id: 'xlsx',
+      label: 'Download Excel (.xlsx)',
+      onSelect: () => {
+        void buildXlsx({
+          sheetName,
+          currencySymbol: state.currencySymbol,
+          rows,
+          fields,
+          isGrouped,
+          showTotals: ui.showTotals,
+          getFieldValue,
+          getRawValue: computed.getMappedRawValue,
+          getFieldTotal: computed.getFieldTotal,
+          isGroupExpanded,
+        })
+          .then((fileContents) => downloadFile(toFileName(sheetName, 'xlsx'), fileContents, XLSX_MIME_TYPE))
+          .catch((error: unknown) => console.error('[flex-reports] Could not build the Excel file.', error))
+      },
+    },
     {
       id: 'csv',
       label: 'Download CSV',

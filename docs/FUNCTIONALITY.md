@@ -145,6 +145,7 @@ viewers and editors, and the host app can limit the formats or turn it off.
 |---|---|
 | **Print…** | The report as it looks on screen (grouping, collapsed groups, totals, vertical view), with every row, the title, and the print date. Toolbars and edit panels are left out, column headers repeat on each page, and only the report prints, not the rest of the page. |
 | **Save as PDF…** | The same layout, through the browser's print dialog: choose **Save as PDF** as the destination. The file is named after the report. |
+| **Excel (.xlsx)** | A real workbook: numbers and dates stay numbers and dates, with currency, percent, and date formats; the header row is frozen. A grouped report uses Excel's own row outline: group rows (with their totals) sit above their rows, and groups collapsed on screen arrive collapsed, ready to expand in Excel. Includes the total row when Totals is on. |
 | **CSV** | Every data row, with the report's columns and headers, values formatted as on screen. No group or total rows. Opens correctly in Excel, including symbols like €. |
 
 Text that would run as a spreadsheet formula (starting with `=`, `+`, `-`, or `@`) is

@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import ExcelJS from 'exceljs'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReportRow, SchemaField } from '../../services/adapters'
@@ -430,7 +431,7 @@ describe('ReportBuilderApp host mode', () => {
       render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} role="viewer" />)
 
       await user.click(screen.getByRole('button', { name: 'Export' }))
-      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Print…', 'Save as PDF…', 'Download CSV'])
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Print…', 'Save as PDF…', 'Download Excel (.xlsx)', 'Download CSV'])
       await user.click(screen.getByRole('menuitem', { name: 'Save as PDF…' }))
 
       expect(titles).toEqual(['Inventory'])
@@ -443,6 +444,35 @@ describe('ReportBuilderApp host mode', () => {
       await user.click(screen.getByRole('button', { name: 'Export' }))
 
       expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Print…', 'Download CSV'])
+    })
+
+    it('downloads the report as an Excel workbook, named after the sheet', async () => {
+      const user = userEvent.setup()
+      const blobs: Blob[] = []
+      Object.assign(URL, {
+        createObjectURL: vi.fn((blob: Blob) => {
+          blobs.push(blob)
+          return 'blob:xlsx'
+        }),
+        revokeObjectURL: vi.fn(),
+      })
+      const downloads: string[] = []
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+        downloads.push(this.download)
+      })
+      render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} role="viewer" />)
+
+      await user.click(screen.getByRole('button', { name: 'Export' }))
+      await user.click(screen.getByRole('menuitem', { name: 'Download Excel (.xlsx)' }))
+
+      await waitFor(() => expect(downloads).toEqual(['Inventory.xlsx']))
+      expect(blobs[0].type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.load(await blobs[0].arrayBuffer())
+      const sheet = workbook.worksheets[0]
+      expect(sheet.name).toBe('Inventory')
+      expect(sheet.getRow(2).getCell(1).value).toBe('Austin')
+      expect(sheet.getRow(2).getCell(2).value).toBe(12)
     })
 
     it('hides the Export button when the host turns exports off', () => {

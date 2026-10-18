@@ -63,6 +63,11 @@ Newest at top. Each entry: what we decided and why.
   unprefixed names like `.mapping-panel` or `#report-table` could collide with the host's
   CSS or IDs. `check:practices` fails on any unprefixed class in the builder's CSS.
   CSS modules were the alternative; the prefix keeps plain CSS and readable class names.
+- **Excel export uses ExcelJS, loaded on demand.** It's MIT licensed and writes Excel's
+  native row outline, so grouped reports stay groupable in Excel (collapsed on screen means
+  collapsed in the file). It's ~930 kB, so it's a separate chunk fetched only when someone
+  downloads Excel. Exports write real numbers and dates with Excel formats, not text, and
+  share the on-screen grouping via `buildGroupTree`.
 - **PDF goes through the browser's print dialog.** Print and "Save as PDF" share one print
   layout (`@media print`), so there's no PDF library to ship or keep in sync. Before any
   print, the table switches off windowing (synchronously, on `beforeprint`) so every row
