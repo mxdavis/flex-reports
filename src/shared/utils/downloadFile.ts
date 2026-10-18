@@ -1,5 +1,5 @@
-// Characters most file systems don't allow in a file name.
-const UNSAFE_FILE_NAME_CHARACTERS = /[\\/:*?"<>|\u0000-\u001f]+/g
+// Characters most file systems don't allow in a file name, plus control characters.
+const UNSAFE_FILE_NAME_CHARACTERS = /[\\/:*?"<>|\p{Cc}]+/gu
 
 export function toFileName(name: string, extension: string, fallback = 'Report'): string {
   const base = name.replace(UNSAFE_FILE_NAME_CHARACTERS, '-').trim() || fallback

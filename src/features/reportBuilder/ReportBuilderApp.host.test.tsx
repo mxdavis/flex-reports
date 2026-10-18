@@ -396,6 +396,38 @@ describe('ReportBuilderApp host mode', () => {
     })
   })
 
+  describe('exports', () => {
+    it('downloads the report as CSV, named after the sheet', async () => {
+      const user = userEvent.setup()
+      const blobs: Blob[] = []
+      Object.assign(URL, {
+        createObjectURL: vi.fn((blob: Blob) => {
+          blobs.push(blob)
+          return 'blob:csv'
+        }),
+        revokeObjectURL: vi.fn(),
+      })
+      const downloads: string[] = []
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+        downloads.push(this.download)
+      })
+      render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} role="viewer" />)
+
+      await user.click(screen.getByRole('button', { name: 'Export' }))
+      await user.click(screen.getByRole('menuitem', { name: 'Download CSV' }))
+
+      expect(downloads).toEqual(['Inventory.csv'])
+      const csv = await blobs[0].text()
+      expect(csv.replace('\uFEFF', '').split('\r\n')).toEqual(['Warehouse,Units', 'Austin,12.00', 'Boston,30.00', ''])
+    })
+
+    it('hides the Export button when the host turns exports off', () => {
+      render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} exports={false} />)
+
+      expect(screen.queryByRole('button', { name: 'Export' })).toBeNull()
+    })
+  })
+
   it('infers columns and logs when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     render(<ReportBuilderApp rows={rows} role="viewer" />)
