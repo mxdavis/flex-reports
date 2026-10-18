@@ -56,6 +56,7 @@ Status tags used in each item:
 - [x] (in-pr) Grouped reports open at the deepest Show rows level under `maxVisibleRows` (default 1,000)
 - [x] (in-pr) Vertical view limited to 100 rows, without totals (disabled with an explanation above that)
 - [ ] (todo) Beyond ~100k rows: group off the main thread (Web Worker) or accept pre-aggregated data from the host
+- [ ] (todo) Decide how grouping treats values that differ only in case ("ACME Legal" vs "acme legal"); likely the host should clean data first. Today the sort treats them as equal but grouping splits on exact text, so mixed rows can produce repeated groups that share a key (one arrow toggles both). A one-line exact tie-break in `buildTreeRows` sorting fixes the misbehavior without merging anything.
 - [x] (in-pr) Per-instance element IDs (React `useId`) so two builders can share a page
 - [x] (in-pr) PR #10: host props API (`schema`, `rows`, `reportDefinition`, `role`, `onSave`); sandbox mode on seed data when `rows` is omitted
 - [x] (in-pr) PR #10: explicit "Save report" button + leave-page warning (no autosave)
@@ -76,6 +77,24 @@ Status tags used in each item:
 - [ ] (todo) Seed demo report for first-load wow factor
 - [ ] (todo) Sandbox playground: paste schema/rows/definition JSON, switch roles, and try a report before plugging it into a host
 - [ ] (todo) Package as an installable npm library (build + exports) instead of importing from source
+
+## Follow-ups from the PR #10 staff review
+
+Each is its own PR. Items marked *contract* change the saved format or props, so they're
+cheapest before anything ships.
+
+- [ ] (todo) Column headers go stale: changing a column's source keeps the old label (grouped header reads "WORK DATE › PERSON › …"). Update the label when it's still the old source's default; show the source on each column card.
+- [ ] (todo) Formula engine rework (wrong numbers today): results depend on evaluation order (`B = {{%C}} + {{%A}}` gives 1, not 2); self-references and cycles show numbers instead of *Invalid formula*; values like `1e-7` break formulas; keys such as `unit-price` can't be referenced; a formula named `constructor` breaks; renaming or removing a formula silently breaks formulas that use it. Resolve only referenced formulas per row with real cycle detection, tokenize instead of rewriting text, rewrite `{{%old}}` on rename.
+- [ ] (todo) Accessibility pass: windowing hides rows from screen readers (`aria-rowcount`, or skip windowing under ~300 rows); focus lost when a focused row scrolls out and after Edit/Cancel/Add/Save; keyboard way to reorder columns; disabled-button reasons only in hover titles (`aria-disabled` + description); no "Report saved" status; formula errors not announced; suggestion lists aren't ARIA comboboxes and the highlight can be off screen; sticky first column on narrow screens.
+- [ ] (todo) Embedding: component relies on sandbox-only `index.css` globals (box-sizing, font, margins), so scope them under the root class; fixed `min(1100px, 96%)` width with no `className` prop; CSS custom properties for theming.
+- [ ] (todo, contract) Formula ids and typed column sources (`source: { kind: 'field', key } | { kind: 'formula', id }`) instead of `sourceKey` meaning two things.
+- [ ] (todo, contract) Locale and currency: a `locale` prop and an ISO currency code (`'USD'`) instead of a symbol.
+- [ ] (todo, contract) Host callbacks `onDirtyChange` (in-app navigation guards) and `onDiagnostic` (repair warnings to host telemetry); props as a union so editors require `onSave`; reconsider `role` defaulting to `'editor'`.
+- [ ] (todo, contract) Public entry (`src/index.ts`) exporting the component, types, normalize/generate, and version; React as a peer dependency.
+- [ ] (todo) State layering: context exposes raw setters and a generic `set`; split saved state from session state and expose named actions.
+- [ ] (todo) Folder names that match contents (`components/` holds sections, `sections/` holds a mapping card).
+- [ ] (todo) Tests: host-mode Playwright fixture page; rows changing in e2e; bundle check that seeds stay out of the main chunk.
+- [ ] (todo) Smaller: ungrouped Total row never totals the first column; document that rows must be replaced, not mutated (cell caches key on row identity); replace `window.confirm`; summary chips as a list instead of 7 `<h2>`s; pressed state shown by color only.
 
 ## Backend integration (when host app is ready)
 

@@ -1,3 +1,4 @@
+import type { ExportFormat } from './types'
 import type { AggregationMode, DisplayType } from '../../services/reportDefinition/types'
 
 export { DEFAULT_CURRENCY_SYMBOL, getDefaultAggregation } from '../../services/reportDefinition/displayType'
@@ -7,6 +8,7 @@ export { MAX_FORMULAS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS } from '../../serv
 export const DEFAULT_MAX_VISIBLE_ROWS = 1000
 // Vertical view turns each row into a column, so past this it stops being readable.
 export const MAX_VERTICAL_VIEW_ROWS = 100
+export const ALL_EXPORT_FORMATS: ExportFormat[] = ['print', 'pdf', 'xlsx', 'csv']
 
 export const DISPLAY_TYPE_OPTIONS: Array<{ value: DisplayType, label: string }> = [
   { value: 'currency', label: 'Currency' },

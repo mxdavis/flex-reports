@@ -26,6 +26,7 @@ function renderSection(overrides: Partial<ReportTableSectionProps> = {}) {
     isOutlineCapped: false,
     isVerticalViewAvailable: true,
     maxVerticalViewRows: 100,
+    exportOptions: [],
     showTips: true,
     fields,
     rows: rows,

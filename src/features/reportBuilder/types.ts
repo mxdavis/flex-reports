@@ -5,6 +5,8 @@ export type { AggregationMode, TableOrientation } from '../../services/reportDef
 
 export type ReportRole = 'editor' | 'viewer'
 
+export type ExportFormat = 'print' | 'pdf' | 'xlsx' | 'csv'
+
 export type ReportBuilderAppProps = {
   // Columns available on `rows`. Inferred from the first row when omitted.
   schema?: SchemaField[]
@@ -23,4 +25,7 @@ export type ReportBuilderAppProps = {
   // Runs on built-in sample data with localStorage saving, for local
   // development and demos. Host apps never set this; rows/schema are ignored.
   sandbox?: boolean
+  // Which export formats viewers and editors can use. Defaults to all of them;
+  // false turns exporting off.
+  exports?: boolean | ExportFormat[]
 }

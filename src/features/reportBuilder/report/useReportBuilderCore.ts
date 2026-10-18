@@ -1,4 +1,4 @@
-import { DEFAULT_MAX_VISIBLE_ROWS, MAX_VERTICAL_VIEW_ROWS } from '../config'
+import { ALL_EXPORT_FORMATS, DEFAULT_MAX_VISIBLE_ROWS, MAX_VERTICAL_VIEW_ROWS } from '../config'
 import { useReportBuilderComputed } from './model/useReportBuilderComputed'
 import { useReportBuilderState, type ReportBuilderStateArgs } from './model/useReportBuilderState'
 
@@ -28,6 +28,7 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     computed,
     isVerticalViewAvailable,
     maxVisibleRows: args.maxVisibleRows ?? DEFAULT_MAX_VISIBLE_ROWS,
+    exportFormats: args.exports === false ? [] : Array.isArray(args.exports) ? args.exports : ALL_EXPORT_FORMATS,
   }
 }
 

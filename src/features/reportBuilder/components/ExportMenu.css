@@ -1,0 +1,30 @@
+.fr-export-menu {
+  position: relative;
+}
+
+.fr-export-menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 4px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.12);
+}
+
+.fr-report-table-header .fr-export-menu-list button {
+  justify-content: flex-start;
+  border: 0;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.fr-report-table-header .fr-export-menu-list button:hover,
+.fr-report-table-header .fr-export-menu-list button:focus-visible {
+  background: #f2f4f7;
+}

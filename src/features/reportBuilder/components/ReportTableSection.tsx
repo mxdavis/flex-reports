@@ -3,6 +3,7 @@ import { useElementId } from '../../../shared/hooks/useElementId'
 import SideArrowIcon from '../../../shared/icons/SideArrowIcon'
 import UpDownArrowIcon from '../../../shared/icons/UpDownArrowIcon'
 import HintedButton from '../../../shared/components/HintedButton'
+import ExportMenu, { type ExportOption } from './ExportMenu'
 import { getTreeLayout, joinFieldLabels, type OutlineRowCounts } from '../report/model/pivotLayout'
 import ReportTableContent, { type ReportTableContentProps } from '../sections/ReportTableContent'
 import './ReportTableSection.css'
@@ -19,6 +20,8 @@ export type ReportTableSectionProps = ReportTableContentProps & {
   isOutlineCapped: boolean
   isVerticalViewAvailable: boolean
   maxVerticalViewRows: number
+  // Print and download choices; the Export button is hidden when empty.
+  exportOptions: ExportOption[]
   showTips: boolean
   onToggleTotals: () => void
   onToggleGrouping: () => void
@@ -39,6 +42,7 @@ function ReportTableSection({
   isOutlineCapped,
   isVerticalViewAvailable,
   maxVerticalViewRows,
+  exportOptions,
   showTips,
   onToggleTotals,
   onToggleGrouping,
@@ -130,6 +134,7 @@ function ReportTableSection({
             {isHorizontalTable ? <UpDownArrowIcon /> : <SideArrowIcon />}
             <span>{isHorizontalTable ? 'Vertical view' : 'Horizontal view'}</span>
           </HintedButton>
+          {exportOptions.length > 0 && <ExportMenu options={exportOptions} />}
           <button
             type="button"
             onClick={onToggleFullscreen}
