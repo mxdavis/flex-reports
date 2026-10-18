@@ -4,6 +4,7 @@ import SideArrowIcon from '../../../shared/icons/SideArrowIcon'
 import UpDownArrowIcon from '../../../shared/icons/UpDownArrowIcon'
 import HintedButton from '../../../shared/components/HintedButton'
 import ExportMenu, { type ExportOption } from './ExportMenu'
+import PrintStamp from './PrintStamp'
 import { getTreeLayout, joinFieldLabels, type OutlineRowCounts } from '../report/model/pivotLayout'
 import ReportTableContent, { type ReportTableContentProps } from '../sections/ReportTableContent'
 import './ReportTableSection.css'
@@ -89,7 +90,10 @@ function ReportTableSection({
       className={isTableFullscreen ? 'fr-report-table fr-jump-target fr-fullscreen' : 'fr-report-table fr-jump-target'}
     >
       <div className="fr-report-table-header">
-        <h2>{sheetName}</h2>
+        <div>
+          <h2>{sheetName}</h2>
+          <PrintStamp />
+        </div>
         <div className="fr-report-table-actions">
           <HintedButton
             isPressed={isHorizontalTable && showTotals}

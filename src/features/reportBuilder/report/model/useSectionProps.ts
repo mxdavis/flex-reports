@@ -6,6 +6,7 @@ import { DEFAULT_SHEET_NAME, EDIT_MODE_JUMP_TARGETS, MAX_VERTICAL_VIEW_ROWS } fr
 import { useElementIdPrefix } from '../../../../shared/hooks/useElementId'
 import { downloadFile, toFileName } from '../../../../shared/utils/downloadFile'
 import type { ExportOption } from '../../components/ExportMenu'
+import type { ExportFormat } from '../../types'
 import { useReportBuilder } from '../useReportBuilder'
 import { buildCsv } from './exportCsv'
 import { countOutlineRows, getEffectiveExpandedLevels, getTreeLayout, type OutlineRowCounts } from './pivotLayout'
@@ -48,7 +49,7 @@ export function useReportSettingsProps(): Omit<ReportSettingsSectionProps, 'isCo
   }
 }
 
-export function useTableSectionProps(): ReportTableSectionProps {
+export function useTableSectionProps({ onPrint }: { onPrint: () => void }): ReportTableSectionProps {
   const { state, computed, isVerticalViewAvailable, maxVisibleRows, exportFormats } = useReportBuilder()
   const { ui, dispatchUi, rows, fields } = state
   const { getFieldValue } = computed
@@ -83,14 +84,17 @@ export function useTableSectionProps(): ReportTableSectionProps {
   }, [expandedLevels, groupOverrides])
 
   const sheetName = state.sheetName.trim().length > 0 ? state.sheetName : DEFAULT_SHEET_NAME
-  // Only the formats that are built so far; the rest join as they're added.
-  const exportOptions: ExportOption[] = exportFormats.includes('csv')
-    ? [{
+  // PDF goes through the print dialog's "Save as PDF", so both use onPrint.
+  const allExportOptions: Array<ExportOption & { id: ExportFormat }> = [
+    { id: 'print', label: 'Print…', onSelect: onPrint },
+    { id: 'pdf', label: 'Save as PDF…', onSelect: onPrint },
+    {
       id: 'csv',
       label: 'Download CSV',
       onSelect: () => downloadFile(toFileName(sheetName, 'csv'), buildCsv(rows, fields, getFieldValue), 'text/csv;charset=utf-8'),
-    }]
-    : []
+    },
+  ]
+  const exportOptions = allExportOptions.filter((option) => exportFormats.includes(option.id))
 
   return {
     ...tableActions,

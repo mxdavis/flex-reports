@@ -348,3 +348,97 @@ body.fr-fullscreen-lock {
     min-width: 130px;
   }
 }
+
+/* ---- Print ---- */
+@media print {
+  /* Our Print button prints only this report: the rest of the host page is
+     hidden for that one print (see usePrintMode). A plain Ctrl+P prints the
+     whole page as usual. */
+  body.fr-print-isolate * {
+    visibility: hidden;
+  }
+
+  body.fr-print-isolate > :not(:has(.fr-print-target)) {
+    display: none;
+  }
+
+  /* The report's ancestors stop offsetting it, so it starts at the page top. */
+  body.fr-print-isolate :has(> .fr-print-target),
+  body.fr-print-isolate :has(.fr-print-target) {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    transform: none !important;
+    overflow: visible !important;
+  }
+
+  body.fr-print-isolate .fr-print-target,
+  body.fr-print-isolate .fr-print-target * {
+    visibility: visible;
+  }
+
+  .fr-report-builder {
+    width: auto;
+    margin: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Screen-only controls and editing panels. */
+  .fr-workspace-toolbar,
+  .fr-report-table-actions,
+  .fr-report-settings,
+  .fr-mapping-panel,
+  .fr-formulas-section,
+  .fr-outline-note,
+  .fr-spacer-row {
+    display: none !important;
+  }
+
+  .fr-report-table,
+  .fr-report-table.fr-fullscreen {
+    position: static;
+    inset: auto;
+    box-shadow: none;
+    border: 0;
+    padding: 0;
+  }
+
+  .fr-report-table-scroll {
+    overflow: visible;
+    max-height: none;
+    border: 0;
+  }
+
+  .fr-report-table table {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Column headers repeat on every page; the total prints once, at the end. */
+  .fr-report-table thead {
+    display: table-header-group;
+  }
+
+  .fr-report-table tfoot {
+    display: table-row-group;
+  }
+
+  .fr-report-table thead th,
+  .fr-report-table tfoot th,
+  .fr-report-table tfoot td {
+    position: static;
+  }
+
+  .fr-report-table tr {
+    break-inside: avoid;
+  }
+
+  /* Let cells wrap so wide reports fit the page width. */
+  .fr-report-table th,
+  .fr-report-table td {
+    min-width: 0;
+    white-space: normal;
+  }
+}

@@ -1,4 +1,5 @@
-import type { ReactNode, RefObject } from 'react'
+import { useContext, type ReactNode, type RefObject } from 'react'
+import { PrintModeContext } from '../../../shared/hooks/usePrintMode'
 import { useVisibleRange } from '../../../shared/hooks/useVisibleRange'
 import './VirtualTableBody.css'
 
@@ -11,9 +12,13 @@ type VirtualTableBodyProps = {
 }
 
 // Draws only the rows inside the scroll container's viewport. Spacer rows keep
-// the scrollbar sized for the full table.
+// the scrollbar sized for the full table. While printing, every row is drawn.
 function VirtualTableBody({ rowCount, columnCount, scrollContainerRef, renderRow }: VirtualTableBodyProps) {
-  const { start, end, paddingTop, paddingBottom, measureRow } = useVisibleRange(scrollContainerRef, rowCount)
+  const isPrinting = useContext(PrintModeContext)
+  const visible = useVisibleRange(scrollContainerRef, rowCount)
+  const { start, end, paddingTop, paddingBottom, measureRow } = isPrinting
+    ? { ...visible, start: 0, end: rowCount, paddingTop: 0, paddingBottom: 0 }
+    : visible
 
   const rows: ReactNode[] = []
   for (let index = start; index < end; index += 1) {

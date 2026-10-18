@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { PrintModeContext, usePrintMode } from '../../../shared/hooks/usePrintMode'
 import EditModeToolbar from '../components/EditModeToolbar'
 import MappingPanelSection from '../components/MappingPanelSection'
 import ReportTableSection from '../components/ReportTableSection'
@@ -8,6 +9,7 @@ import SummaryChips from '../components/SummaryChips'
 import { useFormulasPanelProps } from './model/useFormulasPanelProps'
 import { useMappingPanelProps } from './model/useMappingPanelProps'
 import { useReportSettingsProps, useTableSectionProps, useToolbarProps } from './model/useSectionProps'
+import { DEFAULT_SHEET_NAME } from '../config'
 import { useReportBuilder } from './useReportBuilder'
 
 function ReportBuilderView() {
@@ -16,7 +18,9 @@ function ReportBuilderView() {
   const reportSettingsProps = useReportSettingsProps()
   const mappingPanelProps = useMappingPanelProps()
   const formulasProps = useFormulasPanelProps()
-  const tableSectionProps = useTableSectionProps()
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const { isPrinting, print } = usePrintMode(rootRef, reportSettingsProps.sheetName.trim() || DEFAULT_SHEET_NAME)
+  const tableSectionProps = useTableSectionProps({ onPrint: print })
   const { summaryItems } = computed
   const showAuthoring = state.ui.isEditMode
   const isTableFullscreen = state.ui.isTableFullscreen
@@ -25,45 +29,47 @@ function ReportBuilderView() {
   const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
 
   return (
-    <div className="fr-report-builder">
-      {!isTableFullscreen && <EditModeToolbar {...editModeToolbarProps} />}
+    <PrintModeContext.Provider value={isPrinting}>
+      <div className="fr-report-builder" ref={rootRef}>
+        {!isTableFullscreen && <EditModeToolbar {...editModeToolbarProps} />}
 
-      {!isTableFullscreen && showAuthoring && (
-        <ReportSettingsSection
-          {...reportSettingsProps}
-          isCollapsed={isSettingsCollapsed}
-          onToggleCollapsed={() => {
-            setIsSettingsCollapsed((previous) => !previous)
-          }}
-        />
-      )}
+        {!isTableFullscreen && showAuthoring && (
+          <ReportSettingsSection
+            {...reportSettingsProps}
+            isCollapsed={isSettingsCollapsed}
+            onToggleCollapsed={() => {
+              setIsSettingsCollapsed((previous) => !previous)
+            }}
+          />
+        )}
 
-      {!isTableFullscreen && showAuthoring && (
-        <MappingPanelSection
-          {...mappingPanelProps}
-          isCollapsed={isColumnsCollapsed}
-          onToggleCollapsed={() => {
-            setIsColumnsCollapsed((previous) => !previous)
-          }}
-        />
-      )}
+        {!isTableFullscreen && showAuthoring && (
+          <MappingPanelSection
+            {...mappingPanelProps}
+            isCollapsed={isColumnsCollapsed}
+            onToggleCollapsed={() => {
+              setIsColumnsCollapsed((previous) => !previous)
+            }}
+          />
+        )}
 
-      {!isTableFullscreen && showAuthoring && (
-        <FormulasSection
-          {...formulasProps}
-          isCollapsed={isFormulasCollapsed}
-          onToggleCollapsed={() => {
-            setIsFormulasCollapsed((previous) => !previous)
-          }}
-        />
-      )}
+        {!isTableFullscreen && showAuthoring && (
+          <FormulasSection
+            {...formulasProps}
+            isCollapsed={isFormulasCollapsed}
+            onToggleCollapsed={() => {
+              setIsFormulasCollapsed((previous) => !previous)
+            }}
+          />
+        )}
 
-      {!isTableFullscreen && summaryItems.length > 0 && (
-        <SummaryChips items={summaryItems} />
-      )}
+        {!isTableFullscreen && summaryItems.length > 0 && (
+          <SummaryChips items={summaryItems} />
+        )}
 
-      <ReportTableSection {...tableSectionProps} />
-    </div>
+        <ReportTableSection {...tableSectionProps} />
+      </div>
+    </PrintModeContext.Provider>
   )
 }
 
