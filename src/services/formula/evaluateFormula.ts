@@ -4,28 +4,27 @@ export type FormulaErrorCode =
   | 'empty-expression'
   | 'unsupported-syntax'
   | 'malformed-expression'
+  | 'invalid-reference'
 
 export type FormulaResult =
   | { ok: true; value: number }
   | { ok: false; code: FormulaErrorCode; message: string }
 
-const TOKEN_REGEX = /\{\{\s*(%?[a-zA-Z][a-zA-Z0-9_ ]*)\s*\}\}/g
-const SAFE_EXPRESSION_REGEX = /^[0-9+\-*/().\s]+$/
+const TOKEN_REGEX = /\{\{([^{}]*?)\}\}/g
+const SAFE_EXPRESSION_REGEX = /^[0-9eE+\-*/().\s]+$/
 
 function normalizePercent(expression: string): string {
-  return expression.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)')
+  return expression.replace(/((?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)%/g, '($1/100)')
 }
 
-function injectTokens(expression: string, context: FormulaContext): string {
-  const caseInsensitiveContext = new Map<string, number>()
-  for (const [key, value] of Object.entries(context)) {
-    caseInsensitiveContext.set(key.toLowerCase(), value)
-  }
+export type FormulaResolver = (reference: string) => number
 
+function injectTokens(expression: string, context: FormulaContext | FormulaResolver): string {
   return expression.replace(TOKEN_REGEX, (_, token: string) => {
-    const normalizedToken = (token.startsWith('%') ? token.slice(1) : token).trim().toLowerCase()
-    const value = caseInsensitiveContext.get(normalizedToken)
-    return Number.isFinite(value) ? String(value) : '0'
+    const reference = token.trim()
+    const value = typeof context === 'function' ? context(reference) : context[reference]
+    if (!Number.isFinite(value)) throw new Error('Unknown or invalid formula reference.')
+    return `(${String(value)})`
   })
 }
 
@@ -50,12 +49,10 @@ function tokenize(input: string): Token[] {
     }
 
     if (/[0-9.]/.test(char)) {
-      let numeral = ''
-      while (index < input.length && /[0-9.]/.test(input[index])) {
-        numeral += input[index]
-        index += 1
-      }
+      const numeral = /^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/.exec(input.slice(index))?.[0]
+      if (!numeral) throw new Error('Invalid number')
       tokens.push({ type: 'number', value: Number(numeral) })
+      index += numeral.length
       continue
     }
 
@@ -148,7 +145,7 @@ function evaluateTokens(tokens: Token[]): number {
 
 export function evaluateFormula(
   expression: string | undefined,
-  context: FormulaContext,
+  context: FormulaContext | FormulaResolver,
 ): FormulaResult {
   if (!expression) {
     return {
@@ -158,7 +155,12 @@ export function evaluateFormula(
     }
   }
 
-  const prepared = injectTokens(normalizePercent(expression), context)
+  let prepared: string
+  try {
+    prepared = normalizePercent(injectTokens(expression, context))
+  } catch {
+    return { ok: false, code: 'invalid-reference', message: 'Unknown or invalid formula reference.' }
+  }
 
   if (!SAFE_EXPRESSION_REGEX.test(prepared)) {
     return {
@@ -171,15 +173,7 @@ export function evaluateFormula(
   try {
     const value = evaluateTokens(tokenize(prepared))
     if (!Number.isFinite(value)) {
-      if (Number.isNaN(value)) {
-        return {
-          ok: false,
-          code: 'malformed-expression',
-          message: `Formula "${expression}" did not evaluate to a number.`,
-        }
-      }
-
-      return { ok: true, value: Number.NaN }
+      return { ok: false, code: 'malformed-expression', message: 'Calculation is not a finite number.' }
     }
     return { ok: true, value }
   } catch (error) {

@@ -2,13 +2,14 @@ import defaultSeed from '../billing.seed.json'
 import type {
   BillingSeed,
   DataSource,
-  ReportRow,
+  BillingReportRow,
   SchemaField,
 } from '../../services/adapters/types'
 
 // A DataSource backed by static seed JSON. It stands in for a real host adapter
 // so the rest of the app can be built and tested against realistic rows.
 export interface SeedDataSource extends DataSource {
+  getReportRows(): BillingReportRow[]
   getSeed(): BillingSeed
 }
 
@@ -31,7 +32,7 @@ export function createSeedDataSource(
 
   const clientsById = new Map(seed.client.map((client) => [client.id, client]))
 
-  function getReportRows(): ReportRow[] {
+  function getReportRows(): BillingReportRow[] {
     return seed.personClientTime.map((entry) => {
       const client = clientsById.get(entry.clientId)
 

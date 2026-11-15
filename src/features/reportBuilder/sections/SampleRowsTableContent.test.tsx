@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
@@ -207,6 +207,46 @@ describe('SampleRowsTableContent', () => {
       return
     }
     expect(within(grandTotalRow).getByText('14')).toBeInTheDocument()
+  })
+
+  it('collapses a grouped top-level row to only its subtotal and expands it again', () => {
+    render(
+      <table>
+        <SampleRowsTableContent
+          isHorizontalTable
+          showTotals
+          aggregateMode="sum"
+          isGroupingEnabled
+          fields={pivotFields}
+          previewRows={pivotRows}
+          verticalColumns={[]}
+          getMappedValue={(mappedRow, sourceKey) => String(mappedRow[sourceKey as keyof ReportRow] ?? '')}
+          getAggregatedFieldValue={(rowsToAggregate, sourceKey) => {
+            return rowsToAggregate.reduce((total, mappedRow) => {
+              const value = mappedRow[sourceKey as keyof ReportRow]
+              return typeof value === 'number' ? total + value : total
+            }, 0)
+          }}
+          formatValue={(value) => (value === null ? '' : String(value))}
+        />
+      </table>,
+    )
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Collapse group Alice' })[0])
+
+    expect(screen.queryByText('Client A')).toBeNull()
+    expect(screen.queryByText('Client B')).toBeNull()
+    expect(screen.queryByRole('rowheader', { name: 'Client A Total' })).not.toBeInTheDocument()
+    expect(screen.getByText('Client C')).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: 'Grand total' })).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: 'Alice Total' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Expand group Alice' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand group Alice' }))
+
+    expect(screen.getByText('Client A')).toBeInTheDocument()
+    expect(screen.getByText('Client B')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Collapse group Alice' })[0]).toBeInTheDocument()
   })
 
   it('renders plain horizontal rows when grouping is off', () => {

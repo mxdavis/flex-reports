@@ -1,12 +1,12 @@
-import type { ReportRow } from './types'
+import type { BillingReportRow } from './types'
 
 // Source-agnostic report metrics computed over rows. These are stand-ins until
 // the pivot/aggregation engine lands.
-export function getTotalRevenue(rows: ReportRow[]): number {
+export function getTotalRevenue(rows: BillingReportRow[]): number {
   return rows.reduce((sum, row) => sum + row.total, 0)
 }
 
-export function getRevenueByPerson(rows: ReportRow[]): Array<{
+export function getRevenueByPerson(rows: BillingReportRow[]): Array<{
   personName: string
   totalRevenue: number
 }> {

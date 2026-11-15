@@ -6,6 +6,7 @@ import type {
   SourceColumn,
 } from './types'
 import { getDefaultDisplayType } from './displayType'
+import { MAX_REPORT_COLUMNS } from '../../features/reportBuilder/config'
 
 export const REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v4'
 export const LEGACY_REPORT_DATA_STORAGE_KEY = 'flex-reports.reportData.v3'
@@ -37,7 +38,7 @@ function getDefaultCurrencySymbol(displayType: DisplayType): string {
 }
 
 export function generateDefaultReportData(sourceColumns: SourceColumn[]): ReportData {
-  const fields = sourceColumns.map((column) => {
+  const fields = sourceColumns.slice(0, MAX_REPORT_COLUMNS).map((column) => {
     const sourceKey = String(column.key)
     const displayType = getDefaultDisplayType(column)
 

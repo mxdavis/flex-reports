@@ -13,10 +13,5 @@ export function getDefaultDisplayType(source: Pick<SourceColumn, 'key' | 'dataTy
     return 'date'
   }
 
-  const normalizedKey = String(source.key).toLowerCase()
-  if (normalizedKey === 'hours' || normalizedKey === 'rate' || normalizedKey === 'total') {
-    return 'decimal'
-  }
-
   return 'string'
 }

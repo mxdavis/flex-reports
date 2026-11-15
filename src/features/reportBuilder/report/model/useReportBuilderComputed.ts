@@ -1,3 +1,4 @@
+import { getRowKey } from '../../../../services/adapters/recordsDataSource'
 import { useCallback, useMemo } from 'react'
 import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
 import { getDefaultDisplayType } from '../../../../services/reportDefinition/displayType'
@@ -5,7 +6,7 @@ import type { ReportRow, SeedFormula } from '../../../../services/adapters'
 import type { AggregateMode } from '../../types'
 import type { ChipAggregationMode, DisplayType, ReportField, SourceColumn } from '../../../../services/reportDefinition/types'
 import { DEFAULT_CURRENCY_SYMBOL, getChipAggregationLabel, getDefaultChipAggregation } from '../../config'
-import { formatCellValue } from '../../../../utils/reportBuilder'
+import { formatCellValue, isValidReportDate, toReportNumber } from '../../../../utils/reportBuilder'
 import { buildSummaryItems } from '../../summaryItems'
 
 type UseReportBuilderComputedArgs = {
@@ -61,51 +62,37 @@ export function useReportBuilderComputed({
 
   function getPreferredDisplayType(sourceKey: string): DisplayType {
     const normalizedKey = sourceKey.toLowerCase().trim()
-    const numericBaseKeys = new Set(['grossfees', 'writedown', 'netfees'])
     if (formulasByLabel.has(normalizedKey)) return 'decimal'
 
     const schemaField = sourceColumnByKey.get(sourceKey)
     if (schemaField) return getDefaultDisplayType(schemaField)
-    if (numericBaseKeys.has(normalizedKey)) return 'decimal'
     return getDefaultDisplayType({ key: sourceKey, dataType: 'string' })
-  }
-
-  function buildBaseFormulaContext(row: ReportRow): Record<string, number> {
-    const context: Record<string, number> = {}
-    for (const [key, value] of Object.entries(row)) {
-      if (typeof value === 'number' && Number.isFinite(value)) context[key] = value
-    }
-    return context
   }
 
   const getFormulaValue = useCallback(function getFormulaValue(
     formulaLabel: string,
     cache: Map<string, number>,
     visiting: Set<string>,
-    context: Record<string, number>,
+    row: ReportRow,
   ): number {
-    const normalizedFormulaLabel = formulaLabel.toLowerCase()
-    const cached = cache.get(normalizedFormulaLabel)
-    if (cached !== undefined) return cached
-    if (visiting.has(normalizedFormulaLabel)) return Number.NaN
-
-    const expression = formulasByLabel.get(normalizedFormulaLabel)
-    if (!expression) return Number.NaN
-
-    visiting.add(normalizedFormulaLabel)
-    for (const dependency of formulasByLabel.keys()) {
-      if (dependency === normalizedFormulaLabel || context[dependency] !== undefined) continue
-      context[dependency] = getFormulaValue(dependency, cache, visiting, context)
-    }
-
-    const result = evaluateFormula(expression, context)
+    const label = formulaLabel.toLowerCase()
+    if (cache.has(label)) return cache.get(label)!
+    if (visiting.has(label)) return Number.NaN
+    const expression = formulasByLabel.get(label)
+    if (expression === undefined) return Number.NaN
+    visiting.add(label)
+    const result = evaluateFormula(expression, (reference) => {
+      if (reference.startsWith('%')) return getFormulaValue(reference.slice(1), cache, visiting, row)
+      if (sourceColumnByKey.has(reference)) {
+        return toReportNumber(Object.hasOwn(row, reference) ? row[reference] : undefined)
+      }
+      return getFormulaValue(reference, cache, visiting, row)
+    })
     const value = result.ok ? result.value : Number.NaN
-    cache.set(normalizedFormulaLabel, value)
-    context[formulaLabel] = value
-    context[normalizedFormulaLabel] = value
-    visiting.delete(normalizedFormulaLabel)
+    cache.set(label, value)
+    visiting.delete(label)
     return value
-  }, [formulasByLabel])
+  }, [formulasByLabel, sourceColumnByKey])
 
   const getMappedValue = useCallback((
     row: ReportRow,
@@ -119,38 +106,35 @@ export function useReportBuilderComputed({
 
     const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (mappedColumn) {
-      return formatCellValue((row as Record<string, unknown>)[String((mappedColumn as { key: string }).key)], displayType, {
-        currencySymbol: resolvedCurrencySymbol,
-      })
+      const raw = Object.hasOwn(row, mappedColumn.key) ? row[mappedColumn.key] : undefined
+      const value = displayType === 'string' || displayType === 'date' ? raw : toReportNumber(raw)
+      return formatCellValue(value, displayType, { currencySymbol: resolvedCurrencySymbol })
     }
 
-    if (!formulasByLabel.has(sourceKey.toLowerCase())) return ''
-    const context = buildBaseFormulaContext(row)
-    const value = getFormulaValue(sourceKey, new Map(), new Set(), context)
+    if (!formulasByLabel.has(sourceKey.toLowerCase())) return 'Missing field'
+    const value = getFormulaValue(sourceKey, new Map(), new Set(), row)
+    if (!Number.isFinite(value)) return 'Invalid formula'
     return formatCellValue(value, displayType, { currencySymbol: resolvedCurrencySymbol })
   }, [currencySymbol, formulasByLabel, getFormulaValue, sourceColumnByKey])
 
   function getMappedNumericValue(row: ReportRow, sourceKey: string): number | null {
     const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (mappedColumn) {
-      const value = (row as Record<string, unknown>)[String((mappedColumn as { key: string }).key)]
-      return typeof value === 'number' && Number.isFinite(value) ? value : null
+      return toReportNumber(Object.hasOwn(row, mappedColumn.key) ? row[mappedColumn.key] : undefined)
     }
 
-    if (!formulasByLabel.has(sourceKey.toLowerCase())) return null
-    const context = buildBaseFormulaContext(row)
-    return getFormulaValue(sourceKey, new Map(), new Set(), context)
+    if (!formulasByLabel.has(sourceKey.toLowerCase())) return Number.NaN
+    return getFormulaValue(sourceKey, new Map(), new Set(), row)
   }
 
   function getMappedRawValue(row: ReportRow, sourceKey: string): unknown {
     const mappedColumn = sourceColumnByKey.get(sourceKey)
     if (mappedColumn) {
-      return (row as Record<string, unknown>)[String((mappedColumn as { key: string }).key)]
+      return Object.hasOwn(row, mappedColumn.key) ? row[mappedColumn.key] : undefined
     }
 
-    if (!formulasByLabel.has(sourceKey.toLowerCase())) return null
-    const context = buildBaseFormulaContext(row)
-    return getFormulaValue(sourceKey, new Map(), new Set(), context)
+    if (!formulasByLabel.has(sourceKey.toLowerCase())) return Number.NaN
+    return getFormulaValue(sourceKey, new Map(), new Set(), row)
   }
 
   function getDistinctCount(rowsToAggregate: ReportRow[], sourceKey: string): number {
@@ -178,6 +162,7 @@ export function useReportBuilderComputed({
       count += 1
     }
     if (count === 0) return null
+    if (!Number.isFinite(total)) return Number.NaN
     return mode === 'avg' ? total / count : total
   }
 
@@ -185,7 +170,7 @@ export function useReportBuilderComputed({
     const firstField = reportFields[0]
     if (!firstField) return [] as Array<{ key: string, headerValue: string, rows: ReportRow[] }>
     return previewRows.map((row) => ({
-      key: row.id,
+      key: getRowKey(row),
       headerValue: getMappedValue(row, firstField.sourceKey, firstField.displayType),
       rows: [row],
     }))
@@ -201,7 +186,26 @@ export function useReportBuilderComputed({
     getMappedNumericValue,
   })
 
+  const issues: string[] = []
+  for (const field of reportFields) {
+    if (rows.length === 0) continue
+    if (!sourceColumnByKey.has(field.sourceKey) && !formulasByLabel.has(field.sourceKey.toLowerCase())) {
+      issues.push(`Column ${field.label}: source field is missing. Choose an available field.`)
+    } else if (field.displayType === 'date' && rows.some((row) => {
+      const value = getMappedRawValue(row, field.sourceKey)
+      return value != null && !isValidReportDate(value)
+    })) {
+      issues.push(`Column ${field.label}: use valid YYYY-MM-DD dates. Original values are shown.`)
+    }
+  }
+  for (const formula of formulas) {
+    if (rows.some((row) => !Number.isFinite(getFormulaValue(formula.label, new Map(), new Set(), row)))) {
+      issues.push(`Formula ${formula.label}: check references, circular dependencies, and arithmetic.`)
+    }
+  }
+
   return {
+    issues,
     sourceOptions,
     formulaTokenOptions,
     previewRows,

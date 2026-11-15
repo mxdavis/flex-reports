@@ -2,7 +2,7 @@ import {
   createSeedDataSource,
   type SeedDataSource,
 } from '../../seeds/factory/createSeedDataSource'
-import type { BillingSeed, DataSource, ReportRow, SchemaField } from './types'
+import type { BillingSeed, BillingReportRow, SchemaField } from './types'
 
 export type { BillingSeed, DataSource, ReportRow, SchemaDataType } from './types'
 export type { SeedFormula } from './types'
@@ -32,14 +32,14 @@ function getSeedSource(): SeedDataSource {
 
 // Factory: selects the active data source from env. Today only the mock seed is
 // wired up; a real host adapter becomes another branch here.
-export function getDataSource(): DataSource {
+export function getDataSource(): SeedDataSource {
   switch (resolveKind()) {
     case 'seed':
       return getSeedSource()
   }
 }
 
-export function getReportRows(): ReportRow[] {
+export function getReportRows(): BillingReportRow[] {
   return getDataSource().getReportRows()
 }
 

@@ -46,7 +46,7 @@ function ColumnDetailEditor({
         id={`mapping-${field.id}`}
         value={field.sourceKey}
         options={sourceOptions}
-        title="Type or choose which data endpoint fills this report column."
+        title="Type or choose which source field fills this report column."
         onChange={onSourceChange}
       />
 
@@ -61,7 +61,18 @@ function ColumnDetailEditor({
         }}
       />
 
-      <label htmlFor={`display-type-${field.id}`}>Display type</label>
+      <div className="display-type-heading">
+        <label htmlFor={`display-type-${field.id}`}>Display type</label>
+        <span className="display-type-help">
+          <button type="button" aria-label="About numeric conversion" aria-describedby={`type-help-${field.id}`}>
+            ?
+          </button>
+          <span id={`type-help-${field.id}`} role="tooltip">
+            Number, Decimal, and Currency convert numeric text to numbers. Invalid or missing values count as 0
+            in calculations and totals. Original data is unchanged. Percent uses the same conversion: 0.25 is 25.00%.
+          </span>
+        </span>
+      </div>
       <select
         id={`display-type-${field.id}`}
         value={field.displayType}

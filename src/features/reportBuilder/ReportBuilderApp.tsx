@@ -7,8 +7,10 @@ function ReportBuilderApp({
   initialTableOrientation = 'horizontal',
   initialAggregateMode = 'none',
   initialEditMode = false,
+  ...dataProps
 }: ReportBuilderAppProps) {
   const controller = useReportBuilderController({
+    ...dataProps,
     initialTableOrientation,
     initialAggregateMode,
     initialEditMode,

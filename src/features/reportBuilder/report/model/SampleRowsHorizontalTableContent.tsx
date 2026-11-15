@@ -1,7 +1,10 @@
+import { getRowKey } from '../../../../services/adapters/recordsDataSource'
+import { useMemo, useState } from 'react'
 import type { ReportRow } from '../../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
+import ChevronToggleIcon from '../../../../shared/icons/ChevronToggleIcon'
 import type { AggregateMode } from '../../types'
-import { buildPivotRenderRows } from './sampleRowsPivot'
+import { buildPivotRenderRows, getCollapsibleTopGroups, getVisiblePivotRows, isTopGroupSubtotal } from './sampleRowsPivot'
 
 type SampleRowsHorizontalTableContentProps = {
   showTotals: boolean
@@ -26,6 +29,8 @@ export function SampleRowsHorizontalTableContent({
   formatValue,
   isNumericDisplayType,
 }: SampleRowsHorizontalTableContentProps) {
+  const [collapsedTopGroups, setCollapsedTopGroups] = useState<Set<string>>(new Set())
+
   const aggregateSummaryLabel = aggregateMode === 'avg'
     ? 'Average'
     : aggregateMode === 'count'
@@ -58,8 +63,12 @@ export function SampleRowsHorizontalTableContent({
     ))
 
   const shouldRenderEmbeddedPivot = isGroupingEnabled && fields.length >= 2
-  if (shouldRenderEmbeddedPivot) {
-    const pivotRows = buildPivotRenderRows({
+  const pivotRows = useMemo(() => {
+    if (!shouldRenderEmbeddedPivot) {
+      return []
+    }
+
+    return buildPivotRenderRows({
       previewRows,
       fields,
       aggregateMode,
@@ -69,7 +78,37 @@ export function SampleRowsHorizontalTableContent({
       formatValue,
       isNumericDisplayType,
     })
+  }, [
+    shouldRenderEmbeddedPivot,
+    previewRows,
+    fields,
+    aggregateMode,
+    showTotals,
+    getMappedValue,
+    getAggregatedFieldValue,
+    formatValue,
+    isNumericDisplayType,
+  ])
 
+  const collapsibleTopGroups = useMemo(() => getCollapsibleTopGroups(pivotRows), [pivotRows])
+  const visiblePivotRows = useMemo(
+    () => getVisiblePivotRows(pivotRows, collapsedTopGroups),
+    [pivotRows, collapsedTopGroups],
+  )
+
+  function toggleTopGroup(topGroupValue: string) {
+    setCollapsedTopGroups((previous) => {
+      const next = new Set(previous)
+      if (next.has(topGroupValue)) {
+        next.delete(topGroupValue)
+      } else {
+        next.add(topGroupValue)
+      }
+      return next
+    })
+  }
+
+  if (shouldRenderEmbeddedPivot) {
     return (
       <>
         <thead>
@@ -80,35 +119,62 @@ export function SampleRowsHorizontalTableContent({
           </tr>
         </thead>
         <tbody>
-          {pivotRows.map((pivotRow) => (
-            <tr key={pivotRow.key}>
-              {pivotRow.cells.map((cell) => {
-                const className = cell.isNumeric ? 'seed-table-value-numeric' : undefined
-                const content = cell.emphasis ? <strong>{cell.value}</strong> : cell.value
-                if (cell.tag === 'th') {
+          {visiblePivotRows.map((pivotRow) => {
+            const isCollapsed = collapsedTopGroups.has(pivotRow.topGroupValue)
+            const toggleLabel = `${isCollapsed ? 'Expand' : 'Collapse'} group ${pivotRow.topGroupValue}`
+
+            return (
+              <tr key={pivotRow.key}>
+                {pivotRow.cells.map((cell) => {
+                  const className = cell.isNumeric ? 'seed-table-value-numeric' : undefined
+                  const isTopGroupHeaderCell = cell.columnIndex === 0 && cell.tag === 'th' && cell.scope === 'rowgroup'
+                  const isTopGroupSubtotalCell = cell.columnIndex === 0
+                    && cell.tag === 'th'
+                    && isTopGroupSubtotal(pivotRow)
+                  const canToggleGroup = (isTopGroupHeaderCell || isTopGroupSubtotalCell)
+                    && collapsibleTopGroups.has(pivotRow.topGroupValue)
+
+                  const content = canToggleGroup
+                    ? (
+                      <button
+                        type="button"
+                        className={`group-row-toggle-button${cell.emphasis ? ' is-emphasis' : ''}`}
+                        aria-label={toggleLabel}
+                        title={toggleLabel}
+                        onClick={() => {
+                          toggleTopGroup(pivotRow.topGroupValue)
+                        }}
+                      >
+                        <ChevronToggleIcon direction={isCollapsed ? 'right' : 'left'} />
+                        <span>{cell.value}</span>
+                      </button>
+                    )
+                    : (cell.emphasis ? <strong>{cell.value}</strong> : cell.value)
+                  if (cell.tag === 'th') {
+                    return (
+                      <th
+                        key={`${pivotRow.key}-${cell.columnIndex}`}
+                        scope={cell.scope}
+                        rowSpan={cell.rowSpan}
+                        className={className}
+                      >
+                        {content}
+                      </th>
+                    )
+                  }
                   return (
-                    <th
+                    <td
                       key={`${pivotRow.key}-${cell.columnIndex}`}
-                      scope={cell.scope}
                       rowSpan={cell.rowSpan}
                       className={className}
                     >
                       {content}
-                    </th>
+                    </td>
                   )
-                }
-                return (
-                  <td
-                    key={`${pivotRow.key}-${cell.columnIndex}`}
-                    rowSpan={cell.rowSpan}
-                    className={className}
-                  >
-                    {content}
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
+                })}
+              </tr>
+            )
+          })}
         </tbody>
         {showTotals && (
           <tfoot>
@@ -137,7 +203,7 @@ export function SampleRowsHorizontalTableContent({
       </thead>
       <tbody>
         {previewRows.map((row) => (
-          <tr key={row.id}>
+          <tr key={getRowKey(row)}>
             {fields.map((field) => {
               const mappedValue = getMappedValue(
                 row,
@@ -147,7 +213,7 @@ export function SampleRowsHorizontalTableContent({
               )
               return (
                 <td
-                  key={`${row.id}-${field.id}`}
+                  key={`${getRowKey(row)}-${field.id}`}
                   className={isNumericDisplayType(field.displayType) ? 'seed-table-value-numeric' : ''}
                 >
                   {mappedValue}

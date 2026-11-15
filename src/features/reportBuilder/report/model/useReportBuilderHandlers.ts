@@ -142,7 +142,7 @@ export function useReportBuilderHandlers(args: HandlerArgs) {
       const next = sortFormulasByLabel([...previous, candidate])
       setNewFormula({
         label: getNextFormulaLabel(next.map((formula) => formula.label)),
-        expression: '{{hours}} * {{rate}}',
+        expression: '',
       })
       return next
     })

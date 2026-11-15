@@ -84,10 +84,10 @@ export function buildSummaryItems({
       hasNumericValue = true
     }
 
-    if (hasInvalidValue) {
+    if (hasInvalidValue || !Number.isFinite(total)) {
       return {
         label: `${field.label} (${aggregationLabel})`,
-        value: 'Invalid formula',
+        value: 'Invalid calculation',
       }
     }
 

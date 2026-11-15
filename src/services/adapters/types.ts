@@ -1,6 +1,7 @@
-// Shape of a single row the report engine works over. In production this comes
-// from the host app via a DataSource; here it is produced by the seed adapter.
-export type ReportRow = {
+export type ReportRow = Readonly<Record<string, unknown>>
+
+// The billing demo owns this shape; the report component uses generic ReportRow records.
+export type BillingReportRow = {
   id: string
   workDate: string
   personId: string

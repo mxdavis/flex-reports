@@ -1,57 +1,49 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import {
-  getBillingSeed,
-  getReportRows,
-  getSchema,
-} from '../../../../services/adapters'
-import type { SeedFormula } from '../../../../services/adapters'
-import {
-  loadFormulaData,
-  saveFormulaData,
-} from '../../../../services/reportDefinition/formulaStorage'
-import {
-  generateDefaultReportData,
-  loadReportData,
-  saveReportData,
-} from '../../../../services/reportDefinition/storage'
-import {
-  CURRENCY_SYMBOL_STORAGE_KEY,
-  DEFAULT_CURRENCY_SYMBOL,
-  DEFAULT_SHEET_NAME,
-  SHEET_NAME_STORAGE_KEY,
-} from '../../config'
+import { useEffect, useMemo, useReducer, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { createRecordsDataSource } from '../../../../services/adapters/recordsDataSource'
+import type { SeedFormula } from '../../../../services/adapters/types'
+import { generateDefaultReportData } from '../../../../services/reportDefinition/storage'
+import { DEFAULT_CURRENCY_SYMBOL, DEFAULT_SHEET_NAME, MAX_REPORT_COLUMNS } from '../../config'
 import {
   createInitialUiState,
   uiReducer,
 } from '../../state/uiState'
-import type { ReportBuilderAppProps } from '../../types'
+import type { ReportBuilderOptions } from '../../types'
 import { getNextFormulaLabel, sortFormulasByLabel } from '../../../../utils/reportBuilder'
 import type { ChipAggregationMode, DisplayType, ReportData, SourceColumn } from '../../../../services/reportDefinition/types'
 
 export function useReportBuilderState({
+  records,
+  initialReportDefinition,
+  onReportDefinitionChange,
+  canEditReport = true,
   initialTableOrientation,
   initialAggregateMode,
   initialEditMode,
-}: Required<ReportBuilderAppProps>) {
-  const seed = useMemo(() => getBillingSeed(), [])
-  const schema = useMemo(() => getSchema(), [])
-  const rows = useMemo(() => getReportRows(), [])
-  const canEditReport = import.meta.env.VITE_CAN_EDIT_REPORT !== 'false'
-
-  const sourceColumns = useMemo<SourceColumn[]>(() => {
-    return schema.map((field) => ({
-      id: field.id,
-      key: field.key,
-      label: field.label,
-      dataType: field.dataType,
-    }))
-  }, [schema])
-
-  const [reportData, setReportData] = useState<ReportData>(() => loadReportData(sourceColumns))
-  const [formulas, setFormulas] = useState<SeedFormula[]>(() => sortFormulasByLabel(loadFormulaData(seed.formulas)))
+}: ReportBuilderOptions) {
+  const input = useMemo(() => {
+    try {
+      const source = createRecordsDataSource(records)
+      return { rows: source.getReportRows(), schema: source.getSchema(), error: '' }
+    } catch (error) {
+      return { rows: [], schema: [], error: error instanceof Error ? error.message : 'Invalid report data.' }
+    }
+  }, [records])
+  const rows = input.rows
+  const sourceColumns = useMemo<SourceColumn[]>(() => input.schema, [input.schema])
+  const defaults = useMemo(() => generateDefaultReportData(sourceColumns), [sourceColumns])
+  const [editedReportData, setEditedReportData] = useState<ReportData | null>(() => {
+    return initialReportDefinition?.fields
+      ? { version: 4, fields: initialReportDefinition.fields.slice(0, MAX_REPORT_COLUMNS) }
+      : null
+  })
+  const reportData = editedReportData ?? defaults
+  const setReportData: Dispatch<SetStateAction<ReportData>> = (update) => {
+    setEditedReportData((previous) => typeof update === 'function' ? update(previous ?? defaults) : update)
+  }
+  const [formulas, setFormulas] = useState<SeedFormula[]>(() => sortFormulasByLabel(initialReportDefinition?.formulas ?? []))
   const [newFormula, setNewFormula] = useState<SeedFormula>(() => ({
-    label: getNextFormulaLabel(seed.formulas.map((formula) => formula.label)),
-    expression: '{{hours}} * {{rate}}',
+    label: getNextFormulaLabel(formulas.map((formula) => formula.label)),
+    expression: '',
   }))
   const [formulaError, setFormulaError] = useState('')
   const [editingFormulaError, setEditingFormulaError] = useState('')
@@ -59,26 +51,8 @@ export function useReportBuilderState({
   const [addColumnLabel, setAddColumnLabel] = useState('')
   const [addColumnDisplayType, setAddColumnDisplayType] = useState<DisplayType>('string')
   const [addColumnChipAggregation, setAddColumnChipAggregation] = useState<ChipAggregationMode>('count')
-  const [sheetName, setSheetName] = useState(() => {
-    if (typeof window === 'undefined') return DEFAULT_SHEET_NAME
-    try {
-      const saved = window.localStorage.getItem(SHEET_NAME_STORAGE_KEY)
-      if (!saved) return DEFAULT_SHEET_NAME
-      return saved.trim().length > 0 ? saved : DEFAULT_SHEET_NAME
-    } catch {
-      return DEFAULT_SHEET_NAME
-    }
-  })
-  const [currencySymbol, setCurrencySymbol] = useState(() => {
-    if (typeof window === 'undefined') return DEFAULT_CURRENCY_SYMBOL
-    try {
-      const saved = window.localStorage.getItem(CURRENCY_SYMBOL_STORAGE_KEY)
-      if (!saved || saved.trim().length === 0) return DEFAULT_CURRENCY_SYMBOL
-      return saved
-    } catch {
-      return DEFAULT_CURRENCY_SYMBOL
-    }
-  })
+  const [sheetName, setSheetName] = useState(initialReportDefinition?.sheetName ?? DEFAULT_SHEET_NAME)
+  const [currencySymbol, setCurrencySymbol] = useState(initialReportDefinition?.currencySymbol ?? DEFAULT_CURRENCY_SYMBOL)
 
   const [ui, dispatchUi] = useReducer(
     uiReducer,
@@ -88,49 +62,15 @@ export function useReportBuilderState({
 
   const tableScrollRef = useRef<HTMLDivElement | null>(null)
 
+  const lastEmittedDefinition = useRef('')
   useEffect(() => {
-    setReportData((previous) => {
-      const defaults = generateDefaultReportData(sourceColumns)
-      const safeSourceKeys = new Set(
-        [...sourceColumns.map((column) => String(column.key)), ...formulas.map((formula) => formula.label)]
-          .map((key) => key.toLowerCase()),
-      )
-      const fields = previous.fields.map((field, index) => {
-        if (safeSourceKeys.has(field.sourceKey.toLowerCase())) return field
-        return {
-          ...field,
-          sourceKey: defaults.fields[index]?.sourceKey ?? defaults.fields[0].sourceKey,
-        }
-      })
-      return { version: 4, fields }
-    })
-  }, [formulas, sourceColumns])
-
-  useEffect(() => {
-    saveReportData(reportData)
-  }, [reportData])
-
-  useEffect(() => {
-    saveFormulaData(formulas)
-  }, [formulas])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      window.localStorage.setItem(SHEET_NAME_STORAGE_KEY, sheetName)
-    } catch {
-      // Ignore storage write failures in private mode/full storage.
-    }
-  }, [sheetName])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      window.localStorage.setItem(CURRENCY_SYMBOL_STORAGE_KEY, currencySymbol)
-    } catch {
-      // Ignore storage write failures in private mode/full storage.
-    }
-  }, [currencySymbol])
+    if (!onReportDefinitionChange) return
+    const definition = { fields: reportData.fields, formulas, sheetName, currencySymbol }
+    const signature = JSON.stringify(definition)
+    if (lastEmittedDefinition.current === signature) return
+    lastEmittedDefinition.current = signature
+    onReportDefinitionChange(definition)
+  }, [reportData, formulas, sheetName, currencySymbol, onReportDefinitionChange])
 
   useEffect(() => {
     const tableScrollElement = tableScrollRef.current
@@ -157,6 +97,7 @@ export function useReportBuilderState({
 
   return {
     rows,
+    inputError: input.error,
     sourceColumns,
     reportData,
     setReportData,

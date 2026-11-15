@@ -10,6 +10,7 @@ import type { useReportBuilderController } from './useReportBuilderController'
 type ReportBuilderViewProps = ReturnType<typeof useReportBuilderController>
 
 function ReportBuilderView({
+  issues,
   showAuthoring,
   summaryItems,
   editModeToolbarProps,
@@ -22,6 +23,22 @@ function ReportBuilderView({
   const [isSettingsCollapsed, setIsSettingsCollapsed] = useState(false)
   const [isColumnsCollapsed, setIsColumnsCollapsed] = useState(false)
   const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
+
+  function renderReportIssues() {
+    if (issues.length === 0) return null
+
+    return (
+      <div role="alert">
+        {issues.map((issue) => <p key={issue}>{issue}</p>)}
+      </div>
+    )
+  }
+
+  function renderEmptyReportMessage() {
+    if (sampleRowsProps.previewRows.length > 0) return null
+
+    return <p role="status">No rows</p>
+  }
 
   return (
     <div className="seed-page">
@@ -61,6 +78,8 @@ function ReportBuilderView({
         <SeedStats items={summaryItems} />
       )}
 
+      {renderReportIssues()}
+      {renderEmptyReportMessage()}
       <SampleRowsSection {...sampleRowsProps} />
     </div>
   )

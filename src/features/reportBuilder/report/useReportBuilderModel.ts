@@ -5,7 +5,7 @@ import {
   MAX_REPORT_COLUMNS,
 } from '../config'
 import type { UiAction } from '../state/uiState'
-import type { AggregateMode, ReportBuilderAppProps, TableOrientation } from '../types'
+import type { AggregateMode, ReportBuilderOptions, TableOrientation } from '../types'
 import type { DisplayType, ReportField } from '../../../services/reportDefinition/types'
 import { buildMappingPanelProps } from './model/buildMappingPanelProps'
 import { buildReportBuilderViewProps } from './model/buildReportBuilderViewProps'
@@ -14,16 +14,8 @@ import { useReportBuilderComputed } from './model/useReportBuilderComputed'
 import { useReportBuilderHandlers } from './model/useReportBuilderHandlers'
 import { useReportBuilderState } from './model/useReportBuilderState'
 
-export function useReportBuilderModel({
-  initialTableOrientation,
-  initialAggregateMode,
-  initialEditMode,
-}: Required<ReportBuilderAppProps>) {
-  const state = useReportBuilderState({
-    initialTableOrientation,
-    initialAggregateMode,
-    initialEditMode,
-  })
+export function useReportBuilderModel(options: ReportBuilderOptions) {
+  const state = useReportBuilderState(options)
 
   const {
     isAddingFormula,
@@ -73,6 +65,7 @@ export function useReportBuilderModel({
     dispatchUiValue('setIsTableFullscreen', resolveUpdater(updater, state.ui.isTableFullscreen))
   }
   const {
+    issues,
     sourceOptions,
     formulaTokenOptions,
     previewRows,
@@ -128,7 +121,8 @@ export function useReportBuilderModel({
     state.setReportData((previous) => {
       if (previous.fields.length >= MAX_REPORT_COLUMNS) return previous
       const insertionIndex = Math.min(Math.max(state.ui.addColumnPosition - 1, 0), previous.fields.length)
-      const defaultSourceKey = sourceOptions[0] ?? 'workDate'
+      const defaultSourceKey = sourceOptions[0] ?? ''
+      if (sourceOptions.length === 0) return previous
       const nextSourceKey = state.addColumnSourceKey.trim() || defaultSourceKey
       const nextDisplayType = state.addColumnDisplayType || getPreferredDisplayType(nextSourceKey)
       const nextField: ReportField = {
@@ -207,7 +201,7 @@ export function useReportBuilderModel({
     handleSaveEditFormula,
   })
 
-  return buildReportBuilderViewProps({
+  const view = buildReportBuilderViewProps({
     showAuthoring,
     summaryItems,
     canEditReport: state.canEditReport,
@@ -254,7 +248,9 @@ export function useReportBuilderModel({
     getAggregatedFieldValue,
     formatValue: (value: number | null, displayType: DisplayType) => {
       if (value === null) return ''
+      if (!Number.isFinite(value)) return 'Invalid calculation'
       return formatCellValue(value, displayType, { currencySymbol: state.currencySymbol })
     },
   })
+  return { ...view, issues: state.inputError ? [state.inputError] : issues }
 }

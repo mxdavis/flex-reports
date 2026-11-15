@@ -5,59 +5,49 @@ type FormatCellOptions = {
   currencySymbol?: string
 }
 
+export function toReportNumber(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value !== 'string') return 0
+  const text = value.trim()
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text)) return 0
+  const number = Number(text)
+  return Number.isFinite(number) ? number : 0
+}
+
+export function isValidReportDate(value: unknown): boolean {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00Z`)
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
 export function formatCellValue(
   value: unknown,
   displayType: DisplayType,
   options?: FormatCellOptions,
 ): string {
-  if (value === null || value === undefined) {
-    return ''
-  }
-
-  if (typeof value === 'number' && Number.isNaN(value)) {
-    return 'NaN'
-  }
-
   if (displayType === 'string') {
-    return String(value)
+    if (value === null || value === undefined) return ''
+    return typeof value === 'object' ? JSON.stringify(value) : String(value)
   }
-
   if (displayType === 'date') {
-    const parsedDate = value instanceof Date ? value : new Date(String(value))
-    if (Number.isNaN(parsedDate.getTime())) {
-      return String(value)
-    }
-
+    if (value === null || value === undefined) return ''
+    if (!isValidReportDate(value)) return String(value)
     return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(parsedDate)
+      year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC',
+    }).format(new Date(`${value}T00:00:00Z`))
   }
-
-  if (typeof value !== 'number') {
-    return String(value)
-  }
-
-  const fixedTwoDecimals = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-  const wholeNumber = new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 0,
-  })
-
+  if (typeof value === 'number' && !Number.isFinite(value)) return 'Invalid calculation'
+  const number = toReportNumber(value)
+  const fixed = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   switch (displayType) {
     case 'currency':
-      return `${value < 0 ? '-' : ''}${options?.currencySymbol || '$'}${fixedTwoDecimals.format(Math.abs(value))}`
+      return `${number < 0 ? '-' : ''}${options?.currencySymbol || '$'}${fixed.format(Math.abs(number))}`
     case 'number':
-      return wholeNumber.format(value)
-    case 'decimal':
-      return fixedTwoDecimals.format(value)
+      return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(number)
     case 'percent':
-      return `${fixedTwoDecimals.format(value * 100)}%`
+      return `${fixed.format(number * 100)}%`
     default:
-      return String(value)
+      return fixed.format(number)
   }
 }
 

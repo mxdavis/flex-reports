@@ -52,7 +52,7 @@ export function buildMappingPanelProps(args: BuildMappingPanelPropsArgs) {
     displayTypeOptions: DISPLAY_TYPE_OPTIONS,
     chipAggregationOptions: CHIP_AGGREGATION_OPTIONS,
     onStartAddColumn: () => {
-      const defaultSourceKey = args.sourceOptions[0] ?? 'workDate'
+      const defaultSourceKey = args.sourceOptions[0] ?? ''
       const defaultDisplayType = args.getPreferredDisplayType(defaultSourceKey)
       args.setAddColumnSourceKey(defaultSourceKey)
       args.setAddColumnLabel(defaultSourceKey)

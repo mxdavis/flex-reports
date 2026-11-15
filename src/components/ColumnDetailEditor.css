@@ -17,3 +17,23 @@
   font: inherit;
   background: #ffffff;
 }
+
+.display-type-heading { display: flex; align-items: center; gap: 8px; }
+.display-type-help { position: relative; }
+.display-type-help button { border: 1px solid #d0d5dd; border-radius: 50%; background: white; cursor: help; }
+.display-type-help [role='tooltip'] {
+  display: none;
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  width: min(300px, 65vw);
+  padding: 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: white;
+  color: #344054;
+  font-size: 13px;
+}
+.display-type-help:hover [role='tooltip'],
+.display-type-help button:focus-visible + [role='tooltip'] { display: block; }

@@ -9,8 +9,9 @@
 - **KISS** — simplest thing that works; no speculative abstraction or over-engineering.
 - **Clean & readable** — clear intent over cleverness.
 - **Well-named** variables and functions; names describe what/why.
+- Extract conditional status/error JSX into clearly named render helpers when it makes the main render easier to scan.
 - **Short functions and files** — each does one thing; split when they grow.
-- **Helpers and services** for reusable logic; keep components/controllers thin.
+- **Helpers and services** for reusable logic; keep components/controllers thin. Put multi-step data transformations in small, named helpers; keep `useMemo` callbacks simple.
 - **MVC mindset** (Rails-style): models = domain/data, controllers = orchestration,
   views = presentation.
 
@@ -46,6 +47,7 @@
 ## Process
 
 - Work on branches; open PRs; never push to `main` without review.
+- Update `README.md` only for infrastructure, high-level architecture, or app setup/startup changes. Keep feature specs and story progress in planning documents and `docs/TODO.md`.
 - Stop and ask when unsure rather than guessing.
 - Use latest Node / React / Vite (and keep deps permissively licensed).
 - When PR feedback reveals coding-style preferences, record them in this file

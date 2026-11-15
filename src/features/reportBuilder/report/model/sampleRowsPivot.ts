@@ -1,3 +1,4 @@
+import { getRowKey } from '../../../../services/adapters/recordsDataSource'
 import type { ReportRow } from '../../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
 import type { AggregateMode } from '../../types'
@@ -18,6 +19,21 @@ export type PivotCell = {
 export type PivotRenderRow = {
   key: string
   cells: PivotCell[]
+  topGroupValue: string
+  kind: 'detail' | 'subtotal'
+  subtotalLevel?: number
+}
+
+export function isTopGroupSubtotal(row: PivotRenderRow): boolean {
+  return row.kind === 'subtotal' && row.subtotalLevel === 0
+}
+
+export function getCollapsibleTopGroups(rows: PivotRenderRow[]): Set<string> {
+  return new Set(rows.filter(isTopGroupSubtotal).map((row) => row.topGroupValue))
+}
+
+export function getVisiblePivotRows(rows: PivotRenderRow[], collapsedGroups: ReadonlySet<string>): PivotRenderRow[] {
+  return rows.filter((row) => !collapsedGroups.has(row.topGroupValue) || isTopGroupSubtotal(row))
 }
 
 type GetMappedValue = (
@@ -94,7 +110,7 @@ export function buildPivotRenderRows({
     return `${value} ${aggregateSummaryLabel}`
   }
 
-  const buildSubtotalRow = (level: number, value: string, indices: number[]): PivotRenderRow => {
+  const buildSubtotalRow = (level: number, value: string, indices: number[], topGroupValue: string): PivotRenderRow => {
     const blockRows = indices.map((index) => sortedRows[index])
     const cells: PivotCell[] = [{
       columnIndex: level,
@@ -121,10 +137,16 @@ export function buildPivotRenderRows({
       cells.push({ columnIndex: column, tag: 'td', value: cellValue, rowSpan: 1, isNumeric, emphasis: true })
     }
 
-    return { key: `subtotal-${level}-${indices[0]}-${value}`, cells }
+    return {
+      key: `subtotal-${level}-${indices[0]}-${value}`,
+      cells,
+      topGroupValue,
+      kind: 'subtotal',
+      subtotalLevel: level,
+    }
   }
 
-  const buildLeafRows = (indices: number[]): PivotRenderRow[] => {
+  const buildLeafRows = (indices: number[], topGroupValue: string): PivotRenderRow[] => {
     const rows: PivotRenderRow[] = []
     const isNumeric = isNumericDisplayType(fields[leafColumn].displayType)
     let cursor = 0
@@ -139,20 +161,22 @@ export function buildPivotRenderRows({
       }
 
       rows.push({
-        key: `leaf-${sortedRows[indices[cursor]].id}`,
+        key: `leaf-${getRowKey(sortedRows[indices[cursor]])}`,
         cells: [{ columnIndex: leafColumn, tag: 'td', value, rowSpan: span, isNumeric, emphasis: false }],
+        topGroupValue,
+        kind: 'detail',
       })
       for (let offset = 1; offset < span; offset += 1) {
-        rows.push({ key: `leaf-${sortedRows[indices[cursor + offset]].id}`, cells: [] })
+        rows.push({ key: `leaf-${getRowKey(sortedRows[indices[cursor + offset]])}`, cells: [], topGroupValue, kind: 'detail' })
       }
       cursor += span
     }
     return rows
   }
 
-  const process = (indices: number[], level: number): PivotRenderRow[] => {
+  const process = (indices: number[], level: number, topGroupValue: string): PivotRenderRow[] => {
     if (level > lastGroupLevel) {
-      return buildLeafRows(indices)
+      return buildLeafRows(indices, topGroupValue)
     }
 
     const output: PivotRenderRow[] = []
@@ -168,7 +192,8 @@ export function buildPivotRenderRows({
       }
 
       const blockIndices = indices.slice(cursor, cursor + count)
-      const childRows = process(blockIndices, level + 1)
+      const blockTopGroupValue = level === 0 ? value : topGroupValue
+      const childRows = process(blockIndices, level + 1, blockTopGroupValue)
 
       const groupCell: PivotCell = {
         columnIndex: level,
@@ -183,7 +208,7 @@ export function buildPivotRenderRows({
       output.push(...childRows)
 
       if (showTotals && (level === 0 || count > 1)) {
-        output.push(buildSubtotalRow(level, value, blockIndices))
+        output.push(buildSubtotalRow(level, value, blockIndices, blockTopGroupValue))
       }
 
       cursor += count
@@ -191,5 +216,5 @@ export function buildPivotRenderRows({
     return output
   }
 
-  return process(sortedRows.map((_, index) => index), 0)
+  return process(sortedRows.map((_, index) => index), 0, '')
 }
