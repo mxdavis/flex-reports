@@ -7,6 +7,7 @@ export type SchemaDataType = 'string' | 'number' | 'date' | 'currency'
 export type SchemaField = {
   id: string
   key: string
+  path?: readonly string[]
   label: string
   dataType: SchemaDataType
 }

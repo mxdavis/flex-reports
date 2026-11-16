@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { loadSandboxData } from '../../services/adapters'
 import { createSeedDataSource } from './createSeedDataSource'
 
-type SeedRow = { personId: string, workDate: string, clientId: string, hours: number, rate: number, total: number }
+type SeedRow = { person: { id: string }, workDate: string, client: { id: string }, hours: number, rate: number, total: number }
 
 describe('createSeedDataSource', () => {
   const source = createSeedDataSource()
@@ -32,9 +32,9 @@ describe('createSeedDataSource', () => {
       const clientsForPersonOnDate = new Set(
         rows
           .filter((candidate) => {
-            return candidate.personId === row.personId && candidate.workDate === row.workDate
+            return candidate.person.id === row.person.id && candidate.workDate === row.workDate
           })
-          .map((candidate) => candidate.clientId),
+          .map((candidate) => candidate.client.id),
       )
 
       return clientsForPersonOnDate.size > 1
@@ -45,7 +45,7 @@ describe('createSeedDataSource', () => {
       if (!peopleByRate.has(row.rate)) {
         peopleByRate.set(row.rate, new Set())
       }
-      peopleByRate.get(row.rate)?.add(row.personId)
+      peopleByRate.get(row.rate)?.add(row.person.id)
     }
     const hasOverlappingRatesAcrossPeople = Array.from(peopleByRate.values()).some((people) => people.size > 1)
 
@@ -59,6 +59,7 @@ describe('createSeedDataSource', () => {
     expect(schema.length).toBeGreaterThan(0)
     expect(schema.find((field) => field.key === 'workDate')?.dataType).toBe('date')
     expect(schema.find((field) => field.key === 'total')?.dataType).toBe('currency')
+    expect(schema.find((field) => field.label === 'Client')?.path).toEqual(['client', 'name'])
   })
 
   it('loads the seed as sandbox data, once', async () => {

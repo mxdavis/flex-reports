@@ -1,3 +1,5 @@
+import { getFormulaReferences } from './formulaReferences'
+
 export type FormulaContext = Record<string, number>
 
 export type FormulaErrorCode =
@@ -10,7 +12,6 @@ export type FormulaResult =
   | { ok: true; value: number }
   | { ok: false; code: FormulaErrorCode; message: string }
 
-const TOKEN_REGEX = /\{\{([^{}]*?)\}\}/g
 const SAFE_EXPRESSION_REGEX = /^[0-9eE+\-*/().\s]+$/
 
 function normalizePercent(expression: string): string {
@@ -20,12 +21,17 @@ function normalizePercent(expression: string): string {
 export type FormulaResolver = (reference: string) => number
 
 function injectTokens(expression: string, context: FormulaContext | FormulaResolver): string {
-  return expression.replace(TOKEN_REGEX, (_, token: string) => {
-    const reference = token.trim()
-    const value = typeof context === 'function' ? context(reference) : context[reference]
+  let prepared = ''
+  let offset = 0
+  for (const token of getFormulaReferences(expression)) {
+    if (token.end === null) throw new Error('Unclosed formula reference.')
+    const reference = token.reference.trim()
+    const value = typeof context === 'function' ? context(reference) : Object.hasOwn(context, reference) ? context[reference] : undefined
     if (!Number.isFinite(value)) throw new Error('Unknown or invalid formula reference.')
-    return `(${String(value)})`
-  })
+    prepared += `${expression.slice(offset, token.start)}(${String(value)})`
+    offset = token.end
+  }
+  return prepared + expression.slice(offset)
 }
 
 type Token = { type: 'number'; value: number } | { type: 'op'; value: string }

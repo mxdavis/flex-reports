@@ -1,4 +1,5 @@
 import type { ReportRow, SchemaField } from './types'
+import { formatFieldPath } from './fieldPath'
 
 const rowKeys = new WeakMap<ReportRow, string>()
 let nextRowKey = 0
@@ -31,15 +32,28 @@ export function getRowKey(row: ReportRow): string {
 export function createRecordsDataSource(records: readonly ReportRow[]) {
   if (!Array.isArray(records)) throw new Error('Supply an array of record objects.')
   validateValue(records, new Set())
-  const keys = new Set<string>()
+  const paths = new Map<string, string[]>()
+  const arrayPaths = new Set<string>()
+
+  function discoverFields(record: ReportRow, parent: string[] = []): void {
+    for (const [key, value] of Object.entries(record)) {
+      const path = [...parent, key]
+      const reference = formatFieldPath(path)
+      if (Array.isArray(value)) arrayPaths.add(reference)
+      else if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
+        discoverFields(value as ReportRow, path)
+      } else if (!paths.has(reference)) paths.set(reference, path)
+    }
+  }
+
   for (const [index, record] of records.entries()) {
     if (!record || typeof record !== 'object' || Array.isArray(record) || record instanceof Date) {
       throw new Error(`Row ${index + 1} must be a record object.`)
     }
-    for (const key of Object.keys(record)) keys.add(key)
+    discoverFields(record)
   }
-  const schema: SchemaField[] = Array.from(keys, (key, index) => ({
-    id: `field-${index + 1}`, key, label: key, dataType: 'string',
+  const schema: SchemaField[] = Array.from(paths).filter(([key]) => !arrayPaths.has(key)).map(([key, path], index) => ({
+    id: `field-${index + 1}`, key, path, label: key, dataType: 'string',
   }))
   // Host objects are kept as-is so their render keys and cached values survive a
   // re-render; only an object repeated in the list is copied to get its own key.
@@ -51,5 +65,8 @@ export function createRecordsDataSource(records: readonly ReportRow[]) {
     }
     return { ...record }
   })
-  return { getReportRows: () => rows, getSchema: () => schema }
+  // Fields holding a list (several entries per row) can't fill one cell, so
+  // they're left out and named for the editor.
+  const skippedFields = [...arrayPaths]
+  return { getReportRows: () => rows, getSchema: () => schema, getSkippedFields: () => skippedFields }
 }

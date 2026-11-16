@@ -1,6 +1,7 @@
+import { formatFieldPath, isFieldPath } from '../adapters/fieldPath'
 import type { ReportFormula } from '../adapters'
 import { getNextSequencedName, sortFormulasByLabel } from '../../utils/reportBuilder'
-import { getFormulaError, MAX_FORMULAS, MAX_REPORT_COLUMNS } from './rules'
+import { MAX_FORMULAS, MAX_REPORT_COLUMNS } from './rules'
 import {
   DEFAULT_CURRENCY_SYMBOL,
   getDefaultAggregation,
@@ -39,6 +40,7 @@ function generateDefaultFields(sourceColumns: SourceColumn[]): ReportField[] {
       id: column.id,
       label: column.label,
       sourceKey: column.key,
+      ...(column.path ? { sourcePath: column.path } : {}),
       displayType,
       aggregation: getDefaultAggregation(displayType),
     }
@@ -64,7 +66,8 @@ export function generateDefaultReportDefinition(
 function normalizeField(raw: unknown, sourceByKey: Map<string, SourceColumn>): ReportField | null {
   if (!isRecord(raw)) return null
   const id = asNonEmptyString(raw.id)
-  const sourceKey = asNonEmptyString(raw.sourceKey)
+  const sourcePath = isFieldPath(raw.sourcePath) ? raw.sourcePath : undefined
+  const sourceKey = sourcePath ? formatFieldPath(sourcePath) : asNonEmptyString(raw.sourceKey)
   if (!id || !sourceKey) return null
 
   const displayType = DISPLAY_TYPES.includes(raw.displayType as DisplayType)
@@ -78,6 +81,7 @@ function normalizeField(raw: unknown, sourceByKey: Map<string, SourceColumn>): R
     id,
     label: asNonEmptyString(raw.label) ?? sourceKey,
     sourceKey,
+    ...(sourcePath ? { sourcePath } : {}),
     displayType,
     aggregation,
   }
@@ -87,18 +91,23 @@ function logRepair(message: string): void {
   console.error(`[flex-reports] ${message}`)
 }
 
-// Keeps the formulas the editor would accept (see getFormulaError), up to
-// MAX_FORMULAS, and logs each one it drops.
-function normalizeFormulas(raw: unknown[], fieldKeys: string[]): ReportFormula[] {
+// Keeps every saved formula, even one the editor wouldn't accept (editors see
+// a note and fix it themselves), and logs each one it drops: entries that
+// aren't formulas at all, repeated names, and anything past MAX_FORMULAS.
+function normalizeFormulas(raw: unknown[]): ReportFormula[] {
   const formulas: ReportFormula[] = []
   for (const item of raw) {
-    const formula = {
-      label: isRecord(item) && typeof item.label === 'string' ? item.label.trim() : '',
-      expression: isRecord(item) && typeof item.expression === 'string' ? item.expression.trim() : '',
+    if (!isRecord(item)) {
+      logRepair('Dropped an entry from reportDefinition.formulas that is not a formula object.')
+      continue
     }
-    const error = getFormulaError(formula, { existingLabels: formulas.map((kept) => kept.label), fieldKeys })
-    if (error) {
-      logRepair(`Dropped formula "${formula.label}" from reportDefinition: ${error}`)
+    const formula = {
+      label: typeof item.label === 'string' ? item.label.trim() : '',
+      expression: typeof item.expression === 'string' ? item.expression.trim() : '',
+    }
+    const label = formula.label.toLowerCase()
+    if (label && formulas.some((kept) => kept.label.toLowerCase() === label)) {
+      logRepair(`Dropped formula "${formula.label}" from reportDefinition: a formula with that name already exists.`)
       continue
     }
     if (formulas.length >= MAX_FORMULAS) {
@@ -139,6 +148,23 @@ function normalizeView(raw: unknown): ReportView {
       ? raw.expandedLevels as number
       : null,
   }
+}
+
+// Formula names a definition repeats (ignoring case). The editor never saves
+// one, so a repeat comes from the host building or editing the definition: the
+// builder shows it on the page so the developer sees it. The first one is used.
+export function getRepeatedFormulaNames(raw: unknown): string[] {
+  if (!isRecord(raw) || !Array.isArray(raw.formulas)) return []
+  const seen = new Set<string>()
+  const repeated = new Map<string, string>()
+  for (const item of raw.formulas) {
+    const label = isRecord(item) && typeof item.label === 'string' ? item.label.trim() : ''
+    const key = label.toLowerCase()
+    if (!key) continue
+    if (seen.has(key) && !repeated.has(key)) repeated.set(key, label)
+    seen.add(key)
+  }
+  return [...repeated.values()]
 }
 
 // True for a definition saved by a newer version of Flex Reports than this one.
@@ -185,14 +211,13 @@ export function normalizeReportDefinition(
   if (fields.length < rawFields.length) {
     logRepair(`Dropped ${rawFields.length - fields.length} invalid field(s) from reportDefinition.`)
   }
-  const fieldKeys = sourceColumns.map((column) => column.key)
 
   return {
     version: REPORT_DEFINITION_VERSION,
     sheetName: asNonEmptyString(raw.sheetName) ?? defaults.sheetName,
     currencySymbol: asNonEmptyString(raw.currencySymbol) ?? defaults.currencySymbol,
     fields: fields.length > 0 ? repairFields(fields) : defaults.fields,
-    formulas: Array.isArray(raw.formulas) ? normalizeFormulas(raw.formulas, fieldKeys) : defaults.formulas,
+    formulas: Array.isArray(raw.formulas) ? normalizeFormulas(raw.formulas) : defaults.formulas,
     view: normalizeView(raw.view),
   }
 }
