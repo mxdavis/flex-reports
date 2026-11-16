@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatFieldPath, parseFieldPath, readFieldPath } from './fieldPath'
+import { formatFieldPath, getColumnPath, parseFieldPath, readFieldPath } from './fieldPath'
 
 describe('field paths', () => {
   it.each([
@@ -45,4 +45,11 @@ describe('field paths', () => {
     'rejects malformed or indexed path %j',
     (reference) => expect(parseFieldPath(reference)).toBeNull(),
   )
+
+  it('finds a schema field\'s path from its path, its key, or its key as one name', () => {
+    expect(getColumnPath({ key: 'anything', path: ['client', 'name'] })).toEqual(['client', 'name'])
+    expect(getColumnPath({ key: 'client.name' })).toEqual(['client', 'name'])
+    expect(getColumnPath({ key: '["client.name"]' })).toEqual(['client.name'])
+    expect(getColumnPath({ key: 'client..name' })).toEqual(['client..name'])
+  })
 })

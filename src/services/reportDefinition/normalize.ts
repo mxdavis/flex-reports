@@ -1,4 +1,3 @@
-import { formatFieldPath, isFieldPath } from '../adapters/fieldPath'
 import type { ReportFormula } from '../adapters'
 import { getNextSequencedName, sortFormulasByLabel } from '../../utils/reportBuilder'
 import { MAX_FORMULAS, MAX_REPORT_COLUMNS } from './rules'
@@ -40,7 +39,6 @@ function generateDefaultFields(sourceColumns: SourceColumn[]): ReportField[] {
       id: column.id,
       label: column.label,
       sourceKey: column.key,
-      ...(column.path ? { sourcePath: column.path } : {}),
       displayType,
       aggregation: getDefaultAggregation(displayType),
     }
@@ -66,8 +64,7 @@ export function generateDefaultReportDefinition(
 function normalizeField(raw: unknown, sourceByKey: Map<string, SourceColumn>): ReportField | null {
   if (!isRecord(raw)) return null
   const id = asNonEmptyString(raw.id)
-  const sourcePath = isFieldPath(raw.sourcePath) ? raw.sourcePath : undefined
-  const sourceKey = sourcePath ? formatFieldPath(sourcePath) : asNonEmptyString(raw.sourceKey)
+  const sourceKey = asNonEmptyString(raw.sourceKey)
   if (!id || !sourceKey) return null
 
   const displayType = DISPLAY_TYPES.includes(raw.displayType as DisplayType)
@@ -81,7 +78,6 @@ function normalizeField(raw: unknown, sourceByKey: Map<string, SourceColumn>): R
     id,
     label: asNonEmptyString(raw.label) ?? sourceKey,
     sourceKey,
-    ...(sourcePath ? { sourcePath } : {}),
     displayType,
     aggregation,
   }

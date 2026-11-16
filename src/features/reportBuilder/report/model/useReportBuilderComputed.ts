@@ -1,4 +1,4 @@
-import { parseFieldPath, readFieldPath } from '../../../../services/adapters/fieldPath'
+import { getColumnPath, readFieldPath } from '../../../../services/adapters/fieldPath'
 import { getRowKey } from '../../../../services/adapters/recordsDataSource'
 import { useCallback, useEffect, useMemo } from 'react'
 import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
@@ -75,7 +75,7 @@ export function useReportBuilderComputed({
   showTips,
 }: UseReportBuilderComputedArgs) {
   const sourceColumnByKey = useMemo(() => {
-    return new Map(sourceColumns.map((column) => [String(column.key), column]))
+    return new Map(sourceColumns.map((column) => [String(column.key), { ...column, path: getColumnPath(column) }]))
   }, [sourceColumns])
 
   // "%Fee" is always the Fee formula, never a data field: formulas are the
@@ -89,11 +89,6 @@ export function useReportBuilderComputed({
   const getSourceLabel = (reference: string) => (
     getSourceColumn(reference)?.label ?? (reference.startsWith('%') ? reference.slice(1) : reference)
   )
-
-  const getSourcePath = (reference: string) => {
-    const column = getSourceColumn(reference)
-    return column ? column.path ?? parseFieldPath(column.key) ?? undefined : undefined
-  }
 
   const sourceOptions = useMemo(() => {
     const formulaLabels = formulas.map((formula) => `%${formula.label}`)
@@ -178,7 +173,7 @@ export function useReportBuilderComputed({
     const result = evaluateFormula(expression, (reference) => {
       if (reference.startsWith('%')) return getFormulaValue(reference.slice(1), cache, visiting, row)
       const column = getSourceColumn(reference)
-      if (column) return toReportNumber(readFieldPath(row, column.path ?? parseFieldPath(column.key) ?? []))
+      if (column) return toReportNumber(readFieldPath(row, column.path))
       return Number.NaN
     })
     const value = result.ok ? result.value : Number.NaN
@@ -195,7 +190,7 @@ export function useReportBuilderComputed({
     const cache = new WeakMap<ReportRow, Map<string, unknown>>()
     return (row: ReportRow, sourceKey: string): unknown => {
       const mappedColumn = getSourceColumn(sourceKey)
-      if (mappedColumn) return readFieldPath(row, mappedColumn.path ?? parseFieldPath(mappedColumn.key) ?? [])
+      if (mappedColumn) return readFieldPath(row, mappedColumn.path)
       if (!isFormulaSource(sourceKey)) return null
 
       let rowCache = cache.get(row)
@@ -340,7 +335,6 @@ export function useReportBuilderComputed({
     summaryItems,
     verticalColumns,
     getPreferredDisplayType,
-    getSourcePath,
     getSourceLabel,
     formulaNotes,
     getFieldValue,

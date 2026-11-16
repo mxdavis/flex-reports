@@ -5,7 +5,7 @@ export type FieldPath = readonly string[]
 // the bracket form, as do names with spaces at either end (references are trimmed).
 const PLAIN_SEGMENT = /^[^\s.{}[\]"\\](?:[^.{}[\]"\\]*[^\s.{}[\]"\\])?$/
 
-export function isFieldPath(value: unknown): value is string[] {
+function isFieldPath(value: unknown): value is string[] {
   return Array.isArray(value) && value.length > 0 && value.every((segment) => typeof segment === 'string')
 }
 
@@ -29,6 +29,12 @@ export function parseFieldPath(reference: string): FieldPath | null {
   }
   const path = text.split('.')
   return path.every((segment) => segment.length > 0) ? path : null
+}
+
+// Where a schema field's value lives in a row: its path, or its key read back
+// as one. A key that isn't a valid reference is taken as a single field name.
+export function getColumnPath(column: { key: string, path?: FieldPath }): FieldPath {
+  return column.path ?? parseFieldPath(column.key) ?? [column.key]
 }
 
 export function readFieldPath(record: unknown, path: FieldPath): unknown {

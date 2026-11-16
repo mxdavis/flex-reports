@@ -30,7 +30,6 @@ export function useMappingPanelProps(): MappingPanelProps {
     setFields((previous) => previous.map((field) => (field.id !== fieldId ? field : {
       ...field,
       sourceKey: editingField.sourceKey.trim() || field.sourceKey,
-      sourcePath: computed.getSourcePath(editingField.sourceKey.trim() || field.sourceKey),
       label: editingField.label.trim() || field.label,
       displayType: editingField.displayType,
       aggregation: editingField.aggregation,
@@ -69,7 +68,6 @@ export function useMappingPanelProps(): MappingPanelProps {
       id: 'new-column',
       label: computed.getSourceLabel(sourceKey),
       sourceKey,
-      sourcePath: computed.getSourcePath(sourceKey),
       displayType,
       aggregation: getDefaultAggregation(displayType),
     }
@@ -92,7 +90,6 @@ export function useMappingPanelProps(): MappingPanelProps {
         id: getNextSequencedName('field-', previous.map((field) => field.id)),
         label: draft.label.trim() || computed.getSourceLabel(sourceKey),
         sourceKey,
-        sourcePath: computed.getSourcePath(sourceKey),
       })
       return next
     })

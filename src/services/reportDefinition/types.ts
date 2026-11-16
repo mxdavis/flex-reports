@@ -16,7 +16,6 @@ export type ReportField = {
   id: string
   label: string
   sourceKey: string
-  sourcePath?: readonly string[]
   displayType: DisplayType
   aggregation: AggregationMode
 }
