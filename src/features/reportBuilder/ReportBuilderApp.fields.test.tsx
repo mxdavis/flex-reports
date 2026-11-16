@@ -151,4 +151,25 @@ describe('nested fields in the existing report editor', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Can\'t have two formulas with the same name: "fee".')
     expect(within(screen.getByRole('table')).getByRole('cell')).toHaveTextContent('20')
   })
+
+  it('renames a flat client field to Client (flat billing equivalent)', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp rows={[{ clientId: 'c1', client: 'Acme', hours: 4, rate: 250 }]} onSave={vi.fn()} initialEditMode />)
+    const table = screen.getByRole('table')
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
+    expect(screen.getByLabelText('COLUMN 2')).toHaveValue('client')
+    await user.clear(screen.getByLabelText('Display label'))
+    await user.type(screen.getByLabelText('Display label'), 'Client')
+    await user.click(screen.getByRole('button', { name: 'Save COLUMN 2' }))
+    expect(within(table).getByRole('columnheader', { name: 'Client' })).toBeInTheDocument()
+    expect(within(table).getByText('Acme')).toBeInTheDocument()
+  })
+
+  it('offers only clientId and hours for timeEntries, with no client name lookup', () => {
+    const timeEntries = [{ clientId: 'c1', hours: 4 }, { clientId: 'c1', hours: 2 }, { clientId: 'c2', hours: 3 }]
+    expect(createRecordsDataSource(timeEntries).getSchema().map((field) => field.key)).toEqual(['clientId', 'hours'])
+    render(<ReportBuilderApp rows={timeEntries} role="viewer" />)
+    expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['clientId', 'hours'])
+    expect(screen.queryByText('Acme')).toBeNull()
+  })
 })
