@@ -26,8 +26,13 @@ function findNonNumbers(rows: ReportRow[], getValue: (row: ReportRow) => unknown
   return found
 }
 
-function describeNonNumbers({ count, firstRow, firstValue }: NonNumbers): string {
-  const example = `row ${firstRow}: ${JSON.stringify(firstValue)}`
+function describeExample({ firstRow, firstValue }: NonNumbers): string {
+  return `row ${firstRow}: ${JSON.stringify(firstValue)}`
+}
+
+function describeNonNumbers(nonNumbers: NonNumbers): string {
+  const { count } = nonNumbers
+  const example = describeExample(nonNumbers)
   return count === 1
     ? `1 value isn't a number (${example}). It's shown as entered, left out of totals, and counted as 0 in formulas.`
     : `${count.toLocaleString('en-US')} values aren't numbers (first in ${example}). They're shown as entered, left out of totals, and counted as 0 in formulas.`
@@ -35,8 +40,9 @@ function describeNonNumbers({ count, firstRow, firstValue }: NonNumbers): string
 
 // For a formula: a field it uses has values that aren't numbers, like a
 // spreadsheet cell a formula relies on that holds text.
-function describeFormulaNonNumbers(fieldName: string, { count, firstRow, firstValue }: NonNumbers): string {
-  const example = `row ${firstRow}: ${JSON.stringify(firstValue)}`
+function describeFormulaNonNumbers(fieldName: string, nonNumbers: NonNumbers): string {
+  const { count } = nonNumbers
+  const example = describeExample(nonNumbers)
   return count === 1
     ? `${fieldName} has 1 value that isn't a number (${example}). It's counted as 0.`
     : `${fieldName} has ${count.toLocaleString('en-US')} values that aren't numbers (first in ${example}). They're counted as 0.`
@@ -157,9 +163,6 @@ export function useReportBuilderComputed({
     return getDefaultDisplayType(schemaField)
   }
 
-  // One currency symbol for the whole report.
-  const formatOptions = useMemo(() => ({ currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL }), [currencySymbol])
-
   const getFormulaValue = useCallback(function getFormulaValue(
     formulaLabel: string,
     cache: Map<string, number>,
@@ -206,6 +209,9 @@ export function useReportBuilderComputed({
       return value
     }
   }, [getFormulaValue, getSourceColumn, isFormulaSource])
+
+  // One currency symbol for the whole report.
+  const formatOptions = useMemo(() => ({ currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL }), [currencySymbol])
 
   // Number columns read numeric text as numbers; blanks stay blank and other
   // text is kept as entered so it shows (and exports) unchanged.

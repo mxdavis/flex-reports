@@ -88,6 +88,7 @@ describe('explicit numeric interpretation', () => {
     expect(formatCellValue('250.50', 'string')).toBe('250.50')
     expect(formatCellValue(null, 'string')).toBe('')
     expect(formatCellValue('null', 'string')).toBe('null')
+    expect(formatCellValue(new Date('2026-07-01T00:00:00.000Z'), 'string')).toBe('2026-07-01T00:00:00.000Z')
   })
 
   it('validates calendar dates and avoids timezone shifts', () => {

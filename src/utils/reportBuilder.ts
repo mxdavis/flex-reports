@@ -55,7 +55,9 @@ function parseDate(value: unknown): Date {
   return new Date(text)
 }
 
-function toText(value: unknown): string {
+// A value as text: dates as ISO text, other objects as JSON.
+export function toText(value: unknown): string {
+  if (value instanceof Date) return value.toISOString()
   return typeof value === 'object' ? JSON.stringify(value) : String(value)
 }
 

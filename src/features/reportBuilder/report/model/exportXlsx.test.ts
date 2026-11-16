@@ -70,6 +70,15 @@ describe('buildXlsx', () => {
     expect(sheet.getRow(5).font?.bold).toBe(true)
   })
 
+  it('writes cells holding only spaces as blank, like the report', async () => {
+    const sheet = await exportAndRead({
+      rows: [{ id: '1', region: '  ', store: 'Ames', soldOn: '   ', price: 10, units: 2 }],
+      showTotals: false,
+    })
+    expect(sheet.getRow(2).getCell(1).value).toBeNull()
+    expect(sheet.getRow(2).getCell(3).value).toBeNull()
+  })
+
   it('leaves the total row out when totals are off', async () => {
     const sheet = await exportAndRead({ showTotals: false })
 
