@@ -2,6 +2,7 @@
   scroll-margin-top: 84px;
 }
 
+.fr-report-table thead th.fr-numeric-cell,
 .fr-report-table td.fr-numeric-cell {
   text-align: right;
 }
