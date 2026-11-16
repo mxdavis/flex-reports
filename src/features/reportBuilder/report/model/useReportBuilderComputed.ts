@@ -1,22 +1,30 @@
 import { getRowKey } from '../../../../services/adapters/recordsDataSource'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
 import { getDefaultDisplayType } from '../../../../services/reportDefinition/displayType'
-import type { ReportRow, SeedFormula } from '../../../../services/adapters'
-import type { AggregateMode } from '../../types'
-import type { ChipAggregationMode, DisplayType, ReportField, SourceColumn } from '../../../../services/reportDefinition/types'
-import { DEFAULT_CURRENCY_SYMBOL, getChipAggregationLabel, getDefaultChipAggregation } from '../../config'
+import type { ReportRow, ReportFormula } from '../../../../services/adapters'
+import type { AggregationMode, DisplayType, ReportField, SourceColumn, TableOrientation } from '../../../../services/reportDefinition/types'
+import { DEFAULT_CURRENCY_SYMBOL } from '../../config'
 import { formatCellValue, isValidReportDate, toReportNumber } from '../../../../utils/reportBuilder'
 import { buildSummaryItems } from '../../summaryItems'
+import { getTotalDisplayType, isNumericDisplayType } from './fieldTotals'
+import { isBlank, type GetFieldValue } from './pivotLayout'
+
+// In vertical view each data row becomes a column, headed by its first-column value.
+export type VerticalColumn = {
+  key: string
+  headerValue: string
+  row: ReportRow
+}
 
 type UseReportBuilderComputedArgs = {
   rows: ReportRow[]
   sourceColumns: SourceColumn[]
   reportFields: ReportField[]
-  formulas: SeedFormula[]
+  formulas: ReportFormula[]
   currencySymbol: string
-  tableOrientation: 'horizontal' | 'vertical'
-  aggregateMode: AggregateMode
+  tableOrientation: TableOrientation
+  showTips: boolean
 }
 
 export function useReportBuilderComputed({
@@ -26,7 +34,7 @@ export function useReportBuilderComputed({
   formulas,
   currencySymbol,
   tableOrientation,
-  aggregateMode,
+  showTips,
 }: UseReportBuilderComputedArgs) {
   const sourceColumnByKey = useMemo(() => {
     return new Map(sourceColumns.map((column) => [String(column.key), column]))
@@ -52,21 +60,31 @@ export function useReportBuilderComputed({
     ]))
   }, [formulas, sourceColumns])
 
-  const previewRows = rows
-  const isHorizontalTable = tableOrientation === 'horizontal'
-  const showTotals = aggregateMode !== 'none'
+  // A column whose source isn't in the data or formulas stays put and renders
+  // blank, rather than being silently pointed at another field.
+  const missingSourceFields = useMemo(() => reportFields.filter((field) => (
+    !sourceColumnByKey.has(field.sourceKey) && !formulasByLabel.has(field.sourceKey.toLowerCase())
+  )), [formulasByLabel, reportFields, sourceColumnByKey])
 
-  function resolveChipAggregation(field: ReportField): ChipAggregationMode {
-    return field.chipAggregation ?? getDefaultChipAggregation(field.displayType)
-  }
+  const missingSourceSummary = missingSourceFields.map((field) => `"${field.label}" → "${field.sourceKey}"`).join(', ')
+  useEffect(() => {
+    if (missingSourceSummary) {
+      console.warn(`[flex-reports] Columns point at sources that aren't in the schema or formulas: ${missingSourceSummary}.`)
+    }
+  }, [missingSourceSummary])
+
+  // Editors only: viewers can't fix the column, so they just see it blank.
+  const getFieldWarning = useCallback((field: ReportField): string | null => {
+    if (!showTips || !missingSourceFields.includes(field)) return null
+    return `Source "${field.sourceKey}" isn't in the data or formulas. Edit the column to pick another source.`
+  }, [missingSourceFields, showTips])
+
+  const isHorizontalTable = tableOrientation === 'horizontal'
 
   function getPreferredDisplayType(sourceKey: string): DisplayType {
-    const normalizedKey = sourceKey.toLowerCase().trim()
-    if (formulasByLabel.has(normalizedKey)) return 'decimal'
-
+    if (formulasByLabel.has(sourceKey.toLowerCase().trim())) return 'decimal'
     const schemaField = sourceColumnByKey.get(sourceKey)
-    if (schemaField) return getDefaultDisplayType(schemaField)
-    return getDefaultDisplayType({ key: sourceKey, dataType: 'string' })
+    return getDefaultDisplayType(schemaField)
   }
 
   const getFormulaValue = useCallback(function getFormulaValue(
@@ -94,127 +112,151 @@ export function useReportBuilderComputed({
     return value
   }, [formulasByLabel, sourceColumnByKey])
 
-  const getMappedValue = useCallback((
-    row: ReportRow,
+  // Values are cached per row and source, so each cell's formula and format run
+  // once per change of formulas/currency instead of on every render. Caches are
+  // rebuilt whenever their inputs change, and rows are keys of a WeakMap so a
+  // refetched rows array never holds old data alive.
+  const getMappedRawValue = useMemo(() => {
+    const cache = new WeakMap<ReportRow, Map<string, unknown>>()
+    return (row: ReportRow, sourceKey: string): unknown => {
+      const mappedColumn = sourceColumnByKey.get(sourceKey)
+      if (mappedColumn) return Object.hasOwn(row, mappedColumn.key) ? row[mappedColumn.key] : undefined
+      if (!formulasByLabel.has(sourceKey.toLowerCase())) return null
+
+      let rowCache = cache.get(row)
+      if (!rowCache) {
+        rowCache = new Map()
+        cache.set(row, rowCache)
+      }
+      if (rowCache.has(sourceKey)) return rowCache.get(sourceKey)
+      const value = getFormulaValue(sourceKey, new Map(), new Set(), row)
+      rowCache.set(sourceKey, value)
+      return value
+    }
+  }, [formulasByLabel, getFormulaValue, sourceColumnByKey])
+
+  // One currency symbol for the whole report.
+  const formatOptions = useMemo(() => ({ currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL }), [currencySymbol])
+
+  const getFieldRawValue = useCallback((row: ReportRow, field: ReportField): unknown => {
+    const raw = getMappedRawValue(row, field.sourceKey)
+    return sourceColumnByKey.has(field.sourceKey) && isNumericDisplayType(field.displayType)
+      ? toReportNumber(raw) : raw
+  }, [getMappedRawValue, sourceColumnByKey])
+
+  // A row's value for a column, formatted for display.
+  const getFieldValue = useMemo<GetFieldValue>(() => {
+    const cache = new WeakMap<ReportRow, Map<string, string>>()
+    return (row, field) => {
+      const cacheKey = `${field.sourceKey}\u0000${field.displayType}`
+      let rowCache = cache.get(row)
+      if (!rowCache) {
+        rowCache = new Map()
+        cache.set(row, rowCache)
+      }
+      const cached = rowCache.get(cacheKey)
+      if (cached !== undefined) return cached
+      const raw = getFieldRawValue(row, field)
+      const value = raw === null && !sourceColumnByKey.has(field.sourceKey) ? ''
+        : formatCellValue(raw, field.displayType, formatOptions)
+      rowCache.set(cacheKey, value)
+      return value
+    }
+  }, [formatOptions, getFieldRawValue, sourceColumnByKey])
+
+  const getAggregatedFieldValue = useCallback((
+    rowsToAggregate: ReportRow[],
     sourceKey: string,
-    displayType: DisplayType,
-    localCurrencySymbol?: string,
-  ): string => {
-    const resolvedCurrencySymbol = displayType === 'currency'
-      ? (currencySymbol.trim() || localCurrencySymbol?.trim() || DEFAULT_CURRENCY_SYMBOL)
-      : undefined
-
-    const mappedColumn = sourceColumnByKey.get(sourceKey)
-    if (mappedColumn) {
-      const raw = Object.hasOwn(row, mappedColumn.key) ? row[mappedColumn.key] : undefined
-      const value = displayType === 'string' || displayType === 'date' ? raw : toReportNumber(raw)
-      return formatCellValue(value, displayType, { currencySymbol: resolvedCurrencySymbol })
-    }
-
-    if (!formulasByLabel.has(sourceKey.toLowerCase())) return 'Missing field'
-    const value = getFormulaValue(sourceKey, new Map(), new Set(), row)
-    if (!Number.isFinite(value)) return 'Invalid formula'
-    return formatCellValue(value, displayType, { currencySymbol: resolvedCurrencySymbol })
-  }, [currencySymbol, formulasByLabel, getFormulaValue, sourceColumnByKey])
-
-  function getMappedNumericValue(row: ReportRow, sourceKey: string): number | null {
-    const mappedColumn = sourceColumnByKey.get(sourceKey)
-    if (mappedColumn) {
-      return toReportNumber(Object.hasOwn(row, mappedColumn.key) ? row[mappedColumn.key] : undefined)
-    }
-
-    if (!formulasByLabel.has(sourceKey.toLowerCase())) return Number.NaN
-    return getFormulaValue(sourceKey, new Map(), new Set(), row)
-  }
-
-  function getMappedRawValue(row: ReportRow, sourceKey: string): unknown {
-    const mappedColumn = sourceColumnByKey.get(sourceKey)
-    if (mappedColumn) {
-      return Object.hasOwn(row, mappedColumn.key) ? row[mappedColumn.key] : undefined
-    }
-
-    if (!formulasByLabel.has(sourceKey.toLowerCase())) return Number.NaN
-    return getFormulaValue(sourceKey, new Map(), new Set(), row)
-  }
-
-  function getDistinctCount(rowsToAggregate: ReportRow[], sourceKey: string): number {
-    const seen = new Set<string>()
-    for (const row of rowsToAggregate) {
-      const value = getMappedRawValue(row, sourceKey)
-      if (value === null || value === undefined || value === '') continue
-      if (typeof value === 'number' && Number.isNaN(value)) continue
-      seen.add(`${typeof value}:${String(value)}`)
-    }
-    return seen.size
-  }
-
-  function getAggregatedFieldValue(rowsToAggregate: ReportRow[], sourceKey: string, mode: AggregateMode): number | null {
+    mode: AggregationMode,
+  ): number | null => {
     if (mode === 'none') return null
     if (mode === 'count') return rowsToAggregate.length
-    if (mode === 'distinct') return getDistinctCount(rowsToAggregate, sourceKey)
+    if (mode === 'distinct') {
+      const seen = new Set<string>()
+      for (const row of rowsToAggregate) {
+        const value = getMappedRawValue(row, sourceKey)
+        if (isBlank(value)) continue
+        seen.add(`${typeof value}:${String(value)}`)
+      }
+      return seen.size
+    }
+
+    const isSourceColumn = sourceColumnByKey.has(sourceKey)
     let total = 0
     let count = 0
     for (const row of rowsToAggregate) {
-      const numeric = getMappedNumericValue(row, sourceKey)
-      if (numeric === null) continue
-      if (Number.isNaN(numeric)) return Number.NaN
-      total += numeric
+      const raw = getMappedRawValue(row, sourceKey)
+      const value = isSourceColumn ? toReportNumber(raw) : raw
+      if (typeof value !== 'number') continue
+      if (!Number.isFinite(value)) return Number.NaN
+      total += value
       count += 1
     }
     if (count === 0) return null
     if (!Number.isFinite(total)) return Number.NaN
     return mode === 'avg' ? total / count : total
-  }
+  }, [getMappedRawValue, sourceColumnByKey])
 
-  const verticalColumns = useMemo(() => {
+  // Each column totals by its own aggregation setting, wherever totals appear
+  // (summary chips, group totals, grand total), so e.g. a rate can average
+  // while hours sum.
+  // A column's total as a number (NaN for a broken formula, null for none).
+  const getFieldTotal = useCallback((rowsToAggregate: ReportRow[], field: ReportField): number | null => {
+    return getAggregatedFieldValue(rowsToAggregate, field.sourceKey, field.aggregation)
+  }, [getAggregatedFieldValue])
+
+  const formatFieldTotal = useCallback((rowsToAggregate: ReportRow[], field: ReportField): string => {
+    const value = getFieldTotal(rowsToAggregate, field)
+    if (value === null) return ''
+    if (Number.isNaN(value)) return 'Invalid formula'
+    return formatCellValue(value, getTotalDisplayType(field), formatOptions)
+  }, [formatOptions, getFieldTotal])
+
+  const verticalColumns = useMemo<VerticalColumn[]>(() => {
     const firstField = reportFields[0]
-    if (!firstField) return [] as Array<{ key: string, headerValue: string, rows: ReportRow[] }>
-    return previewRows.map((row) => ({
-      key: getRowKey(row),
-      headerValue: getMappedValue(row, firstField.sourceKey, firstField.displayType),
-      rows: [row],
-    }))
-  }, [getMappedValue, previewRows, reportFields])
+    // Only built in vertical view: one column object per row is wasted work otherwise.
+    if (!firstField || isHorizontalTable) return []
+    return rows.map((row) => ({ key: getRowKey(row), headerValue: getFieldValue(row, firstField), row }))
+  }, [getFieldValue, isHorizontalTable, rows, reportFields])
 
-  const summaryItems = buildSummaryItems({
-    fields: reportFields,
-    rows,
-    currencySymbol,
-    resolveChipAggregation,
-    getChipAggregationLabel,
-    getMappedValue,
-    getMappedNumericValue,
-  })
+  const summaryItems = useMemo(
+    () => buildSummaryItems({ fields: reportFields, rows, formatFieldTotal }),
+    [formatFieldTotal, reportFields, rows],
+  )
 
-  const issues: string[] = []
-  for (const field of reportFields) {
-    if (rows.length === 0) continue
-    if (!sourceColumnByKey.has(field.sourceKey) && !formulasByLabel.has(field.sourceKey.toLowerCase())) {
-      issues.push(`Column ${field.label}: source field is missing. Choose an available field.`)
-    } else if (field.displayType === 'date' && rows.some((row) => {
-      const value = getMappedRawValue(row, field.sourceKey)
-      return value != null && !isValidReportDate(value)
-    })) {
-      issues.push(`Column ${field.label}: use valid YYYY-MM-DD dates. Original values are shown.`)
+  const issues = useMemo(() => {
+    const issues: string[] = []
+    for (const field of reportFields) {
+      if (rows.length === 0) continue
+      if (field.displayType === 'date' && rows.some((row) => {
+        const value = getMappedRawValue(row, field.sourceKey)
+        return value != null && !isValidReportDate(value)
+      })) {
+        issues.push(`Column ${field.label}: use valid dates. Original values are shown.`)
+      }
     }
-  }
-  for (const formula of formulas) {
-    if (rows.some((row) => !Number.isFinite(getFormulaValue(formula.label, new Map(), new Set(), row)))) {
-      issues.push(`Formula ${formula.label}: check references, circular dependencies, and arithmetic.`)
+    for (const formula of formulas) {
+      if (rows.some((row) => !Number.isFinite(getFormulaValue(formula.label, new Map(), new Set(), row)))) {
+        issues.push(`Formula ${formula.label}: check references, circular dependencies, and arithmetic.`)
+      }
     }
-  }
+    return issues
+  }, [formulas, getFormulaValue, getMappedRawValue, reportFields, rows])
 
   return {
     issues,
     sourceOptions,
     formulaTokenOptions,
-    previewRows,
+    rows,
     isHorizontalTable,
-    showTotals,
     summaryItems,
     verticalColumns,
     getPreferredDisplayType,
-    getMappedValue,
-    getAggregatedFieldValue,
+    getFieldValue,
+    getMappedRawValue,
+    getFieldRawValue,
+    getFieldTotal,
+    formatFieldTotal,
+    getFieldWarning,
   }
 }

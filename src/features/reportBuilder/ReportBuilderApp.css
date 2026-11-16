@@ -1,5 +1,10 @@
 @import '../../App.css';
 
-.jump-target {
+.fr-jump-target {
 	scroll-margin-top: 84px;
+}
+
+.fr-report-builder-loading {
+  padding: 24px;
+  color: #475467;
 }

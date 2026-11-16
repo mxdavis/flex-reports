@@ -19,32 +19,28 @@ const reportFields: ReportField[] = [
     label: 'Work Date',
     sourceKey: 'workDate',
     displayType: 'date',
-    chipAggregation: 'count',
-    currencySymbol: '',
+    aggregation: 'count',
   },
   {
     id: 'field-clientName',
     label: 'Client',
     sourceKey: 'clientName',
     displayType: 'string',
-    chipAggregation: 'count',
-    currencySymbol: '',
+    aggregation: 'count',
   },
   {
     id: 'field-originating',
     label: 'Originating Person',
     sourceKey: 'originatingPersonId',
     displayType: 'string',
-    chipAggregation: 'count',
-    currencySymbol: '',
+    aggregation: 'count',
   },
   {
     id: 'field-rate',
     label: 'Rate',
     sourceKey: 'rate',
     displayType: 'currency',
-    chipAggregation: 'sum',
-    currencySymbol: '$',
+    aggregation: 'sum',
   },
 ]
 
@@ -77,9 +73,14 @@ const repeatedValueRows: ReportRow[] = [
   },
 ]
 
+function fieldWith(sourceKey: string, aggregation: ReportField['aggregation']): ReportField {
+  const base = reportFields.find((field) => field.sourceKey === sourceKey)!
+  return { ...base, aggregation }
+}
+
 describe('useReportBuilderComputed', () => {
-  it('count returns row count and distinct returns unique value count per column', () => {
-    const { result } = renderHook(() =>
+  function renderComputed() {
+    return renderHook(() =>
       useReportBuilderComputed({
         rows: repeatedValueRows,
         sourceColumns,
@@ -87,19 +88,69 @@ describe('useReportBuilderComputed', () => {
         formulas: [],
         currencySymbol: '$',
         tableOrientation: 'horizontal',
-        aggregateMode: 'count',
+        showTips: true,
       }),
-    )
+    ).result
+  }
+
+  it('count returns row count and distinct returns unique value count per column', () => {
+    const result = renderComputed()
+    const total = result.current.formatFieldTotal
 
     // Count is raw row count regardless of column.
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'originatingPersonId', 'count')).toBe(2)
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'rate', 'count')).toBe(2)
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'personName', 'count')).toBe(2)
+    expect(total(repeatedValueRows, fieldWith('originatingPersonId', 'count'))).toBe('2')
+    expect(total(repeatedValueRows, fieldWith('rate', 'count'))).toBe('2')
 
     // Distinct count is per-column unique values.
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'originatingPersonId', 'distinct')).toBe(1)
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'rate', 'distinct')).toBe(1)
-    expect(result.current.getAggregatedFieldValue(repeatedValueRows, 'personName', 'distinct')).toBe(2)
+    expect(total(repeatedValueRows, fieldWith('originatingPersonId', 'distinct'))).toBe('1')
+    expect(total(repeatedValueRows, fieldWith('rate', 'distinct'))).toBe('1')
+    expect(total(repeatedValueRows, fieldWith('clientName', 'distinct'))).toBe('1')
+  })
+
+  it('sums and averages in the column format, and leaves none blank', () => {
+    const result = renderComputed()
+    const total = result.current.formatFieldTotal
+
+    expect(total(repeatedValueRows, fieldWith('rate', 'sum'))).toBe('$480.00')
+    expect(total(repeatedValueRows, fieldWith('rate', 'avg'))).toBe('$240.00')
+    expect(total(repeatedValueRows, fieldWith('rate', 'none'))).toBe('')
+  })
+
+  it('builds summary chips from each column aggregation, skipping none', () => {
+    const result = renderComputed()
+
+    expect(result.current.summaryItems).toEqual([
+      { label: 'Work Date (count)', value: '2' },
+      { label: 'Client (count)', value: '2' },
+      { label: 'Originating Person (count)', value: '2' },
+      { label: 'Rate (sum)', value: '$480.00' },
+    ])
+  })
+
+  it('refreshes cached cell values when the currency symbol or a formula changes', () => {
+    const rate = fieldWith('rate', 'sum')
+    const { result, rerender } = renderHook(
+      ({ currencySymbol, formulas }) => useReportBuilderComputed({
+        rows: repeatedValueRows,
+        sourceColumns,
+        reportFields,
+        formulas,
+        currencySymbol,
+        tableOrientation: 'horizontal',
+        showTips: true,
+      }),
+      { initialProps: { currencySymbol: '$', formulas: [{ label: 'doubleRate', expression: '{{rate}} * 2' }] } },
+    )
+    const row = repeatedValueRows[0]
+
+    expect(result.current.getFieldValue(row, rate)).toBe('$240.00')
+    expect(result.current.getMappedRawValue(row, 'doubleRate')).toBe(480)
+
+    rerender({ currencySymbol: '€', formulas: [{ label: 'doubleRate', expression: '{{rate}} * 3' }] })
+
+    expect(result.current.getFieldValue(row, rate)).toBe('€240.00')
+    expect(result.current.getMappedRawValue(row, 'doubleRate')).toBe(720)
+    expect(result.current.formatFieldTotal(repeatedValueRows, rate)).toBe('€480.00')
   })
   it('uses one numeric interpretation for formulas, sums and averages', () => {
     const rows = [
@@ -109,14 +160,14 @@ describe('useReportBuilderComputed', () => {
     const { result } = renderHook(() => useReportBuilderComputed({
       rows, sourceColumns: createRecordsDataSource(rows).getSchema(), reportFields: [],
       formulas: [{ label: 'twice', expression: '{{amount}} * 2' }],
-      currencySymbol: '$', tableOrientation: 'horizontal', aggregateMode: 'sum',
+      currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
     }))
-    expect(result.current.getAggregatedFieldValue(rows, 'amount', 'sum')).toBe(300)
-    expect(result.current.getAggregatedFieldValue(rows, 'amount', 'avg')).toBe(75)
-    expect(result.current.getAggregatedFieldValue(rows, 'decimalAmount', 'sum')).toBe(16)
-    expect(result.current.getAggregatedFieldValue(rows, 'decimalAmount', 'avg')).toBe(4)
-    expect(result.current.getAggregatedFieldValue(rows, 'twice', 'sum')).toBe(600)
-    expect(result.current.getAggregatedFieldValue(rows, 'twice', 'avg')).toBe(150)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'amount', displayType: 'decimal', aggregation: 'sum' })).toBe(300)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'amount', displayType: 'decimal', aggregation: 'avg' })).toBe(75)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'decimalAmount', displayType: 'decimal', aggregation: 'sum' })).toBe(16)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'decimalAmount', displayType: 'decimal', aggregation: 'avg' })).toBe(4)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'twice', displayType: 'decimal', aggregation: 'sum' })).toBe(600)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'twice', displayType: 'decimal', aggregation: 'avg' })).toBe(150)
   })
 
   it('resolves only actual formula dependencies and preserves reference/calculation errors', () => {
@@ -129,15 +180,29 @@ describe('useReportBuilderComputed', () => {
         { label: 'unknown', expression: '{{misspelled}} + 1' },
         { label: 'circular', expression: '{{%circular}} + 1' },
         { label: 'division', expression: '1 / 0' },
-      ], currencySymbol: '$', tableOrientation: 'horizontal', aggregateMode: 'sum',
+      ], currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
     }))
-    expect(result.current.getAggregatedFieldValue(rows, 'base', 'sum')).toBe(4)
-    expect(result.current.getAggregatedFieldValue(rows, 'dependent', 'sum')).toBe(6)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'base', displayType: 'decimal', aggregation: 'sum' })).toBe(4)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'dependent', displayType: 'decimal', aggregation: 'sum' })).toBe(6)
     for (const field of ['unknown', 'circular', 'division']) {
-      expect(result.current.getMappedValue(rows[0], field, 'number')).toBe('Invalid formula')
-      expect(result.current.getAggregatedFieldValue(rows, field, 'sum')).toBeNaN()
+      expect(result.current.getFieldValue(rows[0], { id: field, label: field, sourceKey: field, displayType: 'number', aggregation: 'sum' })).toBe('Invalid formula')
+      expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: field, displayType: 'decimal', aggregation: 'sum' })).toBeNaN()
     }
     expect(result.current.issues).toHaveLength(3)
   })
 
+})
+
+it('calculates formulas and totals over more than 1,000 source rows', () => {
+  const rows = Array.from({ length: 1500 }, () => ({ amount: '2' }))
+  const { result } = renderHook(() => useReportBuilderComputed({
+    rows, sourceColumns: createRecordsDataSource(rows).getSchema(), reportFields: [],
+    formulas: [{ label: 'twice', expression: '{{amount}} * 2' }],
+    currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
+  }))
+  const field: ReportField = { id: 'twice', label: 'Twice', sourceKey: 'twice', displayType: 'number', aggregation: 'sum' }
+  expect(result.current.getFieldTotal(rows, field)).toBe(6000)
+  expect(result.current.getFieldRawValue(rows[1499], field)).toBe(4)
+  expect(result.current.getFieldRawValue(rows[0], { ...field, sourceKey: 'amount' })).toBe(2)
+  expect(result.current.getFieldRawValue(rows[0], { ...field, sourceKey: 'amount', displayType: 'string' })).toBe('2')
 })

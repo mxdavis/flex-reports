@@ -1,17 +1,17 @@
-.editable-card-summary {
+.fr-editable-card-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.editable-card-summary strong {
+.fr-editable-card-summary strong {
   color: #475467;
   font-size: 12px;
   text-transform: uppercase;
 }
 
-.editable-card-summary-right {
+.fr-editable-card-summary-right {
   min-width: 0;
   text-align: right;
   color: #101828;
@@ -20,13 +20,13 @@
   white-space: nowrap;
 }
 
-.editable-card-actions {
+.fr-editable-card-actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.editable-card-actions button {
+.fr-editable-card-actions button {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   background: #ffffff;
@@ -35,7 +35,7 @@
   cursor: pointer;
 }
 
-.editable-card-actions button:disabled {
+.fr-editable-card-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }

@@ -1,6 +1,7 @@
+import { useElementId } from '../shared/hooks/useElementId'
 import AutocompleteInput from '../shared/components/AutocompleteInput'
 import type {
-  ChipAggregationMode,
+  AggregationMode,
   DisplayType,
   ReportField,
 } from '../services/reportDefinition/types'
@@ -11,8 +12,8 @@ type DisplayTypeOption = {
   label: string
 }
 
-type ChipAggregationOption = {
-  value: ChipAggregationMode
+type AggregationOption = {
+  value: AggregationMode
   label: string
 }
 
@@ -21,11 +22,11 @@ type ColumnDetailEditorProps = {
   columnLabel: string
   sourceOptions: string[]
   displayTypeOptions: DisplayTypeOption[]
-  chipAggregationOptions: ChipAggregationOption[]
+  aggregationOptions: AggregationOption[]
   onSourceChange: (nextValue: string) => void
   onLabelChange: (nextValue: string) => void
   onDisplayTypeChange: (nextValue: DisplayType) => void
-  onChipAggregationChange: (nextValue: ChipAggregationMode) => void
+  onAggregationChange: (nextValue: AggregationMode) => void
 }
 
 function ColumnDetailEditor({
@@ -33,26 +34,31 @@ function ColumnDetailEditor({
   columnLabel,
   sourceOptions,
   displayTypeOptions,
-  chipAggregationOptions,
+  aggregationOptions,
   onSourceChange,
   onLabelChange,
   onDisplayTypeChange,
-  onChipAggregationChange,
+  onAggregationChange,
 }: ColumnDetailEditorProps) {
+  const typeHelpId = useElementId(`type-help-${field.id}`)
+  const sourceId = useElementId(`mapping-${field.id}`)
+  const labelId = useElementId(`label-${field.id}`)
+  const displayTypeId = useElementId(`display-type-${field.id}`)
+  const aggregationId = useElementId(`aggregation-${field.id}`)
   return (
-    <div className="column-detail-editor drag-block">
-      <label htmlFor={`mapping-${field.id}`}>{columnLabel}</label>
+    <div className="fr-column-detail-editor fr-drag-block">
+      <label htmlFor={sourceId}>{columnLabel}</label>
       <AutocompleteInput
-        id={`mapping-${field.id}`}
+        id={sourceId}
         value={field.sourceKey}
         options={sourceOptions}
-        title="Type or choose which source field fills this report column."
+        title="Type or choose which data endpoint fills this report column."
         onChange={onSourceChange}
       />
 
-      <label htmlFor={`label-${field.id}`}>Display label</label>
+      <label htmlFor={labelId}>Display label</label>
       <input
-        id={`label-${field.id}`}
+        id={labelId}
         type="text"
         value={field.label}
         title="Header text shown in the report output. You can override it."
@@ -61,20 +67,20 @@ function ColumnDetailEditor({
         }}
       />
 
-      <div className="display-type-heading">
-        <label htmlFor={`display-type-${field.id}`}>Display type</label>
-        <span className="display-type-help">
-          <button type="button" aria-label="About numeric conversion" aria-describedby={`type-help-${field.id}`}>
+      <div className="fr-display-type-heading">
+        <label htmlFor={displayTypeId}>Display type</label>
+        <span className="fr-display-type-help">
+          <button type="button" aria-label="About numeric conversion" aria-describedby={typeHelpId}>
             ?
           </button>
-          <span id={`type-help-${field.id}`} role="tooltip">
+          <span id={typeHelpId} role="tooltip">
             Number, Decimal, and Currency convert numeric text to numbers. Invalid or missing values count as 0
             in calculations and totals. Original data is unchanged. Percent uses the same conversion: 0.25 is 25.00%.
           </span>
         </span>
       </div>
       <select
-        id={`display-type-${field.id}`}
+        id={displayTypeId}
         value={field.displayType}
         title="Choose how values in this column are formatted."
         onChange={(event) => {
@@ -89,22 +95,22 @@ function ColumnDetailEditor({
       </select>
 
       <label
-        htmlFor={`chip-aggregation-${field.id}`}
-        title="Controls how this column appears in summary chips above the chart."
+        htmlFor={aggregationId}
+        title="How this column is totalled in summary chips, group totals, and the grand total."
       >
-        Chip type
+        Total type
       </label>
       <select
-        id={`chip-aggregation-${field.id}`}
-        value={field.chipAggregation}
-        title="Controls how this column appears in summary chips above the chart."
+        id={aggregationId}
+        value={field.aggregation}
+        title="How this column is totalled in summary chips, group totals, and the grand total."
         onChange={(event) => {
-          onChipAggregationChange(event.target.value as ChipAggregationMode)
+          onAggregationChange(event.target.value as AggregationMode)
         }}
       >
-        {chipAggregationOptions.map((chipAggregationOption) => (
-          <option key={chipAggregationOption.value} value={chipAggregationOption.value}>
-            {chipAggregationOption.label}
+        {aggregationOptions.map((aggregationOption) => (
+          <option key={aggregationOption.value} value={aggregationOption.value}>
+            {aggregationOption.label}
           </option>
         ))}
       </select>

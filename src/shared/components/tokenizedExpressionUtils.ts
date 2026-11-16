@@ -3,10 +3,6 @@ export type TriggerState = {
   query: string
 }
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase()
-}
-
 export function getTriggerState(value: string, cursor: number): TriggerState | null {
   const cappedCursor = Math.max(0, Math.min(cursor, value.length))
   const prefix = value.slice(0, cappedCursor)
@@ -26,15 +22,4 @@ export function getTriggerState(value: string, cursor: number): TriggerState | n
     start: openIndex,
     query,
   }
-}
-
-export function filterTokenOptions(options: string[], query: string): string[] {
-  const normalizedQuery = normalize(query)
-  const uniqueOptions = Array.from(new Set(options))
-
-  if (!normalizedQuery) {
-    return uniqueOptions
-  }
-
-  return uniqueOptions.filter((option) => normalize(option).includes(normalizedQuery))
 }

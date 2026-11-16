@@ -1,16 +1,16 @@
-.column-detail-editor {
+.fr-column-detail-editor {
   display: grid;
   gap: 6px;
 }
 
-.column-detail-editor label {
+.fr-column-detail-editor label {
   font-size: 12px;
   color: #344054;
   font-weight: 600;
 }
 
-.column-detail-editor select,
-.column-detail-editor input {
+.fr-column-detail-editor select,
+.fr-column-detail-editor input {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   padding: 7px 9px;
@@ -18,10 +18,10 @@
   background: #ffffff;
 }
 
-.display-type-heading { display: flex; align-items: center; gap: 8px; }
-.display-type-help { position: relative; }
-.display-type-help button { border: 1px solid #d0d5dd; border-radius: 50%; background: white; cursor: help; }
-.display-type-help [role='tooltip'] {
+.fr-display-type-heading { display: flex; align-items: center; gap: 8px; }
+.fr-display-type-help { position: relative; }
+.fr-display-type-help button { border: 1px solid #d0d5dd; border-radius: 50%; background: white; cursor: help; }
+.fr-display-type-help [role='tooltip'] {
   display: none;
   position: absolute;
   z-index: 5;
@@ -35,5 +35,5 @@
   color: #344054;
   font-size: 13px;
 }
-.display-type-help:hover [role='tooltip'],
-.display-type-help button:focus-visible + [role='tooltip'] { display: block; }
+.fr-display-type-help:hover [role='tooltip'],
+.fr-display-type-help button:focus-visible + [role='tooltip'] { display: block; }

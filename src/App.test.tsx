@@ -4,17 +4,9 @@ import App from './App'
 
 vi.mock('./features/reportBuilder/ReportBuilderApp', () => {
   return {
-    default: ({
-      initialTableOrientation,
-      initialAggregateMode,
-      initialEditMode,
-    }: {
-      initialTableOrientation?: string
-      initialAggregateMode?: string
-      initialEditMode?: boolean
-    }) => (
+    default: ({ role, initialEditMode }: { role?: string, initialEditMode?: boolean }) => (
       <div data-testid="app-wrapper-props">
-        {JSON.stringify({ initialTableOrientation, initialAggregateMode, initialEditMode })}
+        {JSON.stringify({ role, initialEditMode })}
       </div>
     ),
   }
@@ -22,16 +14,10 @@ vi.mock('./features/reportBuilder/ReportBuilderApp', () => {
 
 describe('App wrapper', () => {
   it('forwards props to ReportBuilderApp', () => {
-    render(
-      <App
-        initialTableOrientation="vertical"
-        initialAggregateMode="sum"
-        initialEditMode
-      />,
-    )
+    render(<App role="viewer" initialEditMode />)
 
     expect(screen.getByTestId('app-wrapper-props')).toHaveTextContent(
-      '{"initialTableOrientation":"vertical","initialAggregateMode":"sum","initialEditMode":true}',
+      '{"role":"viewer","initialEditMode":true}',
     )
   })
 })

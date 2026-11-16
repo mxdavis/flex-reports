@@ -1,0 +1,63 @@
+.fr-report-settings {
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 6px;
+}
+
+.fr-report-settings h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.fr-report-settings-controls {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.fr-report-settings-sheet-name,
+.fr-report-settings-currency-symbol {
+  display: grid;
+  gap: 6px;
+}
+
+.fr-report-settings-sheet-name {
+  flex: 1 1 360px;
+  max-width: 420px;
+}
+
+.fr-report-settings-currency-symbol {
+  width: 150px;
+}
+
+.fr-report-settings-sheet-name label {
+  font-size: 12px;
+  color: #344054;
+  font-weight: 600;
+}
+
+.fr-report-settings-currency-symbol label {
+  font-size: 12px;
+  color: #344054;
+  font-weight: 600;
+}
+
+.fr-report-settings-sheet-name input {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font: inherit;
+  background: #ffffff;
+}
+
+.fr-report-settings-currency-symbol select {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font: inherit;
+  background: #ffffff;
+}

@@ -1,68 +1,17 @@
+// Host data stays unchanged; rendering keys are managed separately.
 export type ReportRow = Readonly<Record<string, unknown>>
-
-// The billing demo owns this shape; the report component uses generic ReportRow records.
-export type BillingReportRow = {
-  id: string
-  workDate: string
-  personId: string
-  personName: string
-  clientId: string
-  clientName: string
-  originatingPersonId: string
-  task: string
-  hours: number
-  rate: number
-  total: number
-}
 
 export type SchemaDataType = 'string' | 'number' | 'date' | 'currency'
 
+// Describes one column available on the host's rows.
 export type SchemaField = {
   id: string
-  key: keyof ReportRow | string
+  key: string
   label: string
   dataType: SchemaDataType
 }
 
-// Mock fixture types. These mimic the records a host billing app would send in,
-// so we can build and test the report flow without a real data source.
-export type SeedPersonBilling = {
-  id: string
-  name: string
-}
-
-export type SeedClient = {
-  id: string
-  name: string
-  originatingPerson: string
-}
-
-export type SeedPersonClientTime = {
-  id: string
-  workDate: string
-  personId: string
-  clientId: string
-  task: string
-  timeWorked: number
-  rate: number
-  total: number
-}
-
-export type SeedFormula = {
+export type ReportFormula = {
   label: string
   expression: string
-}
-
-export type BillingSeed = {
-  personBilling: SeedPersonBilling[]
-  client: SeedClient[]
-  personClientTime: SeedPersonClientTime[]
-  formulas: SeedFormula[]
-}
-
-// Pluggable seam: a host app implements this to feed rows into the report
-// engine. The bundled SeedDataSource mimics a host by replaying mock JSON.
-export interface DataSource {
-  getReportRows(): ReportRow[]
-  getSchema(): SchemaField[]
 }

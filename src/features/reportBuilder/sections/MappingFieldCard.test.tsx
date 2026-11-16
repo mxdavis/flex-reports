@@ -9,8 +9,7 @@ function createField(): ReportField {
     sourceKey: 'hours',
     label: 'Hours',
     displayType: 'number',
-    chipAggregation: 'sum',
-    currencySymbol: '',
+    aggregation: 'sum',
   }
 }
 
@@ -29,7 +28,7 @@ describe('MappingFieldCard', () => {
         editingFieldDraft={null}
         sourceOptions={['hours']}
         displayTypeOptions={[{ value: 'number', label: 'Number' }]}
-        chipAggregationOptions={[{ value: 'sum', label: 'Sum' }]}
+        aggregationOptions={[{ value: 'sum', label: 'Sum' }]}
         minColumns={1}
         onMoveField={() => undefined}
         onStartEditField={onStartEditField}
@@ -41,7 +40,7 @@ describe('MappingFieldCard', () => {
         onSetEditingFieldSourceKey={() => undefined}
         onSetEditingFieldLabel={() => undefined}
         onSetEditingFieldDisplayType={() => undefined}
-        onSetEditingFieldChipAggregation={() => undefined}
+        onSetEditingFieldAggregation={() => undefined}
       />,
     )
 
@@ -63,7 +62,7 @@ describe('MappingFieldCard', () => {
         editingFieldDraft={null}
         sourceOptions={['hours']}
         displayTypeOptions={[{ value: 'number', label: 'Number' }]}
-        chipAggregationOptions={[{ value: 'sum', label: 'Sum' }]}
+        aggregationOptions={[{ value: 'sum', label: 'Sum' }]}
         minColumns={1}
         onMoveField={() => undefined}
         onStartEditField={() => undefined}
@@ -75,7 +74,7 @@ describe('MappingFieldCard', () => {
         onSetEditingFieldSourceKey={() => undefined}
         onSetEditingFieldLabel={() => undefined}
         onSetEditingFieldDisplayType={() => undefined}
-        onSetEditingFieldChipAggregation={() => undefined}
+        onSetEditingFieldAggregation={() => undefined}
       />,
     )
 

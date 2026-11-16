@@ -1,9 +1,9 @@
 import TokenizedExpressionInput from '../shared/components/TokenizedExpressionInput'
-import type { SeedFormula } from '../services/adapters'
+import type { ReportFormula } from '../services/adapters'
 import './FormulaDetailEditor.css'
 
 type FormulaDetailEditorProps = {
-  formula: SeedFormula
+  formula: ReportFormula
   tokenOptions: string[]
   onLabelChange: (nextValue: string) => void
   onExpressionChange: (nextValue: string) => void
@@ -23,7 +23,7 @@ function FormulaDetailEditor({
 }: FormulaDetailEditorProps) {
   return (
     <>
-      <div className="formula-item-edit-grid">
+      <div className="fr-formula-item-edit-grid">
         <label htmlFor={labelInputId}>Label</label>
         <input
           id={labelInputId}
@@ -44,7 +44,7 @@ function FormulaDetailEditor({
           onChange={onExpressionChange}
         />
       </div>
-      {error && <p className="formula-error">{error}</p>}
+      {error && <p className="fr-formula-error">{error}</p>}
     </>
   )
 }

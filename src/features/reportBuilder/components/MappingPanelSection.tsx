@@ -1,22 +1,22 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
+import { useElementId } from '../../../shared/hooks/useElementId'
 import MappingFieldCard from '../sections/MappingFieldCard'
 import type {
-  ChipAggregationMode,
+  AggregationMode,
   DisplayType,
   ReportField,
 } from '../../../services/reportDefinition/types'
-import ChevronToggleIcon from '../../../shared/icons/ChevronToggleIcon'
+import SectionTitleRow from '../../../shared/components/SectionTitleRow'
+import type { NewColumnDraft } from '../state/uiState'
 import './MappingPanelSection.css'
 
 export type MappingPanelSectionProps = {
   fields: ReportField[]
-  isAddingColumn: boolean
-  addColumnPosition: number
-  addColumnSourceKey: string
-  addColumnLabel: string
-  addColumnDisplayType: DisplayType
-  addColumnChipAggregation: ChipAggregationMode
+  // The Add column form's draft, or null when the form is closed.
+  newColumn: NewColumnDraft | null
   maxColumns: number
+  showTips: boolean
+  getFieldWarning: (field: ReportField) => string | null
   minColumns: number
   draggedFieldId: string | null
   dragOverFieldId: string | null
@@ -24,14 +24,14 @@ export type MappingPanelSectionProps = {
   editingFieldDraft: ReportField | null
   sourceOptions: string[]
   displayTypeOptions: Array<{ value: DisplayType, label: string }>
-  chipAggregationOptions: Array<{ value: ChipAggregationMode, label: string }>
+  aggregationOptions: Array<{ value: AggregationMode, label: string }>
   onStartAddColumn: () => void
   onCancelAddColumn: () => void
   onAddColumnPositionChange: (value: number) => void
   onAddColumnSourceKeyChange: (value: string) => void
   onAddColumnLabelChange: (value: string) => void
   onAddColumnDisplayTypeChange: (value: DisplayType) => void
-  onAddColumnChipAggregationChange: (value: ChipAggregationMode) => void
+  onAddColumnAggregationChange: (value: AggregationMode) => void
   onSaveNewColumn: () => void
   onMoveField: (sourceId: string, targetId: string) => void
   onStartEditField: (field: ReportField) => void
@@ -43,19 +43,16 @@ export type MappingPanelSectionProps = {
   onSetEditingFieldSourceKey: (value: string) => void
   onSetEditingFieldLabel: (value: string) => void
   onSetEditingFieldDisplayType: (value: DisplayType) => void
-  onSetEditingFieldChipAggregation: (value: ChipAggregationMode) => void
+  onSetEditingFieldAggregation: (value: AggregationMode) => void
   isCollapsed?: boolean
   onToggleCollapsed?: () => void
 }
 function MappingPanelSection({
   fields,
-  isAddingColumn,
-  addColumnPosition,
-  addColumnSourceKey,
-  addColumnLabel,
-  addColumnDisplayType,
-  addColumnChipAggregation,
+  newColumn,
   maxColumns,
+  showTips,
+  getFieldWarning,
   minColumns,
   draggedFieldId,
   dragOverFieldId,
@@ -63,14 +60,14 @@ function MappingPanelSection({
   editingFieldDraft,
   sourceOptions,
   displayTypeOptions,
-  chipAggregationOptions,
+  aggregationOptions,
   onStartAddColumn,
   onCancelAddColumn,
   onAddColumnPositionChange,
   onAddColumnSourceKeyChange,
   onAddColumnLabelChange,
   onAddColumnDisplayTypeChange,
-  onAddColumnChipAggregationChange,
+  onAddColumnAggregationChange,
   onSaveNewColumn,
   onMoveField,
   onStartEditField,
@@ -82,36 +79,38 @@ function MappingPanelSection({
   onSetEditingFieldSourceKey,
   onSetEditingFieldLabel,
   onSetEditingFieldDisplayType,
-  onSetEditingFieldChipAggregation,
+  onSetEditingFieldAggregation,
   isCollapsed = false,
   onToggleCollapsed,
 }: MappingPanelSectionProps) {
+  const addColumnPositionId = useElementId('add-column-position')
+  const reportColumnsId = useElementId('report-columns')
+  const reportColumnsContentId = useElementId('report-columns-content')
   return (
-    <section id="report-columns" className="mapping-panel jump-target">
-      <div className="section-title-row">
-        <h2>Column Mapping</h2>
-        {onToggleCollapsed && (
-          <button
-            type="button"
-            className="collapse-toggle-button"
-            onClick={onToggleCollapsed}
-            aria-label={isCollapsed ? 'Expand columns' : 'Collapse columns'}
-            aria-expanded={!isCollapsed}
-            aria-controls="report-columns-content"
-            title={isCollapsed ? 'Expand columns' : 'Collapse columns'}
-          >
-            <ChevronToggleIcon direction={isCollapsed ? 'down' : 'up'} />
-          </button>
-        )}
-      </div>
+    <section id={reportColumnsId} className="fr-mapping-panel fr-jump-target">
+      <SectionTitleRow
+        title="Column Mapping"
+        sectionName="columns"
+        contentId={reportColumnsContentId}
+        isCollapsed={isCollapsed}
+        onToggleCollapsed={onToggleCollapsed}
+      />
       {!isCollapsed && (
-        <>
-          <p className="mapping-help">
+        <div id={reportColumnsContentId}>
+          <p className="fr-mapping-help">
             Build your report layout here. Choose what each column pulls from,
             rename the header users see, and drag cards to reorder the final output.
           </p>
-          {!isAddingColumn && (
-            <div className="formula-add-card">
+          {showTips && (
+            <p className="fr-mapping-tip">
+              <strong>Tip:</strong> Grouping nests by each column from the left. Put the columns you
+              group by first, then the column that names each row, then your numbers. To choose how
+              a column adds up in group totals, edit the column and set
+              its <strong>Total type</strong> (for example Sum for hours, Average for a rate).
+            </p>
+          )}
+          {!newColumn && (
+            <div className="fr-add-card">
               <button
                 type="button"
                 onClick={onStartAddColumn}
@@ -123,13 +122,13 @@ function MappingPanelSection({
               <small>{fields.length}/{maxColumns} columns</small>
             </div>
           )}
-          {isAddingColumn && (
-            <div className="formula-editor" id="report-columns-content">
-              <div className="formula-editor-grid">
-                <label htmlFor="add-column-position">Column number</label>
+          {newColumn && (
+            <div className="fr-editor">
+              <div className="fr-editor-grid">
+                <label htmlFor={addColumnPositionId}>Column number</label>
                 <select
-                  id="add-column-position"
-                  value={addColumnPosition}
+                  id={addColumnPositionId}
+                  value={newColumn.position}
                   title="Insert this new column at the selected position. Existing columns will shift right."
                   onChange={(event) => {
                     onAddColumnPositionChange(Number(event.target.value))
@@ -142,24 +141,17 @@ function MappingPanelSection({
                 </select>
               </div>
               <ColumnDetailEditor
-                field={{
-                  id: 'add-column',
-                  sourceKey: addColumnSourceKey,
-                  label: addColumnLabel,
-                  displayType: addColumnDisplayType,
-                  chipAggregation: addColumnChipAggregation,
-                  currencySymbol: '',
-                }}
+                field={newColumn.draft}
                 columnLabel="Data point"
                 sourceOptions={sourceOptions}
                 displayTypeOptions={displayTypeOptions}
-                chipAggregationOptions={chipAggregationOptions}
+                aggregationOptions={aggregationOptions}
                 onSourceChange={onAddColumnSourceKeyChange}
                 onLabelChange={onAddColumnLabelChange}
                 onDisplayTypeChange={onAddColumnDisplayTypeChange}
-                onChipAggregationChange={onAddColumnChipAggregationChange}
+                onAggregationChange={onAddColumnAggregationChange}
               />
-              <div className="formula-editor-actions">
+              <div className="fr-editor-actions">
                 <button
                   type="button"
                   onClick={onSaveNewColumn}
@@ -174,12 +166,13 @@ function MappingPanelSection({
               </small>
             </div>
           )}
-          {!isAddingColumn && (
-            <div className="mapping-grid" id="report-columns-content">
+          {!newColumn && (
+            <div className="fr-mapping-grid">
               {fields.map((field, index) => (
                 <MappingFieldCard
                   key={field.id}
                   field={field}
+                  warning={getFieldWarning(field)}
                   index={index}
                   fieldsLength={fields.length}
                   draggedFieldId={draggedFieldId}
@@ -188,7 +181,7 @@ function MappingPanelSection({
                   editingFieldDraft={editingFieldDraft}
                   sourceOptions={sourceOptions}
                   displayTypeOptions={displayTypeOptions}
-                  chipAggregationOptions={chipAggregationOptions}
+                  aggregationOptions={aggregationOptions}
                   minColumns={minColumns}
                   onMoveField={onMoveField}
                   onStartEditField={onStartEditField}
@@ -200,12 +193,12 @@ function MappingPanelSection({
                   onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
                   onSetEditingFieldLabel={onSetEditingFieldLabel}
                   onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
-                  onSetEditingFieldChipAggregation={onSetEditingFieldChipAggregation}
+                  onSetEditingFieldAggregation={onSetEditingFieldAggregation}
                 />
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
     </section>
   )

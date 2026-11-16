@@ -1,28 +1,31 @@
-import type { ReportRow, SeedFormula } from '../../services/adapters/types'
-import type { ReportField } from '../../services/reportDefinition/types'
+import type { ReportRow, SchemaField } from '../../services/adapters'
+import type { ReportDefinition } from '../../services/reportDefinition/types'
 
-export type AggregateMode = 'none' | 'sum' | 'avg' | 'count' | 'distinct'
-export type TableOrientation = 'horizontal' | 'vertical'
+export type { AggregationMode, TableOrientation } from '../../services/reportDefinition/types'
 
-export type ReportDefinition = {
-  fields: ReportField[]
-  formulas: SeedFormula[]
-  sheetName: string
-  currencySymbol: string
-}
+export type ReportRole = 'editor' | 'viewer'
+
+export type ExportFormat = 'print' | 'pdf' | 'xlsx' | 'csv'
 
 export type ReportBuilderAppProps = {
-  records: readonly ReportRow[]
-  initialReportDefinition?: Partial<ReportDefinition>
-  onReportDefinitionChange?: (definition: ReportDefinition) => void
-  canEditReport?: boolean
-  initialTableOrientation?: TableOrientation
-  initialAggregateMode?: AggregateMode
+  // Columns available on `rows`. Discovered across all rows as text when omitted.
+  schema?: SchemaField[]
+  // Host data. While it's undefined the builder shows "Loading report…".
+  rows?: ReportRow[]
+  // Saved report to start from. Defaults are generated from the schema when omitted.
+  reportDefinition?: ReportDefinition
+  // Viewers can explore but never save. Hosts must still check permissions in onSave.
+  role?: ReportRole
+  // Called with the full definition when an editor clicks Save. Throw/reject to show an error.
+  onSave?: (definition: ReportDefinition) => void | Promise<void>
   initialEditMode?: boolean
-}
-
-export type ReportBuilderOptions = ReportBuilderAppProps & {
-  initialTableOrientation: TableOrientation
-  initialAggregateMode: AggregateMode
-  initialEditMode: boolean
+  // Maximum displayed/printed report rows (1–1,000; defaults to 1,000).
+  // Calculations and grouping always use every incoming row.
+  maxVisibleRows?: number
+  // Runs on built-in sample data with localStorage saving, for local
+  // development and demos. Host apps never set this; rows/schema are ignored.
+  sandbox?: boolean
+  // Which export formats viewers and editors can use. Defaults to all of them;
+  // false turns exporting off.
+  exports?: boolean | ExportFormat[]
 }

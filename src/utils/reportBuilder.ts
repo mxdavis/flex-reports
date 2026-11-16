@@ -1,9 +1,16 @@
-import type { SeedFormula } from '../services/adapters'
+import type { ReportFormula } from '../services/adapters'
+import { DEFAULT_CURRENCY_SYMBOL } from '../services/reportDefinition/displayType'
 import type { DisplayType } from '../services/reportDefinition/types'
 
 type FormatCellOptions = {
   currencySymbol?: string
 }
+
+// Built once: constructing Intl formatters per cell dominated render time on
+// large reports.
+const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })
+const TWO_DECIMALS_FORMAT = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const WHOLE_NUMBER_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
 export function toReportNumber(value: unknown): number {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0
@@ -14,10 +21,26 @@ export function toReportNumber(value: unknown): number {
   return Number.isFinite(number) ? number : 0
 }
 
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
+
+// A date-only value ("2026-07-01") is a calendar day, so it's read in the
+// viewer's timezone. new Date("2026-07-01") would read it as UTC midnight and
+// show the previous day west of UTC. Values with a time are real instants.
+function parseDate(value: unknown): Date {
+  if (value instanceof Date) return value
+  const text = String(value).trim()
+  const dateOnly = DATE_ONLY.exec(text)
+  if (dateOnly) {
+    const parsed = new Date(`${text}T00:00:00`)
+    const valid = parsed.getFullYear() === Number(dateOnly[1])
+      && parsed.getMonth() === Number(dateOnly[2]) - 1 && parsed.getDate() === Number(dateOnly[3])
+    return valid ? parsed : new Date(Number.NaN)
+  }
+  return new Date(text)
+}
+
 export function isValidReportDate(value: unknown): boolean {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
-  const parsed = new Date(`${value}T00:00:00Z`)
-  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+  return value !== null && value !== undefined && Number.isFinite(parseDate(value).getTime())
 }
 
 export function formatCellValue(
@@ -25,103 +48,55 @@ export function formatCellValue(
   displayType: DisplayType,
   options?: FormatCellOptions,
 ): string {
+  if ((displayType === 'string' || displayType === 'date') && value == null) return ''
+
+  if (typeof value === 'number' && Number.isNaN(value)) {
+    // Broken formulas evaluate to NaN; totals show the same label.
+    return 'Invalid formula'
+  }
+
   if (displayType === 'string') {
-    if (value === null || value === undefined) return ''
     return typeof value === 'object' ? JSON.stringify(value) : String(value)
   }
+
   if (displayType === 'date') {
-    if (value === null || value === undefined) return ''
-    if (!isValidReportDate(value)) return String(value)
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC',
-    }).format(new Date(`${value}T00:00:00Z`))
+    const parsedDate = parseDate(value)
+    if (Number.isNaN(parsedDate.getTime())) {
+      return String(value)
+    }
+
+    return DATE_FORMAT.format(parsedDate)
   }
-  if (typeof value === 'number' && !Number.isFinite(value)) return 'Invalid calculation'
+
   const number = toReportNumber(value)
-  const fixed = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
   switch (displayType) {
     case 'currency':
-      return `${number < 0 ? '-' : ''}${options?.currencySymbol || '$'}${fixed.format(Math.abs(number))}`
+      return `${number < 0 ? '-' : ''}${options?.currencySymbol || DEFAULT_CURRENCY_SYMBOL}${TWO_DECIMALS_FORMAT.format(Math.abs(number))}`
     case 'number':
-      return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(number)
+      return WHOLE_NUMBER_FORMAT.format(number)
+    case 'decimal':
+      return TWO_DECIMALS_FORMAT.format(number)
     case 'percent':
-      return `${fixed.format(number * 100)}%`
+      return `${TWO_DECIMALS_FORMAT.format(number * 100)}%`
     default:
-      return fixed.format(number)
+      return String(value)
   }
 }
 
-export function getNextFieldId(existingIds: string[]): string {
+// The next name in a numbered series: ['field-1', 'field-4'] with prefix
+// 'field-' gives 'field-5'. Names outside the series are ignored.
+export function getNextSequencedName(prefix: string, existingNames: string[]): string {
   let maxSequence = 0
-
-  for (const id of existingIds) {
-    const match = /^field-(\d+)$/.exec(id)
-    if (!match) {
-      continue
-    }
-
-    const sequence = Number(match[1])
-    if (Number.isFinite(sequence) && sequence > maxSequence) {
-      maxSequence = sequence
-    }
+  for (const name of existingNames) {
+    if (!name.startsWith(prefix)) continue
+    const sequence = Number(name.slice(prefix.length))
+    if (Number.isInteger(sequence) && sequence > maxSequence) maxSequence = sequence
   }
-
-  return `field-${maxSequence + 1}`
+  return `${prefix}${maxSequence + 1}`
 }
 
-export function getNextFormulaLabel(existingLabels: string[]): string {
-  let maxSequence = 0
-
-  for (const label of existingLabels) {
-    const match = /^formula(\d+)$/.exec(label)
-    if (!match) {
-      continue
-    }
-
-    const sequence = Number(match[1])
-    if (Number.isFinite(sequence) && sequence > maxSequence) {
-      maxSequence = sequence
-    }
-  }
-
-  return `formula${maxSequence + 1}`
-}
-
-export function validateFormulaInput(
-  formulas: SeedFormula[],
-  candidate: SeedFormula,
-  options?: { ignoreLabel?: string },
-): string {
-  const label = candidate.label.trim()
-  const expression = candidate.expression.trim()
-
-  if (!label || !expression) {
-    return 'Label and expression are required.'
-  }
-
-  if (!/^[A-Za-z][A-Za-z0-9_ ]*$/.test(label)) {
-    return 'Label must start with a letter and use only letters, numbers, spaces, and _.'
-  }
-
-  const normalizedLabel = label.toLowerCase()
-  const ignoredLabel = options?.ignoreLabel?.toLowerCase()
-  const hasDuplicate = formulas.some((formula) => {
-    const currentLabel = formula.label.toLowerCase()
-    if (ignoredLabel && currentLabel === ignoredLabel) {
-      return false
-    }
-
-    return currentLabel === normalizedLabel
-  })
-
-  if (hasDuplicate) {
-    return `A formula with label "${label}" already exists.`
-  }
-
-  return ''
-}
-
-export function sortFormulasByLabel(items: SeedFormula[]): SeedFormula[] {
+export function sortFormulasByLabel(items: ReportFormula[]): ReportFormula[] {
   return [...items].sort((left, right) => {
     return left.label.localeCompare(right.label, undefined, { sensitivity: 'base' })
   })

@@ -1,11 +1,11 @@
-import type { DataSource, ReportRow, SchemaField } from './types'
+import type { ReportRow, SchemaField } from './types'
 
 const rowKeys = new WeakMap<ReportRow, string>()
 let nextRowKey = 0
 
-function validateValue(value: unknown, depth: number, parents: Set<object>): void {
-  if (depth > 10) throw new Error('Report data exceeds 10 nesting levels.')
+function validateValue(value: unknown, parents: Set<object>): void {
   if (value == null || ['string', 'number', 'boolean'].includes(typeof value)) return
+  if (value instanceof Date) return
   if (typeof value !== 'object') throw new Error('Report data must contain JSON-compatible values.')
   if (parents.has(value)) throw new Error('Report data contains a circular reference.')
   if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
@@ -14,7 +14,7 @@ function validateValue(value: unknown, depth: number, parents: Set<object>): voi
   if (Object.getOwnPropertySymbols(value).length > 0) throw new Error('Symbol properties are not supported in report data.')
   parents.add(value)
   for (const child of Object.values(value)) {
-    validateValue(child, typeof child === 'object' && child !== null ? depth + 1 : depth, parents)
+    validateValue(child, parents)
   }
   parents.delete(value)
 }
@@ -28,21 +28,16 @@ export function getRowKey(row: ReportRow): string {
   return key
 }
 
-export function createRecordsDataSource(records: readonly ReportRow[]): DataSource {
+export function createRecordsDataSource(records: readonly ReportRow[]) {
   if (!Array.isArray(records)) throw new Error('Supply an array of record objects.')
-  if (records.length > 1000) throw new Error('Report data exceeds 1,000 rows.')
-  validateValue(records, 0, new Set())
-  if (new TextEncoder().encode(JSON.stringify(records)).length > 5 * 1024 * 1024) {
-    throw new Error('Report data exceeds 5 MiB.')
-  }
+  validateValue(records, new Set())
   const keys = new Set<string>()
   for (const [index, record] of records.entries()) {
-    if (!record || typeof record !== 'object' || Array.isArray(record)) {
+    if (!record || typeof record !== 'object' || Array.isArray(record) || record instanceof Date) {
       throw new Error(`Row ${index + 1} must be a record object.`)
     }
     for (const key of Object.keys(record)) keys.add(key)
   }
-  if (keys.size > 50) throw new Error('Report data exceeds 50 fields.')
   const schema: SchemaField[] = Array.from(keys, (key, index) => ({
     id: `field-${index + 1}`, key, label: key, dataType: 'string',
   }))

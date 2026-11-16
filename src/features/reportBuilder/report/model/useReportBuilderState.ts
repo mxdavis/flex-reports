@@ -1,106 +1,144 @@
-import { useEffect, useMemo, useReducer, useRef, useState, type Dispatch, type SetStateAction } from 'react'
-import { createRecordsDataSource } from '../../../../services/adapters/recordsDataSource'
-import type { SeedFormula } from '../../../../services/adapters/types'
-import { generateDefaultReportData } from '../../../../services/reportDefinition/storage'
-import { DEFAULT_CURRENCY_SYMBOL, DEFAULT_SHEET_NAME, MAX_REPORT_COLUMNS } from '../../config'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import type { ReportFormula, SandboxData, SchemaField } from '../../../../services/adapters'
+import { generateDefaultReportDefinition, isFromNewerVersion, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
+import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
-  createInitialUiState,
-  uiReducer,
-} from '../../state/uiState'
-import type { ReportBuilderOptions } from '../../types'
-import { getNextFormulaLabel, sortFormulasByLabel } from '../../../../utils/reportBuilder'
-import type { ChipAggregationMode, DisplayType, ReportData, SourceColumn } from '../../../../services/reportDefinition/types'
+  REPORT_DEFINITION_VERSION,
+  type ReportDefinition,
+  type ReportField,
+  type SourceColumn,
+} from '../../../../services/reportDefinition/types'
+import { createInitialUiState, uiReducer } from '../../state/uiState'
+import type { ReportBuilderAppProps } from '../../types'
+import { getNextSequencedName } from '../../../../utils/reportBuilder'
+import { resolveReportSource } from './resolveReportSource'
+import { useReportSave } from './useReportSave'
+
+export type ReportBuilderStateArgs = Omit<ReportBuilderAppProps, 'initialEditMode'> & {
+  initialEditMode: boolean
+  // Set only in sandbox mode, once the sample data has loaded (see useSandboxData).
+  sandboxData?: SandboxData
+}
 
 export function useReportBuilderState({
-  records,
-  initialReportDefinition,
-  onReportDefinitionChange,
-  canEditReport = true,
-  initialTableOrientation,
-  initialAggregateMode,
+  schema: hostSchema,
+  rows: hostRows,
+  reportDefinition,
+  role = 'editor',
+  onSave,
   initialEditMode,
-}: ReportBuilderOptions) {
-  const input = useMemo(() => {
-    try {
-      const source = createRecordsDataSource(records)
-      return { rows: source.getReportRows(), schema: source.getSchema(), error: '' }
-    } catch (error) {
-      return { rows: [], schema: [], error: error instanceof Error ? error.message : 'Invalid report data.' }
+  sandboxData,
+}: ReportBuilderStateArgs) {
+  // The schema is compared by content, so a host passing an inline array
+  // doesn't make every render recompute the report.
+  const schemaKey = hostSchema ? JSON.stringify(hostSchema) : ''
+  const stableSchema = useMemo(() => (schemaKey ? JSON.parse(schemaKey) as SchemaField[] : undefined), [schemaKey])
+  const source = useMemo(
+    () => resolveReportSource(hostRows, stableSchema, sandboxData),
+    [hostRows, stableSchema, sandboxData],
+  )
+  const { rows, isSandbox } = source
+  useEffect(() => {
+    if (source.error) console.error(`[flex-reports] ${source.error}`)
+  }, [source.error])
+  const sourceColumns: SourceColumn[] = source.schema
+
+  const [initialDefinition, setInitialDefinition] = useState<ReportDefinition>(() => (isSandbox
+    ? loadSandboxDefinition(sourceColumns, source.seedFormulas)
+    : normalizeReportDefinition(reportDefinition, sourceColumns)))
+
+  const [fields, setFields] = useState<ReportField[]>(initialDefinition.fields)
+
+  // Without a saved definition, the columns are defaults for the schema. If the
+  // schema changes while they're untouched (e.g. mounted with empty rows while
+  // loading), rebuild them for the new schema and treat that as the starting point.
+  const columnsKey = sourceColumns.map((column) => `${column.key}:${column.dataType}`).join('|')
+  const [defaultsColumnsKey, setDefaultsColumnsKey] = useState(columnsKey)
+  if (columnsKey !== defaultsColumnsKey) {
+    setDefaultsColumnsKey(columnsKey)
+    const usesDefaults = !isSandbox && reportDefinition === undefined
+    if (usesDefaults && JSON.stringify(fields) === JSON.stringify(initialDefinition.fields)) {
+      const defaultFields = generateDefaultReportDefinition(sourceColumns).fields
+      setFields(defaultFields)
+      setInitialDefinition((previous) => ({ ...previous, fields: defaultFields }))
     }
-  }, [records])
-  const rows = input.rows
-  const sourceColumns = useMemo<SourceColumn[]>(() => input.schema, [input.schema])
-  const defaults = useMemo(() => generateDefaultReportData(sourceColumns), [sourceColumns])
-  const [editedReportData, setEditedReportData] = useState<ReportData | null>(() => {
-    return initialReportDefinition?.fields
-      ? { version: 4, fields: initialReportDefinition.fields.slice(0, MAX_REPORT_COLUMNS) }
-      : null
-  })
-  const reportData = editedReportData ?? defaults
-  const setReportData: Dispatch<SetStateAction<ReportData>> = (update) => {
-    setEditedReportData((previous) => typeof update === 'function' ? update(previous ?? defaults) : update)
   }
-  const [formulas, setFormulas] = useState<SeedFormula[]>(() => sortFormulasByLabel(initialReportDefinition?.formulas ?? []))
-  const [newFormula, setNewFormula] = useState<SeedFormula>(() => ({
-    label: getNextFormulaLabel(formulas.map((formula) => formula.label)),
+  const [formulas, setFormulas] = useState<ReportFormula[]>(initialDefinition.formulas)
+  const [sheetName, setSheetName] = useState(initialDefinition.sheetName)
+  const [currencySymbol, setCurrencySymbol] = useState(initialDefinition.currencySymbol)
+  const [newFormula, setNewFormula] = useState<ReportFormula>(() => ({
+    label: getNextSequencedName('formula', initialDefinition.formulas.map((formula) => formula.label)),
     expression: '',
   }))
   const [formulaError, setFormulaError] = useState('')
   const [editingFormulaError, setEditingFormulaError] = useState('')
-  const [addColumnSourceKey, setAddColumnSourceKey] = useState('')
-  const [addColumnLabel, setAddColumnLabel] = useState('')
-  const [addColumnDisplayType, setAddColumnDisplayType] = useState<DisplayType>('string')
-  const [addColumnChipAggregation, setAddColumnChipAggregation] = useState<ChipAggregationMode>('count')
-  const [sheetName, setSheetName] = useState(initialReportDefinition?.sheetName ?? DEFAULT_SHEET_NAME)
-  const [currencySymbol, setCurrencySymbol] = useState(initialReportDefinition?.currencySymbol ?? DEFAULT_CURRENCY_SYMBOL)
 
   const [ui, dispatchUi] = useReducer(
     uiReducer,
-    { canEditReport, initialEditMode, initialTableOrientation, initialAggregateMode },
+    { initialEditMode, initialView: initialDefinition.view },
     createInitialUiState,
   )
 
-  const tableScrollRef = useRef<HTMLDivElement | null>(null)
-
-  const lastEmittedDefinition = useRef('')
+  // A report saved by a newer Flex Reports is shown read-only, so saving from
+  // this older version can't overwrite fields it doesn't understand.
+  const [isNewerVersion] = useState(() => !isSandbox && isFromNewerVersion(reportDefinition))
+  const canSave = role === 'editor' && !isNewerVersion && (isSandbox || onSave !== undefined)
+  const saveBlockedReason = role === 'editor' && isNewerVersion
+    ? 'This report was saved by a newer version of Flex Reports, so saving is turned off here to keep it from being overwritten.'
+    : ''
+  // Authoring tips are for editors only; viewers can explore but never see them.
+  const showTips = role === 'editor'
+  const isMissingSchema = !isSandbox && hostSchema === undefined
   useEffect(() => {
-    if (!onReportDefinitionChange) return
-    const definition = { fields: reportData.fields, formulas, sheetName, currencySymbol }
-    const signature = JSON.stringify(definition)
-    if (lastEmittedDefinition.current === signature) return
-    lastEmittedDefinition.current = signature
-    onReportDefinitionChange(definition)
-  }, [reportData, formulas, sheetName, currencySymbol, onReportDefinitionChange])
+    if (isMissingSchema) {
+      console.warn('[flex-reports] `rows` was passed without `schema`; discovering columns across all rows as text.')
+    }
+  }, [isMissingSchema])
+  useEffect(() => {
+    if (role === 'editor' && !isSandbox && !onSave) {
+      console.error('[flex-reports] role="editor" was passed without `onSave`; the Save button is hidden.')
+    }
+  }, [isSandbox, onSave, role])
+
+  const definition = useMemo<ReportDefinition>(() => ({
+    version: REPORT_DEFINITION_VERSION,
+    sheetName,
+    currencySymbol,
+    fields,
+    formulas,
+    view: {
+      orientation: ui.tableOrientation,
+      showTotals: ui.showTotals,
+      isGroupingEnabled: ui.isGroupingEnabled,
+      expandedLevels: ui.expandedLevels,
+    },
+  }), [currencySymbol, fields, formulas, sheetName, ui.expandedLevels, ui.isGroupingEnabled, ui.showTotals, ui.tableOrientation])
+
+  const saveState = useReportSave({ definition, baseline: initialDefinition, canSave, isSandbox, onSave })
+
+  const tableScrollRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const tableScrollElement = tableScrollRef.current
     if (!tableScrollElement) return
     tableScrollElement.scrollTo({ left: tableScrollElement.scrollWidth, behavior: 'smooth' })
-  }, [reportData.fields.length])
+  }, [fields.length])
 
   useEffect(() => {
     if (!ui.isTableFullscreen) return
     function handleEscape(event: KeyboardEvent): void {
-      if (event.key === 'Escape') dispatchUi({ type: 'setIsTableFullscreen', value: false })
+      if (event.key === 'Escape') dispatchUi({ type: 'set', changes: { isTableFullscreen: false } })
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
   }, [ui.isTableFullscreen])
 
-  useEffect(() => {
-    const nextMax = reportData.fields.length + 1
-    const nextPosition = Math.min(Math.max(ui.addColumnPosition, 1), nextMax)
-    if (nextPosition !== ui.addColumnPosition) {
-      dispatchUi({ type: 'setAddColumnPosition', value: nextPosition })
-    }
-  }, [reportData.fields.length, ui.addColumnPosition])
-
   return {
+    sourceError: source.error,
     rows,
-    inputError: input.error,
     sourceColumns,
-    reportData,
-    setReportData,
+    fields,
+    setFields,
     formulas,
     setFormulas,
     newFormula,
@@ -109,19 +147,14 @@ export function useReportBuilderState({
     setFormulaError,
     editingFormulaError,
     setEditingFormulaError,
-    addColumnSourceKey,
-    setAddColumnSourceKey,
-    addColumnLabel,
-    setAddColumnLabel,
-    addColumnDisplayType,
-    setAddColumnDisplayType,
-    addColumnChipAggregation,
-    setAddColumnChipAggregation,
     sheetName,
     setSheetName,
     currencySymbol,
     setCurrencySymbol,
-    canEditReport,
+    canSave,
+    saveBlockedReason,
+    showTips,
+    saveState,
     ui,
     dispatchUi,
     tableScrollRef,

@@ -15,6 +15,10 @@ const DRY_SCAN_DIRS = ['src']
 const DRY_SCAN_EXTENSIONS = new Set(['.ts', '.tsx'])
 const DRY_IGNORE_SUFFIXES = ['.test.ts', '.test.tsx']
 const DRY_BLOCK_SIZE_LINES = 20
+// The builder is embedded in host pages, so its classes are namespaced to
+// avoid clashing with the host's CSS. index.css styles only the sandbox page.
+const CSS_CLASS_PREFIX = 'fr-'
+const CSS_PREFIX_EXEMPT = new Set(['src/index.css'])
 
 function listFilesRecursive(dirPath) {
   const entries = readdirSync(dirPath, { withFileTypes: true })
@@ -131,6 +135,19 @@ function validateDuplicateBlocks(files, failures) {
   }
 }
 
+function validateCssClassPrefix(filePath, failures) {
+  const text = readFileSync(filePath, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/@import[^;]*;/g, '')
+    .replace(/\{[^{}]*\}/g, '{}')
+  const classNames = new Set(text.match(/\.[a-zA-Z][\w-]*/g) ?? [])
+  for (const className of classNames) {
+    if (!className.startsWith(`.${CSS_CLASS_PREFIX}`)) {
+      failures.push(`CSS class without "${CSS_CLASS_PREFIX}" prefix: ${className} in ${filePath}`)
+    }
+  }
+}
+
 function run() {
   const failures = []
   const dryCandidateFiles = []
@@ -160,6 +177,12 @@ function run() {
   }
 
   validateDuplicateBlocks(dryCandidateFiles, failures)
+
+  for (const filePath of listFilesRecursive('src')) {
+    if (filePath.endsWith('.css') && !CSS_PREFIX_EXEMPT.has(filePath)) {
+      validateCssClassPrefix(filePath, failures)
+    }
+  }
 
   validateLineLimit(REPORT_APP_PATH, MAX_REPORT_APP_LINES, failures)
 

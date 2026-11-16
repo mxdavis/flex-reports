@@ -1,0 +1,17 @@
+.fr-report-table th.fr-column-header-warning {
+  color: #b54708;
+}
+
+.fr-column-header-warning-icon {
+  cursor: help;
+}
+
+/* Read by screen readers; the icon carries it visually. */
+.fr-column-header-warning-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

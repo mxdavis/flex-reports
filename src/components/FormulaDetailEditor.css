@@ -1,17 +1,17 @@
-.formula-item-edit-grid {
+.fr-formula-item-edit-grid {
   display: grid;
   grid-template-columns: 110px 1fr;
   gap: 8px;
   align-items: center;
 }
 
-.formula-item-edit-grid label {
+.fr-formula-item-edit-grid label {
   font-size: 12px;
   color: #344054;
   font-weight: 600;
 }
 
-.formula-item-edit-grid input {
+.fr-formula-item-edit-grid input {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   padding: 7px 9px;
@@ -20,7 +20,7 @@
 }
 
 @media (max-width: 900px) {
-  .formula-item-edit-grid {
+  .fr-formula-item-edit-grid {
     grid-template-columns: 1fr;
     gap: 4px;
   }

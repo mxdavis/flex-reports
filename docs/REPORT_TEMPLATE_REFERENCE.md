@@ -1,80 +1,62 @@
 # Report Template Reference
 
-Purpose: capture examples of what customers should be able to build without code changes.
+Purpose: capture what customers should be able to build without code changes, and the
+shape of the saved report.
 
 ## Core requirement
 
-Customers must configure report columns from the UI.
+Customers configure report columns from the UI, over whatever data the host sends.
 
-- Semantic fields (People, Client, Hours, Rate, etc.) are mapped to customer source columns.
+- Columns map directly to the host's schema keys.
 - Display names are editable in the UI.
-- No hardcoded business column names in code for customer-specific reports.
+- Any data shape works; nothing is tied to particular field names.
 
 ## Column types
 
-A report column definition can be one of these:
+A report column (`fields[]` entry) points at one `sourceKey`, which is either:
 
-1. Source mapped column
-- Reads from a selected source column key.
-- Example: semantic field `people` mapped to `column1`.
+1. **A source column.** A key from the host's `schema`.
+   Example: `{ "sourceKey": "warehouse", "label": "Warehouse" }`.
 
-2. Formula column
-- Expression using other report columns.
-- Example: `hours * rate`.
+2. **A formula.** The label of an entry in `formulas[]`, evaluated per row.
+   Example formula: `{ "label": "lineTotal", "expression": "{{units}} * {{price}}" }`,
+   then a column with `"sourceKey": "lineTotal"`.
 
-3. Value template column
-- Literal template text with placeholders.
-- Placeholder format: `{{value_name}}`.
-- Example: `{{target_utilization}}` or `{{region_multiplier}}`.
+To use an outside constant such as a quota or target, put it on the rows as a field,
+where it can also vary per row.
 
 ## Example shape
 
 ```json
 {
-  "columns": [
-    {
-      "id": "people",
-      "label": "People",
-      "kind": "source",
-      "sourceKey": "column1"
-    },
-    {
-      "id": "gross_fees",
-      "label": "Gross Fees",
-      "kind": "formula",
-      "expression": "hours * rate"
-    },
-    {
-      "id": "quota",
-      "label": "Quarter Quota",
-      "kind": "value_template",
-      "template": "{{quarter_quota}}"
-    }
-  ]
+  "version": 1,
+  "sheetName": "Inventory",
+  "currencySymbol": "$",
+  "fields": [
+    { "id": "warehouse", "label": "Warehouse", "sourceKey": "warehouse", "displayType": "string", "aggregation": "distinct" },
+    { "id": "units", "label": "Units", "sourceKey": "units", "displayType": "number", "aggregation": "sum" },
+    { "id": "field-1", "label": "Line total", "sourceKey": "lineTotal", "displayType": "currency", "aggregation": "sum" }
+  ],
+  "formulas": [
+    { "label": "lineTotal", "expression": "{{units}} * {{price}}" }
+  ],
+  "view": { "orientation": "horizontal", "showTotals": true, "isGroupingEnabled": true, "expandedLevels": null }
 }
 ```
 
-## Package implications
-
-- The package ships generic semantics and a mapping UI.
-- Customer onboarding includes mapping source columns to semantics.
-- Saved mappings and report definitions are stored in app data, not code.
-
 ## Persisted reportData
 
-The host app must persist report configuration so users do not re-enter mappings
-every time.
+The host persists this definition so users don't re-enter their setup each time.
 
-- Store reportData with at least: column labels, semantic-to-source mappings,
-  formula definitions, and view/edit permission metadata.
-- A host-side generator can create starter reportData for first run
-  (for example a Rails service/helper).
+- Flex Reports hands the full definition to `onSave` when an editor clicks **Save report**.
+- The host stores it (DB, service API) and passes it back as `reportDefinition`.
+- A host-side generator can create starter definitions for first run, for example a Rails
+  service or helper that builds `fields` from the host's own column keys.
 
-## Edit mode permissions
+## Edit permissions
 
-- Not every user can edit report definitions.
-- UI must show edit controls only for users with edit permission.
-
-## Notes
-
-When a concrete sample file is provided, add it here or in a sibling file under `docs/` as a canonical reference example.
+- The host passes `role="editor"` or `role="viewer"`.
+- Viewers can explore everything, including edit mode, but never see Save. A refresh
+  resets them to the saved default view.
+- `role` is a UI convenience, not security. The host's `onSave` must check the user's
+  permissions in its own backend before persisting.
