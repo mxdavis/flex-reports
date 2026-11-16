@@ -70,9 +70,9 @@ function ColumnDetailEditor({
       <select
         id={displayTypeId}
         value={field.displayType}
-        title={'Choose how values in this column are formatted. Number, Decimal, and Currency convert numeric text '
-          + 'to numbers. Invalid or missing values count as 0 in calculations and totals. Original data is unchanged. '
-          + 'Percent uses the same conversion: 0.25 is 25.00%.'}
+        title={'Choose how values in this column are formatted. Number, Decimal, Currency, and Percent read numbers '
+          + 'even when they include commas or the currency symbol. Blank cells stay blank and aren\'t counted. '
+          + 'Anything else is shown as entered, left out of totals, and flagged. Percent shows 0.25 as 25.00%.'}
         onChange={(event) => {
           onDisplayTypeChange(event.target.value as DisplayType)
         }}

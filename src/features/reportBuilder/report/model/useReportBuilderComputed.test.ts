@@ -163,11 +163,26 @@ describe('useReportBuilderComputed', () => {
       currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
     }))
     expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'amount', displayType: 'decimal', aggregation: 'sum' })).toBe(300)
-    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'amount', displayType: 'decimal', aggregation: 'avg' })).toBe(75)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'amount', displayType: 'decimal', aggregation: 'avg' })).toBe(150)
     expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'decimalAmount', displayType: 'decimal', aggregation: 'sum' })).toBe(16)
-    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'decimalAmount', displayType: 'decimal', aggregation: 'avg' })).toBe(4)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'decimalAmount', displayType: 'decimal', aggregation: 'avg' })).toBeCloseTo(16 / 3)
     expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'twice', displayType: 'decimal', aggregation: 'sum' })).toBe(600)
     expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'twice', displayType: 'decimal', aggregation: 'avg' })).toBe(150)
+  })
+
+  it('keeps blanks blank, shows non-numbers as entered and leaves both out of averages', () => {
+    const rows = [{ amount: '$1,200.00' }, { amount: null }, { amount: 'N/A' }, { amount: '1,250' }, { amount: '' }]
+    const amount: ReportField = { id: 'amount', label: 'Amount', sourceKey: 'amount', displayType: 'currency', aggregation: 'avg' }
+    const { result } = renderHook(() => useReportBuilderComputed({
+      rows, sourceColumns: createRecordsDataSource(rows).getSchema(), reportFields: [amount],
+      formulas: [], currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
+    }))
+    expect(rows.map((row) => result.current.getFieldValue(row, amount))).toEqual(['$1,200.00', '', 'N/A', '$1,250.00', ''])
+    expect(result.current.getFieldTotal(rows, amount)).toBe(1225)
+    expect(result.current.getFieldTotal(rows, { ...amount, aggregation: 'sum' })).toBe(2450)
+    expect(result.current.issues).toEqual([
+      'Column Amount: 1 value isn\'t a number (row 3: "N/A"). It\'s shown as entered, left out of totals, and counted as 0 in formulas.',
+    ])
   })
 
   it('resolves only actual formula dependencies and preserves reference/calculation errors', () => {

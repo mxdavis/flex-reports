@@ -5,10 +5,30 @@ import { getDefaultDisplayType } from '../../../../services/reportDefinition/dis
 import type { ReportRow, ReportFormula } from '../../../../services/adapters'
 import type { AggregationMode, DisplayType, ReportField, SourceColumn, TableOrientation } from '../../../../services/reportDefinition/types'
 import { DEFAULT_CURRENCY_SYMBOL } from '../../config'
-import { formatCellValue, isValidReportDate, toReportNumber } from '../../../../utils/reportBuilder'
+import { formatCellValue, isBlankReportValue, isValidReportDate, parseReportNumber, toReportNumber } from '../../../../utils/reportBuilder'
 import { buildSummaryItems } from '../../summaryItems'
 import { getTotalDisplayType, isNumericDisplayType } from './fieldTotals'
 import { isBlank, type GetFieldValue } from './pivotLayout'
+
+type NonNumbers = { count: number, firstRow: number, firstValue: unknown }
+
+function findNonNumbers(rows: ReportRow[], getValue: (row: ReportRow) => unknown, currencySymbol: string): NonNumbers | undefined {
+  let found: NonNumbers | undefined
+  rows.forEach((row, index) => {
+    const value = getValue(row)
+    if (isBlankReportValue(value) || parseReportNumber(value, currencySymbol) !== undefined) return
+    if (found) found.count += 1
+    else found = { count: 1, firstRow: index + 1, firstValue: value }
+  })
+  return found
+}
+
+function describeNonNumbers({ count, firstRow, firstValue }: NonNumbers): string {
+  const example = `row ${firstRow}: ${JSON.stringify(firstValue)}`
+  return count === 1
+    ? `1 value isn't a number (${example}). It's shown as entered, left out of totals, and counted as 0 in formulas.`
+    : `${count.toLocaleString('en-US')} values aren't numbers (first in ${example}). They're shown as entered, left out of totals, and counted as 0 in formulas.`
+}
 
 // In vertical view each data row becomes a column, headed by its first-column value.
 export type VerticalColumn = {
@@ -87,6 +107,9 @@ export function useReportBuilderComputed({
     return getDefaultDisplayType(schemaField)
   }
 
+  // One currency symbol for the whole report.
+  const formatOptions = useMemo(() => ({ currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL }), [currencySymbol])
+
   const getFormulaValue = useCallback(function getFormulaValue(
     formulaLabel: string,
     cache: Map<string, number>,
@@ -102,7 +125,7 @@ export function useReportBuilderComputed({
     const result = evaluateFormula(expression, (reference) => {
       if (reference.startsWith('%')) return getFormulaValue(reference.slice(1), cache, visiting, row)
       if (sourceColumnByKey.has(reference)) {
-        return toReportNumber(Object.hasOwn(row, reference) ? row[reference] : undefined)
+        return toReportNumber(Object.hasOwn(row, reference) ? row[reference] : undefined, formatOptions.currencySymbol)
       }
       return getFormulaValue(reference, cache, visiting, row)
     })
@@ -110,7 +133,7 @@ export function useReportBuilderComputed({
     cache.set(label, value)
     visiting.delete(label)
     return value
-  }, [formulasByLabel, sourceColumnByKey])
+  }, [formatOptions, formulasByLabel, sourceColumnByKey])
 
   // Values are cached per row and source, so each cell's formula and format run
   // once per change of formulas/currency instead of on every render. Caches are
@@ -135,14 +158,14 @@ export function useReportBuilderComputed({
     }
   }, [formulasByLabel, getFormulaValue, sourceColumnByKey])
 
-  // One currency symbol for the whole report.
-  const formatOptions = useMemo(() => ({ currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL }), [currencySymbol])
-
+  // Number columns read numeric text as numbers; blanks stay blank and other
+  // text is kept as entered so it shows (and exports) unchanged.
   const getFieldRawValue = useCallback((row: ReportRow, field: ReportField): unknown => {
     const raw = getMappedRawValue(row, field.sourceKey)
-    return sourceColumnByKey.has(field.sourceKey) && isNumericDisplayType(field.displayType)
-      ? toReportNumber(raw) : raw
-  }, [getMappedRawValue, sourceColumnByKey])
+    if (!sourceColumnByKey.has(field.sourceKey) || !isNumericDisplayType(field.displayType)) return raw
+    if (isBlankReportValue(raw)) return null
+    return parseReportNumber(raw, formatOptions.currencySymbol) ?? raw
+  }, [formatOptions, getMappedRawValue, sourceColumnByKey])
 
   // A row's value for a column, formatted for display.
   const getFieldValue = useMemo<GetFieldValue>(() => {
@@ -156,13 +179,11 @@ export function useReportBuilderComputed({
       }
       const cached = rowCache.get(cacheKey)
       if (cached !== undefined) return cached
-      const raw = getFieldRawValue(row, field)
-      const value = raw === null && !sourceColumnByKey.has(field.sourceKey) ? ''
-        : formatCellValue(raw, field.displayType, formatOptions)
+      const value = formatCellValue(getFieldRawValue(row, field), field.displayType, formatOptions)
       rowCache.set(cacheKey, value)
       return value
     }
-  }, [formatOptions, getFieldRawValue, sourceColumnByKey])
+  }, [formatOptions, getFieldRawValue])
 
   const getAggregatedFieldValue = useCallback((
     rowsToAggregate: ReportRow[],
@@ -186,7 +207,8 @@ export function useReportBuilderComputed({
     let count = 0
     for (const row of rowsToAggregate) {
       const raw = getMappedRawValue(row, sourceKey)
-      const value = isSourceColumn ? toReportNumber(raw) : raw
+      // Blank and non-numeric source values are left out, so they don't lower averages.
+      const value = isSourceColumn ? parseReportNumber(raw, formatOptions.currencySymbol) : raw
       if (typeof value !== 'number') continue
       if (!Number.isFinite(value)) return Number.NaN
       total += value
@@ -195,7 +217,7 @@ export function useReportBuilderComputed({
     if (count === 0) return null
     if (!Number.isFinite(total)) return Number.NaN
     return mode === 'avg' ? total / count : total
-  }, [getMappedRawValue, sourceColumnByKey])
+  }, [formatOptions, getMappedRawValue, sourceColumnByKey])
 
   // Each column totals by its own aggregation setting, wherever totals appear
   // (summary chips, group totals, grand total), so e.g. a rate can average
@@ -234,6 +256,10 @@ export function useReportBuilderComputed({
       })) {
         issues.push(`Column ${field.label}: use valid dates. Original values are shown.`)
       }
+      const nonNumbers = isNumericDisplayType(field.displayType) && sourceColumnByKey.has(field.sourceKey)
+        ? findNonNumbers(rows, (row) => getMappedRawValue(row, field.sourceKey), formatOptions.currencySymbol)
+        : undefined
+      if (nonNumbers) issues.push(`Column ${field.label}: ${describeNonNumbers(nonNumbers)}`)
     }
     for (const formula of formulas) {
       if (rows.some((row) => !Number.isFinite(getFormulaValue(formula.label, new Map(), new Set(), row)))) {
@@ -241,7 +267,7 @@ export function useReportBuilderComputed({
       }
     }
     return issues
-  }, [formulas, getFormulaValue, getMappedRawValue, reportFields, rows])
+  }, [formatOptions, formulas, getFormulaValue, getMappedRawValue, reportFields, rows, sourceColumnByKey])
 
   return {
     issues,
