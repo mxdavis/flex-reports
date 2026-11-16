@@ -1,4 +1,4 @@
-import { formatFieldPath, parseFieldPath, readFieldPath } from '../../../../services/adapters/fieldPath'
+import { parseFieldPath, readFieldPath } from '../../../../services/adapters/fieldPath'
 import { getRowKey } from '../../../../services/adapters/recordsDataSource'
 import { useCallback, useEffect, useMemo } from 'react'
 import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
@@ -44,13 +44,10 @@ export function useReportBuilderComputed({
 
   // "%Fee" is always the Fee formula, never a data field: formulas are the
   // user's own, kept apart from the host's data even when names overlap.
-  const getSourceColumn = useCallback((reference: string) => {
-    if (reference.startsWith('%')) return undefined
-    const column = sourceColumnByKey.get(reference)
-    if (column) return column
-    const path = parseFieldPath(reference)
-    return path ? sourceColumnByKey.get(formatFieldPath(path)) : undefined
-  }, [sourceColumnByKey])
+  // Each field has one written form (see formatFieldPath), so it's found by that alone.
+  const getSourceColumn = useCallback((reference: string) => (
+    reference.startsWith('%') ? undefined : sourceColumnByKey.get(reference)
+  ), [sourceColumnByKey])
 
   // A new column's default header: the field's label, or the formula's name.
   const getSourceLabel = (reference: string) => (

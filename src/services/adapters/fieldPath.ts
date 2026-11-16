@@ -1,14 +1,19 @@
 export type FieldPath = readonly string[]
 
-const SIMPLE_SEGMENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/
+// A name that reads back unchanged when written plainly, e.g. "Unit Price" or
+// "Amount (2)". Dots (nesting), brackets, braces, quotes and backslashes need
+// the bracket form, as do names with spaces at either end (references are trimmed).
+const PLAIN_SEGMENT = /^[^\s.{}[\]"\\](?:[^.{}[\]"\\]*[^\s.{}[\]"\\])?$/
 
 export function isFieldPath(value: unknown): value is string[] {
   return Array.isArray(value) && value.length > 0 && value.every((segment) => typeof segment === 'string')
 }
 
-// Dots mean nesting. JSON arrays keep literal dots, empty keys and punctuation unambiguous.
+// Dots mean nesting. JSON arrays keep literal dots, empty keys and punctuation
+// unambiguous. A leading % marks a formula, so a field named that way is bracketed.
 export function formatFieldPath(path: FieldPath): string {
-  return path.every((segment) => SIMPLE_SEGMENT.test(segment)) ? path.join('.') : JSON.stringify(path)
+  const isPlain = !path[0]?.startsWith('%') && path.every((segment) => PLAIN_SEGMENT.test(segment))
+  return isPlain ? path.join('.') : JSON.stringify(path)
 }
 
 export function parseFieldPath(reference: string): FieldPath | null {

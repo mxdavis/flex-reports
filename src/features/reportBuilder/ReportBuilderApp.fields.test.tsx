@@ -70,7 +70,7 @@ describe('nested fields in the existing report editor', () => {
     ]
     const schema = createRecordsDataSource(rows).getSchema()
     const definition = generateDefaultReportDefinition(schema, [{
-      label: 'fee', expression: '{{metrics.hours}} * {{["metrics","rate"]}} + {{["metrics.hours"]}} + {{["a}}b"]}}',
+      label: 'fee', expression: '{{metrics.hours}} * {{metrics.rate}} + {{["metrics.hours"]}} + {{["a}}b"]}}',
     }])
     definition.fields = [
       ...definition.fields.filter((field) => ['client.name', 'task'].includes(field.sourceKey)),
@@ -171,5 +171,20 @@ describe('nested fields in the existing report editor', () => {
     render(<ReportBuilderApp rows={timeEntries} role="viewer" />)
     expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['clientId', 'hours'])
     expect(screen.queryByText('Acme')).toBeNull()
+  })
+
+  it('writes field names with spaces plainly in formulas: {{Unit Price}}', () => {
+    const rows = [{ product: 'Cable', quantity: 2, 'Unit Price': 10 }, { product: 'Dock', quantity: 1, 'Unit Price': 40 }]
+    const schema = createRecordsDataSource(rows).getSchema()
+    expect(schema.map((field) => field.key)).toEqual(['product', 'quantity', 'Unit Price'])
+    const definition = generateDefaultReportDefinition(schema, [{ label: 'Line total', expression: '{{quantity}} * {{Unit Price}}' }])
+    definition.fields = [
+      ...definition.fields.filter((field) => field.sourceKey === 'product'),
+      { id: 'total', label: 'Line total', sourceKey: '%Line total', displayType: 'number', aggregation: 'sum' },
+    ]
+    definition.view = { ...definition.view, showTotals: true }
+    render(<ReportBuilderApp rows={rows} reportDefinition={definition} role="viewer" />)
+    const cells = within(screen.getByRole('table')).getAllByRole('cell').map((cell) => cell.textContent)
+    expect(cells).toEqual(expect.arrayContaining(['20', '40', '60']))
   })
 })
