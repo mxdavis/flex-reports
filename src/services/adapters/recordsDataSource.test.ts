@@ -3,6 +3,26 @@ import { createRecordsDataSource, getRowKey } from './recordsDataSource'
 import { generateDefaultReportDefinition } from '../reportDefinition/normalize'
 
 describe('record input', () => {
+  it('discovers nested scalar paths across rows, keeping ids ordinary and dotted keys separate', () => {
+    const source = createRecordsDataSource([
+      { client: { id: 'c1', name: 'Acme' }, 'client.name': 'Literal', Name: 'A', name: 'B' },
+      { client: { name: 'Beta', address: { city: 'Boston' } }, '': 4 },
+    ])
+    expect(source.getSchema().map(({ key, path, label, dataType }) => ({ key, path, label, dataType }))).toEqual(
+      [
+        ['client.id', ['client', 'id']], ['client.name', ['client', 'name']],
+        ['["client.name"]', ['client.name']], ['Name', ['Name']], ['name', ['name']],
+        ['client.address.city', ['client', 'address', 'city']], ['[""]', ['']],
+      ].map(([key, path]) => ({ key, path, label: (path as string[]).join(' ') || '(no name)', dataType: 'string' })),
+    )
+  })
+
+  it('skips fields with several entries per row, naming them, without flattening or joining', () => {
+    const source = createRecordsDataSource([{ clientId: 'c1', entries: [{ client: { name: 'Hidden' } }], hours: 2 }])
+    expect(source.getSchema().map((field) => field.key)).toEqual(['clientId', 'hours'])
+    expect(source.getSkippedFields()).toEqual(['entries'])
+  })
+
   it('discovers every key in first-seen order without assuming field types', () => {
     const records = Object.freeze([Object.freeze({ hours: '4', id: 'same' }), Object.freeze({ id: 'same', later: 3 })])
     const source = createRecordsDataSource(records)

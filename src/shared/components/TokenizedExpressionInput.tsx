@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { filterOptions, useOptionsList } from '../hooks/useOptionsList'
 import './TokenizedExpressionInput.css'
 import { getTriggerState } from './tokenizedExpressionUtils'
+import { getFormulaReferences } from '../../services/formula/formulaReferences'
 import AutocompleteOptionsList from './AutocompleteOptionsList'
 
 type TokenizedExpressionInputProps = {
@@ -62,7 +63,8 @@ export default function TokenizedExpressionInput({
 
     const cursor = inputRef.current?.selectionStart ?? cursorPosition
     const beforeToken = value.slice(0, triggerState.start)
-    const afterToken = value.slice(cursor)
+    const token = getFormulaReferences(value).find((reference) => reference.start === triggerState.start)
+    const afterToken = value.slice(token?.end ?? cursor)
     const nextValue = `${beforeToken}{{${option}}}${afterToken}`
     const nextCursor = beforeToken.length + option.length + 4
 

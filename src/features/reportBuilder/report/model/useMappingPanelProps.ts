@@ -30,6 +30,7 @@ export function useMappingPanelProps(): MappingPanelProps {
     setFields((previous) => previous.map((field) => (field.id !== fieldId ? field : {
       ...field,
       sourceKey: editingField.sourceKey.trim() || field.sourceKey,
+      sourcePath: computed.getSourcePath(editingField.sourceKey.trim() || field.sourceKey),
       label: editingField.label.trim() || field.label,
       displayType: editingField.displayType,
       aggregation: editingField.aggregation,
@@ -66,8 +67,9 @@ export function useMappingPanelProps(): MappingPanelProps {
     const displayType = computed.getPreferredDisplayType(sourceKey)
     return {
       id: 'new-column',
-      label: sourceKey,
+      label: computed.getSourceLabel(sourceKey),
       sourceKey,
+      sourcePath: computed.getSourcePath(sourceKey),
       displayType,
       aggregation: getDefaultAggregation(displayType),
     }
@@ -88,8 +90,9 @@ export function useMappingPanelProps(): MappingPanelProps {
       next.splice(Math.min(Math.max(position - 1, 0), previous.length), 0, {
         ...draft,
         id: getNextSequencedName('field-', previous.map((field) => field.id)),
-        label: draft.label.trim() || sourceKey,
+        label: draft.label.trim() || computed.getSourceLabel(sourceKey),
         sourceKey,
+        sourcePath: computed.getSourcePath(sourceKey),
       })
       return next
     })
@@ -101,6 +104,7 @@ export function useMappingPanelProps(): MappingPanelProps {
     newColumn: ui.newColumn,
     maxColumns: MAX_REPORT_COLUMNS,
     showTips: state.showTips,
+    skippedFields: state.skippedFields,
     getFieldWarning: computed.getFieldWarning,
     minColumns: MIN_REPORT_COLUMNS,
     draggedFieldId: ui.draggedFieldId,

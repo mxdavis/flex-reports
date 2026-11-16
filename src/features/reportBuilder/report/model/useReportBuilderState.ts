@@ -135,6 +135,7 @@ export function useReportBuilderState({
 
   return {
     sourceError: source.error,
+    skippedFields: source.skippedFields,
     rows,
     sourceColumns,
     fields,
