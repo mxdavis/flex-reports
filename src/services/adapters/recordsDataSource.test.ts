@@ -13,7 +13,7 @@ describe('record input', () => {
         ['client.id', ['client', 'id']], ['client.name', ['client', 'name']],
         ['["client.name"]', ['client.name']], ['Name', ['Name']], ['name', ['name']],
         ['client.address.city', ['client', 'address', 'city']], ['[""]', ['']],
-      ].map(([key, path]) => ({ key, path, label: (path as string[]).join(' ') || '(no name)', dataType: 'string' })),
+      ].map(([key, path]) => ({ key, path, label: key, dataType: 'string' })),
     )
   })
 

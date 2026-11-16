@@ -20,7 +20,7 @@ describe('nested fields in the existing report editor', () => {
       <ReportBuilderApp rows={[{ client: { name: 'Acme' }, hours: '4' }]} onSave={onSave} initialEditMode />,
     )
     const table = screen.getByRole('table')
-    expect(within(table).getByRole('columnheader', { name: 'client name' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'client.name' })).toBeInTheDocument()
 
     for (const label of ['Client', 'Customer']) {
       await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
@@ -52,7 +52,7 @@ describe('nested fields in the existing report editor', () => {
       client: { name: 'Nested' }, 'client.name': 'Literal', Name: 'Upper', name: 'Lower', '': 'Empty key',
     }]} onSave={vi.fn()} initialEditMode />)
     const table = screen.getByRole('table')
-    for (const label of ['client name', 'client.name', 'Name', 'name', '(no name)']) {
+    for (const label of ['client.name', '["client.name"]', 'Name', 'name', '[""]']) {
       expect(within(table).getByRole('columnheader', { name: label })).toBeInTheDocument()
     }
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))

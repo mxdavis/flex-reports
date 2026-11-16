@@ -1,5 +1,5 @@
 import type { ReportRow, SchemaField } from './types'
-import { formatFieldPath, getFieldPathLabel } from './fieldPath'
+import { formatFieldPath } from './fieldPath'
 
 const rowKeys = new WeakMap<ReportRow, string>()
 let nextRowKey = 0
@@ -34,16 +34,12 @@ export function createRecordsDataSource(records: readonly ReportRow[]) {
   validateValue(records, new Set())
   const paths = new Map<string, string[]>()
   const arrayPaths = new Set<string>()
-  const skippedPaths = new Map<string, string[]>()
 
   function discoverFields(record: ReportRow, parent: string[] = []): void {
     for (const [key, value] of Object.entries(record)) {
       const path = [...parent, key]
       const reference = formatFieldPath(path)
-      if (Array.isArray(value)) {
-        arrayPaths.add(reference)
-        if (!skippedPaths.has(reference)) skippedPaths.set(reference, path)
-      }
+      if (Array.isArray(value)) arrayPaths.add(reference)
       else if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
         discoverFields(value as ReportRow, path)
       } else if (!paths.has(reference)) paths.set(reference, path)
@@ -57,11 +53,11 @@ export function createRecordsDataSource(records: readonly ReportRow[]) {
     discoverFields(record)
   }
   const schema: SchemaField[] = Array.from(paths).filter(([key]) => !arrayPaths.has(key)).map(([key, path], index) => ({
-    id: `field-${index + 1}`, key, path, label: getFieldPathLabel(path), dataType: 'string',
+    id: `field-${index + 1}`, key, path, label: key, dataType: 'string',
   }))
   const rows = records.map((record) => ({ ...record }))
   // Fields holding a list (several entries per row) can't fill one cell, so
   // they're left out and named for the editor.
-  const skippedFields = Array.from(skippedPaths.values(), getFieldPathLabel)
+  const skippedFields = [...arrayPaths]
   return { getReportRows: () => rows, getSchema: () => schema, getSkippedFields: () => skippedFields }
 }

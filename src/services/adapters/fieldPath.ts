@@ -11,12 +11,6 @@ export function formatFieldPath(path: FieldPath): string {
   return path.every((segment) => SIMPLE_SEGMENT.test(segment)) ? path.join('.') : JSON.stringify(path)
 }
 
-// The default header for a field: its names joined with spaces, so
-// { client: { name } } is headed "client name". Users rename it as they like.
-export function getFieldPathLabel(path: FieldPath): string {
-  return path.join(' ').trim() || '(no name)'
-}
-
 export function parseFieldPath(reference: string): FieldPath | null {
   const text = reference.trim()
   if (!text) return null
