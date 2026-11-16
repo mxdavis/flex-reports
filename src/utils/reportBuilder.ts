@@ -12,13 +12,29 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '
 const TWO_DECIMALS_FORMAT = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const WHOLE_NUMBER_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
-export function toReportNumber(value: unknown): number {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
-  if (typeof value !== 'string') return 0
+const PLAIN_NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/
+const GROUPED_NUMBER = /^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/
+
+export function isBlankReportValue(value: unknown): boolean {
+  return value === null || value === undefined || (typeof value === 'string' && value.trim() === '')
+}
+
+// Reads numeric text such as "1250.50", "-3" or "1,250.50". Currency symbols and
+// other text aren't read: "$40" and "120USD" aren't numbers. Returns undefined
+// for blanks and anything else.
+export function parseReportNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
+  if (typeof value !== 'string') return undefined
   const text = value.trim()
-  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text)) return 0
+  if (GROUPED_NUMBER.test(text)) return Number(text.replaceAll(',', ''))
+  if (!PLAIN_NUMBER.test(text)) return undefined
   const number = Number(text)
-  return Number.isFinite(number) ? number : 0
+  return Number.isFinite(number) ? number : undefined
+}
+
+// Formulas treat blank and non-numeric values as 0.
+export function toReportNumber(value: unknown): number {
+  return parseReportNumber(value) ?? 0
 }
 
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -39,6 +55,12 @@ function parseDate(value: unknown): Date {
   return new Date(text)
 }
 
+// A value as text: dates as ISO text, other objects as JSON.
+export function toText(value: unknown): string {
+  if (value instanceof Date) return value.toISOString()
+  return typeof value === 'object' ? JSON.stringify(value) : String(value)
+}
+
 export function isValidReportDate(value: unknown): boolean {
   return value !== null && value !== undefined && Number.isFinite(parseDate(value).getTime())
 }
@@ -48,16 +70,14 @@ export function formatCellValue(
   displayType: DisplayType,
   options?: FormatCellOptions,
 ): string {
-  if ((displayType === 'string' || displayType === 'date') && value == null) return ''
+  if (isBlankReportValue(value)) return ''
 
   if (typeof value === 'number' && Number.isNaN(value)) {
     // Broken formulas evaluate to NaN; totals show the same label.
     return 'Invalid formula'
   }
 
-  if (displayType === 'string') {
-    return typeof value === 'object' ? JSON.stringify(value) : String(value)
-  }
+  if (displayType === 'string') return toText(value)
 
   if (displayType === 'date') {
     const parsedDate = parseDate(value)
@@ -68,11 +88,13 @@ export function formatCellValue(
     return DATE_FORMAT.format(parsedDate)
   }
 
-  const number = toReportNumber(value)
+  const currencySymbol = options?.currencySymbol || DEFAULT_CURRENCY_SYMBOL
+  const number = parseReportNumber(value)
+  if (number === undefined) return toText(value)
 
   switch (displayType) {
     case 'currency':
-      return `${number < 0 ? '-' : ''}${options?.currencySymbol || DEFAULT_CURRENCY_SYMBOL}${TWO_DECIMALS_FORMAT.format(Math.abs(number))}`
+      return `${number < 0 ? '-' : ''}${currencySymbol}${TWO_DECIMALS_FORMAT.format(Math.abs(number))}`
     case 'number':
       return WHOLE_NUMBER_FORMAT.format(number)
     case 'decimal':

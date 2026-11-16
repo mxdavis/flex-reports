@@ -1,7 +1,7 @@
 import type { Row, Worksheet } from 'exceljs'
 import type { ReportRow } from '../../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
-import { isValidReportDate } from '../../../../utils/reportBuilder'
+import { isBlankReportValue, isValidReportDate, toText } from '../../../../utils/reportBuilder'
 import { getTotalDisplayType } from './fieldTotals'
 import { buildGroupTree, getTreeLayout, joinFieldLabels, type GetFieldValue, type GroupNode } from './pivotLayout'
 
@@ -42,7 +42,7 @@ function numberFormat(displayType: DisplayType, currencySymbol: string): string 
 // Excel stores dates without a timezone, so a date-only value is written as
 // that calendar day (at UTC midnight, which is how ExcelJS serializes dates).
 function toExcelDate(value: unknown): Date | string | null {
-  if (value === null || value === undefined || value === '') return null
+  if (isBlankReportValue(value)) return null
   if (!isValidReportDate(value)) return String(value)
   if (value instanceof Date) return value
   const text = String(value).trim()
@@ -53,10 +53,10 @@ function toExcelDate(value: unknown): Date | string | null {
 }
 
 function toCellValue(value: unknown, displayType: DisplayType): CellValue {
-  if (value === null || value === undefined || value === '') return null
+  if (isBlankReportValue(value)) return null
   if (typeof value === 'number') return Number.isNaN(value) ? INVALID_FORMULA : value
   if (displayType === 'date') return toExcelDate(value)
-  return typeof value === 'object' ? JSON.stringify(value) : String(value)
+  return toText(value)
 }
 
 function toTotalValue(total: number | null): CellValue {

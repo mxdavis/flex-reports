@@ -33,7 +33,7 @@ describe('nested fields in the existing report editor', () => {
     }
     await user.click(screen.getByRole('button', { name: 'Save report' }))
     const saved = onSave.mock.calls[0][0] as ReportDefinition
-    expect(saved.fields[0]).toMatchObject({ label: 'Customer', sourceKey: 'client.name', sourcePath: ['client', 'name'] })
+    expect(saved.fields[0]).toEqual({ id: expect.any(String), label: 'Customer', sourceKey: 'client.name', displayType: 'string', aggregation: 'distinct' })
 
     rerender(<ReportBuilderApp rows={[{ client: { name: 'Beta' }, hours: '9' }]} onSave={onSave} initialEditMode />)
     expect(within(table).getByRole('columnheader', { name: 'Customer' })).toBeInTheDocument()
@@ -83,7 +83,7 @@ describe('nested fields in the existing report editor', () => {
     expect(within(group).getByText('6')).toBeInTheDocument()
     expect(within(group).getByText('$1,108.00')).toBeInTheDocument()
     expect(screen.queryByText('Draft')).toBeNull()
-    expect(normalizeReportDefinition(JSON.parse(JSON.stringify(definition)), schema).fields[0].sourcePath).toEqual(['client', 'name'])
+    expect(normalizeReportDefinition(JSON.parse(JSON.stringify(definition)), schema).fields[0].sourceKey).toBe('client.name')
   })
 
   it('tells editors which fields have several entries per row, and keeps the rest usable', () => {

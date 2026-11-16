@@ -30,6 +30,7 @@ describe('record input', () => {
       ['hours', 'string'], ['id', 'string'], ['later', 'string'],
     ])
     const rows = source.getReportRows()
+    expect(rows[0]).toBe(records[0])
     expect(rows).toEqual(records)
     expect(getRowKey(rows[0])).not.toBe(getRowKey(rows[1]))
     expect(rows[0].id).toBe('same')

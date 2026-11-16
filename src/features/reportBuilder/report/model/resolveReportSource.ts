@@ -1,5 +1,5 @@
 import { createRecordsDataSource } from '../../../../services/adapters/recordsDataSource'
-import { formatFieldPath, parseFieldPath } from '../../../../services/adapters/fieldPath'
+import { formatFieldPath, getColumnPath } from '../../../../services/adapters/fieldPath'
 import type { ReportFormula, ReportRow, SandboxData, SchemaField } from '../../../../services/adapters'
 
 export type ReportSource = {
@@ -20,9 +20,10 @@ export function resolveReportSource(rows: ReportRow[] = [], schema?: SchemaField
   }
   try {
     const source = createRecordsDataSource(rows)
+    // Every column gets its path, and its key in the one form formulas use.
     const columns = (schema ?? source.getSchema()).map((column) => {
-      const path = column.path ?? parseFieldPath(column.key)
-      return path ? { ...column, key: formatFieldPath(path), path } : column
+      const path = getColumnPath(column)
+      return { ...column, key: formatFieldPath(path), path }
     })
     return { isSandbox: false, rows: source.getReportRows(), schema: columns, seedFormulas: [], skippedFields: source.getSkippedFields() }
   } catch (error) {

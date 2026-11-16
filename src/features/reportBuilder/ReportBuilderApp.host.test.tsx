@@ -473,7 +473,7 @@ describe('ReportBuilderApp host mode', () => {
       expect(sheet.name).toBe('Inventory')
       expect(sheet.getRow(2).getCell(1).value).toBe('Austin')
       expect(sheet.getRow(2).getCell(2).value).toBe(12)
-      expect(sheet.getRow(3).getCell(2).value).toBe(0)
+      expect(sheet.getRow(3).getCell(2).value).toBe('invalid')
     })
 
     it('hides the Export button when the host turns exports off', () => {

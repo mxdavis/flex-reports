@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { formatCellValue, getNextSequencedName, isValidReportDate, toReportNumber } from './reportBuilder'
+import { formatCellValue, getNextSequencedName, isValidReportDate, parseReportNumber, toReportNumber } from './reportBuilder'
 
 describe('getNextSequencedName', () => {
   it('continues the highest number in the series', () => {
@@ -63,20 +63,32 @@ describe('formatCellValue dates across timezones', () => {
 describe('explicit numeric interpretation', () => {
   it.each([
     ['250', 250], ['  -12.5 ', -12.5], ['.75', .75], ['+2e2', 200], [2.75, 2.75],
-    ['250abc', 0], ['0x10', 0], ['0b10', 0], ['$250', 0], ['1,000', 0], ['1e999', 0],
+    ['1,000', 1000], ['-1,250.50', -1250.5], ['$250', 0], ['-$1,250.50', 0], ['120USD', 0], ['US120', 0],
+    ['250abc', 0], ['0x10', 0], ['0b10', 0], ['1,00', 0], ['1e999', 0], ['€5', 0],
     ['', 0], [' ', 0], [null, 0], [undefined, 0], [true, 0], [{}, 0], [[2], 0], [NaN, 0], [Infinity, 0],
   ])('interprets %j as %s', (input, expected) => expect(toReportNumber(input)).toBe(expected))
+
+  it('does not read currency symbols, and tells blanks apart from non-numbers', () => {
+    expect(parseReportNumber('$40')).toBeUndefined()
+    expect(parseReportNumber('€1,250')).toBeUndefined()
+    expect(parseReportNumber('  ')).toBeUndefined()
+    expect(parseReportNumber('N/A')).toBeUndefined()
+  })
 
   it('rounds presentation only and keeps original text in String mode', () => {
     expect(formatCellValue('12.5', 'number')).toBe('13')
     expect(toReportNumber('12.5')).toBe(12.5)
     expect(formatCellValue('250.50', 'currency', { currencySymbol: '€' })).toBe('€250.50')
-    expect(formatCellValue('bad', 'currency')).toBe('$0.00')
-    expect(formatCellValue(null, 'decimal')).toBe('0.00')
+    expect(formatCellValue('bad', 'currency')).toBe('bad')
+    expect(formatCellValue(null, 'decimal')).toBe('')
+    expect(formatCellValue('', 'currency')).toBe('')
+    expect(formatCellValue('$1,250.00', 'currency')).toBe('$1,250.00')
+    expect(formatCellValue('€1.234,50', 'currency', { currencySymbol: '€' })).toBe('€1.234,50')
     expect(formatCellValue('0.25', 'percent')).toBe('25.00%')
     expect(formatCellValue('250.50', 'string')).toBe('250.50')
     expect(formatCellValue(null, 'string')).toBe('')
     expect(formatCellValue('null', 'string')).toBe('null')
+    expect(formatCellValue(new Date('2026-07-01T00:00:00.000Z'), 'string')).toBe('2026-07-01T00:00:00.000Z')
   })
 
   it('validates calendar dates and avoids timezone shifts', () => {
