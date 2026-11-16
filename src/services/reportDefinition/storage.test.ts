@@ -17,11 +17,11 @@ describe('sandbox definition storage', () => {
 
   it('returns defaults with seed formulas when nothing is saved', () => {
     expect(loadSandboxDefinition(sourceColumns, seedFormulas))
-      .toEqual(generateDefaultReportDefinition(sourceColumns, seedFormulas))
+      .toEqual(generateDefaultReportDefinition(seedFormulas))
   })
 
   it('saves and reloads a definition', () => {
-    const definition = { ...generateDefaultReportDefinition(sourceColumns, []), sheetName: 'Scores' }
+    const definition = { ...generateDefaultReportDefinition([]), sheetName: 'Scores' }
 
     saveSandboxDefinition(definition)
 
@@ -34,7 +34,7 @@ describe('sandbox definition storage', () => {
     window.localStorage.setItem(SANDBOX_DEFINITION_STORAGE_KEY, '{not json')
 
     expect(loadSandboxDefinition(sourceColumns, seedFormulas))
-      .toEqual(generateDefaultReportDefinition(sourceColumns, seedFormulas))
+      .toEqual(generateDefaultReportDefinition(seedFormulas))
     expect(errorSpy).toHaveBeenCalled()
     errorSpy.mockRestore()
   })

@@ -2,10 +2,16 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRecordsDataSource } from '../../services/adapters/recordsDataSource'
-import { generateDefaultReportDefinition, normalizeReportDefinition } from '../../services/reportDefinition/normalize'
+import { normalizeReportDefinition } from '../../services/reportDefinition/normalize'
 import type { ReportDefinition } from '../../services/reportDefinition/types'
 import { installMemoryStorage } from '../../test/memoryStorage'
+import { reportWithColumns } from '../../test/reportWithColumns'
 import ReportBuilderApp from './ReportBuilderApp'
+
+// A saved report showing every field found in the rows.
+function withAllColumns(rows: Record<string, unknown>[]): ReportDefinition {
+  return reportWithColumns(createRecordsDataSource(rows).getSchema())
+}
 
 describe('nested fields in the existing report editor', () => {
   beforeEach(() => {
@@ -13,12 +19,13 @@ describe('nested fields in the existing report editor', () => {
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
-  it('renames a nested column twice, saves its path separately, and reads fresh host data', async () => {
+  it('adds a nested field from Getting started, renames it twice, saves it, and reads fresh host data', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
     const { rerender, unmount } = render(
       <ReportBuilderApp rows={[{ client: { name: 'Acme' }, hours: '4' }]} onSave={onSave} initialEditMode />,
     )
+    await user.click(screen.getByRole('checkbox', { name: 'client.name' }))
     const table = screen.getByRole('table')
     expect(within(table).getByRole('columnheader', { name: 'client.name' })).toBeInTheDocument()
 
@@ -48,9 +55,8 @@ describe('nested fields in the existing report editor', () => {
 
   it('distinguishes nested, literal dotted, case-sensitive, and empty keys in the picker', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp rows={[{
-      client: { name: 'Nested' }, 'client.name': 'Literal', Name: 'Upper', name: 'Lower', '': 'Empty key',
-    }]} onSave={vi.fn()} initialEditMode />)
+    const rows = [{ client: { name: 'Nested' }, 'client.name': 'Literal', Name: 'Upper', name: 'Lower', '': 'Empty key' }]
+    render(<ReportBuilderApp rows={rows} reportDefinition={withAllColumns(rows)} onSave={vi.fn()} initialEditMode />)
     const table = screen.getByRole('table')
     for (const label of ['client.name', '["client.name"]', 'Name', 'name', '[""]']) {
       expect(within(table).getByRole('columnheader', { name: label })).toBeInTheDocument()
@@ -69,7 +75,7 @@ describe('nested fields in the existing report editor', () => {
       { client: { name: 'Acme' }, task: 'Review', metrics: { hours: '2', rate: '50' }, 'metrics.hours': '2', 'a}}b': '1' },
     ]
     const schema = createRecordsDataSource(rows).getSchema()
-    const definition = generateDefaultReportDefinition(schema, [{
+    const definition = reportWithColumns(schema, [{
       label: 'fee', expression: '{{metrics.hours}} * {{metrics.rate}} + {{["metrics.hours"]}} + {{["a}}b"]}}',
     }])
     definition.fields = [
@@ -93,7 +99,7 @@ describe('nested fields in the existing report editor', () => {
     expect(screen.queryByRole('alert')).toBeNull()
     unmount()
 
-    render(<ReportBuilderApp rows={rows} role="viewer" />)
+    render(<ReportBuilderApp rows={rows} reportDefinition={withAllColumns(rows)} role="viewer" />)
     expect(screen.queryByRole('note')).toBeNull()
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.getByRole('columnheader', { name: 'clientId' })).toBeInTheDocument()
@@ -102,7 +108,7 @@ describe('nested fields in the existing report editor', () => {
   })
 
   it('keeps a saved formula working when new data gains a field with the same name', () => {
-    const definition = generateDefaultReportDefinition(createRecordsDataSource([{ hours: 2 }]).getSchema(), [
+    const definition = reportWithColumns(createRecordsDataSource([{ hours: 2 }]).getSchema(), [
       { label: 'Fee', expression: '{{hours}} * 10' },
       { label: 'Both', expression: '{{%Fee}} + {{Fee}}' },
     ])
@@ -124,7 +130,7 @@ describe('nested fields in the existing report editor', () => {
   })
 
   it('keeps saved formulas the editor would reject and tells editors what to fix', () => {
-    const definition = generateDefaultReportDefinition(createRecordsDataSource([{ hours: 2 }]).getSchema(), [
+    const definition = reportWithColumns(createRecordsDataSource([{ hours: 2 }]).getSchema(), [
       { label: '9 Fees', expression: '{{hours}} * 10' },
       { label: 'Blank', expression: '' },
     ])
@@ -143,7 +149,7 @@ describe('nested fields in the existing report editor', () => {
   })
 
   it('shows everyone a warning when a host passes two formulas with the same name, using the first', () => {
-    const definition = generateDefaultReportDefinition(createRecordsDataSource([{ hours: 2 }]).getSchema(), [])
+    const definition = reportWithColumns(createRecordsDataSource([{ hours: 2 }]).getSchema(), [])
     definition.formulas = [{ label: 'Fee', expression: '{{hours}} * 10' }, { label: 'fee', expression: '1' }]
     definition.fields = [{ id: 'fee', label: 'Fee', sourceKey: '%Fee', displayType: 'number', aggregation: 'none' }]
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
@@ -154,7 +160,8 @@ describe('nested fields in the existing report editor', () => {
 
   it('renames a flat client field to Client (flat billing equivalent)', async () => {
     const user = userEvent.setup()
-    render(<ReportBuilderApp rows={[{ clientId: 'c1', client: 'Acme', hours: 4, rate: 250 }]} onSave={vi.fn()} initialEditMode />)
+    const rows = [{ clientId: 'c1', client: 'Acme', hours: 4, rate: 250 }]
+    render(<ReportBuilderApp rows={rows} reportDefinition={withAllColumns(rows)} onSave={vi.fn()} initialEditMode />)
     const table = screen.getByRole('table')
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
     expect(screen.getByLabelText('COLUMN 2')).toHaveValue('client')
@@ -168,7 +175,7 @@ describe('nested fields in the existing report editor', () => {
   it('offers only clientId and hours for timeEntries, with no client name lookup', () => {
     const timeEntries = [{ clientId: 'c1', hours: 4 }, { clientId: 'c1', hours: 2 }, { clientId: 'c2', hours: 3 }]
     expect(createRecordsDataSource(timeEntries).getSchema().map((field) => field.key)).toEqual(['clientId', 'hours'])
-    render(<ReportBuilderApp rows={timeEntries} role="viewer" />)
+    render(<ReportBuilderApp rows={timeEntries} reportDefinition={withAllColumns(timeEntries)} role="viewer" />)
     expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['clientId', 'hours'])
     expect(screen.queryByText('Acme')).toBeNull()
   })
@@ -177,7 +184,7 @@ describe('nested fields in the existing report editor', () => {
     const rows = [{ product: 'Cable', quantity: 2, 'Unit Price': 10 }, { product: 'Dock', quantity: 1, 'Unit Price': 40 }]
     const schema = createRecordsDataSource(rows).getSchema()
     expect(schema.map((field) => field.key)).toEqual(['product', 'quantity', 'Unit Price'])
-    const definition = generateDefaultReportDefinition(schema, [{ label: 'Line total', expression: '{{quantity}} * {{Unit Price}}' }])
+    const definition = reportWithColumns(schema, [{ label: 'Line total', expression: '{{quantity}} * {{Unit Price}}' }])
     definition.fields = [
       ...definition.fields.filter((field) => field.sourceKey === 'product'),
       { id: 'total', label: 'Line total', sourceKey: '%Line total', displayType: 'number', aggregation: 'sum' },

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { ReportFormula, SandboxData, SchemaField } from '../../../../services/adapters'
-import { generateDefaultReportDefinition, getRepeatedFormulaNames, isFromNewerVersion, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
+import { getRepeatedFormulaNames, isFromNewerVersion, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
 import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
   REPORT_DEFINITION_VERSION,
@@ -43,26 +43,16 @@ export function useReportBuilderState({
   }, [source.error])
   const sourceColumns: SourceColumn[] = source.schema
 
-  const [initialDefinition, setInitialDefinition] = useState<ReportDefinition>(() => (isSandbox
+  const [initialDefinition] = useState<ReportDefinition>(() => (isSandbox
     ? loadSandboxDefinition(sourceColumns, source.seedFormulas)
     : normalizeReportDefinition(reportDefinition, sourceColumns)))
 
   const [fields, setFields] = useState<ReportField[]>(initialDefinition.fields)
+  // Getting started shows when the report opens blank, stays until Done (or a
+  // reload), and shows again whenever the report has no columns.
+  const [isGettingStartedOpen, setIsGettingStartedOpen] = useState(initialDefinition.fields.length === 0)
+  if (fields.length === 0 && !isGettingStartedOpen) setIsGettingStartedOpen(true)
 
-  // Without a saved definition, the columns are defaults for the schema. If the
-  // schema changes while they're untouched (e.g. mounted with empty rows while
-  // loading), rebuild them for the new schema and treat that as the starting point.
-  const columnsKey = sourceColumns.map((column) => `${column.key}:${column.dataType}`).join('|')
-  const [defaultsColumnsKey, setDefaultsColumnsKey] = useState(columnsKey)
-  if (columnsKey !== defaultsColumnsKey) {
-    setDefaultsColumnsKey(columnsKey)
-    const usesDefaults = !isSandbox && reportDefinition === undefined
-    if (usesDefaults && JSON.stringify(fields) === JSON.stringify(initialDefinition.fields)) {
-      const defaultFields = generateDefaultReportDefinition(sourceColumns).fields
-      setFields(defaultFields)
-      setInitialDefinition((previous) => ({ ...previous, fields: defaultFields }))
-    }
-  }
   const [formulas, setFormulas] = useState<ReportFormula[]>(initialDefinition.formulas)
   // Shown to everyone: only a host can pass these in, and its developer needs to see it.
   const [definitionIssues] = useState(() => (isSandbox ? [] : getRepeatedFormulaNames(reportDefinition)
@@ -138,6 +128,8 @@ export function useReportBuilderState({
 
   return {
     sourceError: source.error,
+    isGettingStartedOpen,
+    closeGettingStarted: () => setIsGettingStartedOpen(false),
     definitionIssues,
     skippedFields: source.skippedFields,
     rows,

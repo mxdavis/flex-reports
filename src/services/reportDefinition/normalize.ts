@@ -32,28 +32,19 @@ function asNonEmptyString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value : null
 }
 
-function generateDefaultFields(sourceColumns: SourceColumn[]): ReportField[] {
-  return sourceColumns.slice(0, MAX_REPORT_COLUMNS).map((column) => {
-    const displayType = getDefaultDisplayType(column)
-    return {
-      id: column.id,
-      label: column.label,
-      sourceKey: column.key,
-      displayType,
-      aggregation: getDefaultAggregation(displayType),
-    }
-  })
+// A report column showing a data field, with that field's default type and total.
+export function createFieldColumn(column: SourceColumn, id: string): ReportField {
+  const displayType = getDefaultDisplayType(column)
+  return { id, label: column.label, sourceKey: column.key, displayType, aggregation: getDefaultAggregation(displayType) }
 }
 
-export function generateDefaultReportDefinition(
-  sourceColumns: SourceColumn[],
-  formulas: ReportFormula[] = [],
-): ReportDefinition {
+export function generateDefaultReportDefinition(formulas: ReportFormula[] = []): ReportDefinition {
   return {
     version: REPORT_DEFINITION_VERSION,
     sheetName: DEFAULT_SHEET_NAME,
     currencySymbol: DEFAULT_CURRENCY_SYMBOL,
-    fields: generateDefaultFields(sourceColumns),
+    // A new report starts with no columns; the user picks them under Getting started.
+    fields: [],
     // Sorted here, the one place definitions are built, so the saved baseline
     // matches the builder's (sorted) state and a fresh report isn't "unsaved".
     formulas: sortFormulasByLabel(formulas),
@@ -176,7 +167,7 @@ export function normalizeReportDefinition(
   sourceColumns: SourceColumn[],
   fallbackFormulas: ReportFormula[] = [],
 ): ReportDefinition {
-  const defaults = generateDefaultReportDefinition(sourceColumns, fallbackFormulas)
+  const defaults = generateDefaultReportDefinition(fallbackFormulas)
   if (!isRecord(raw)) {
     if (raw !== undefined && raw !== null) {
       console.error('[flex-reports] reportDefinition must be an object; using defaults.', raw)
@@ -212,7 +203,7 @@ export function normalizeReportDefinition(
     version: REPORT_DEFINITION_VERSION,
     sheetName: asNonEmptyString(raw.sheetName) ?? defaults.sheetName,
     currencySymbol: asNonEmptyString(raw.currencySymbol) ?? defaults.currencySymbol,
-    fields: fields.length > 0 ? repairFields(fields) : defaults.fields,
+    fields: repairFields(fields),
     formulas: Array.isArray(raw.formulas) ? normalizeFormulas(raw.formulas) : defaults.formulas,
     view: normalizeView(raw.view),
   }

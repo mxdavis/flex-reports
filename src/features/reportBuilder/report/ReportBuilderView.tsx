@@ -4,9 +4,11 @@ import EditModeToolbar from '../components/EditModeToolbar'
 import MappingPanelSection from '../components/MappingPanelSection'
 import ReportTableSection from '../components/ReportTableSection'
 import FormulasSection from '../components/FormulasSection'
+import GettingStarted from '../components/GettingStarted'
 import ReportSettingsSection from '../components/ReportSettingsSection'
 import SummaryChips from '../components/SummaryChips'
 import { useFormulasPanelProps } from './model/useFormulasPanelProps'
+import { useGettingStartedProps } from './model/useGettingStartedProps'
 import { useMappingPanelProps } from './model/useMappingPanelProps'
 import { useReportSettingsProps, useTableSectionProps, useToolbarProps } from './model/useSectionProps'
 import { DEFAULT_SHEET_NAME } from '../config'
@@ -18,6 +20,7 @@ function ReportBuilderView() {
   const reportSettingsProps = useReportSettingsProps()
   const mappingPanelProps = useMappingPanelProps()
   const formulasProps = useFormulasPanelProps()
+  const gettingStartedProps = useGettingStartedProps()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const { isPrinting, print } = usePrintMode(rootRef, reportSettingsProps.sheetName.trim() || DEFAULT_SHEET_NAME)
   const tableSectionProps = useTableSectionProps({ onPrint: print })
@@ -31,6 +34,15 @@ function ReportBuilderView() {
   function renderReportIssues() {
     const issues = [state.sourceError, ...state.definitionIssues, ...computed.issues].filter(Boolean)
     return issues.length > 0 && <div role="alert">{issues.map((issue, index) => <p key={`${index}-${issue}`}>{issue}</p>)}</div>
+  }
+
+  function renderNoColumnsMessage() {
+    const nextStep = showAuthoring ? 'Tick fields under Getting started to add them.' : 'Open Edit mode to choose its columns.'
+    return (
+      <p className="fr-no-columns" role="status">
+        <strong>This report has no columns yet.</strong> {nextStep}
+      </p>
+    )
   }
 
   function renderEmptyReportMessage() {
@@ -51,6 +63,8 @@ function ReportBuilderView() {
             }}
           />
         )}
+
+        {!isTableFullscreen && showAuthoring && gettingStartedProps && <GettingStarted {...gettingStartedProps} />}
 
         {!isTableFullscreen && showAuthoring && (
           <MappingPanelSection
@@ -78,7 +92,7 @@ function ReportBuilderView() {
 
         {renderReportIssues()}
         {renderEmptyReportMessage()}
-        <ReportTableSection {...tableSectionProps} />
+        {state.fields.length > 0 ? <ReportTableSection {...tableSectionProps} /> : renderNoColumnsMessage()}
       </div>
     </PrintModeContext.Provider>
   )

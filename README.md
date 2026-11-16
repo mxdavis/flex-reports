@@ -92,8 +92,8 @@ logged to the console. Passing a schema gives you explicit labels and formats.
 
 `rows` and `schema` can change at any time, for example after a refetch, and the table
 updates. Passing `schema` inline is fine: it's compared by content. If you don't pass a
-`reportDefinition`, the default columns are rebuilt whenever the schema changes (say, you
-mounted with empty rows while loading), as long as nobody has edited them yet.
+`reportDefinition`, the report starts with no columns, and editors pick them under
+**Getting started** in edit mode.
 
 ### 2. Save the report
 

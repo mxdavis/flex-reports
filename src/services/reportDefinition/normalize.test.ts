@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { generateDefaultReportDefinition, isFromNewerVersion, normalizeReportDefinition } from './normalize'
+import { createFieldColumn, generateDefaultReportDefinition, isFromNewerVersion, normalizeReportDefinition } from './normalize'
 import type { SourceColumn } from './types'
 
 // Deliberately non-billing so defaults are proven schema-driven.
@@ -11,15 +11,22 @@ const sourceColumns: SourceColumn[] = [
 ]
 
 describe('generateDefaultReportDefinition', () => {
-  it('builds one field per schema column with type-based defaults', () => {
-    const definition = generateDefaultReportDefinition(sourceColumns)
+  it('starts a new report with no columns', () => {
+    const definition = generateDefaultReportDefinition()
 
     expect(definition.version).toBe(1)
-    expect(definition.fields.map((field) => field.sourceKey)).toEqual(['sku', 'shippedOn', 'quantity', 'price'])
-    expect(definition.fields.map((field) => field.displayType)).toEqual(['string', 'date', 'decimal', 'currency'])
-    expect(definition.fields.map((field) => field.aggregation)).toEqual(['distinct', 'distinct', 'sum', 'sum'])
+    expect(definition.fields).toEqual([])
     expect(definition.formulas).toEqual([])
     expect(definition.view).toEqual({ orientation: 'horizontal', showTotals: false, isGroupingEnabled: false, expandedLevels: null })
+  })
+})
+
+describe('createFieldColumn', () => {
+  it('gives a field column its type-based defaults', () => {
+    const columns = sourceColumns.map((column) => createFieldColumn(column, column.id))
+    expect(columns.map((field) => field.sourceKey)).toEqual(['sku', 'shippedOn', 'quantity', 'price'])
+    expect(columns.map((field) => field.displayType)).toEqual(['string', 'date', 'decimal', 'currency'])
+    expect(columns.map((field) => field.aggregation)).toEqual(['distinct', 'distinct', 'sum', 'sum'])
   })
 })
 
@@ -30,7 +37,7 @@ describe('normalizeReportDefinition', () => {
 
   it('keeps a valid definition as-is', () => {
     const valid = {
-      ...generateDefaultReportDefinition(sourceColumns, [{ label: 'lineTotal', expression: '{{quantity}} * {{price}}' }]),
+      ...generateDefaultReportDefinition([{ label: 'lineTotal', expression: '{{quantity}} * {{price}}' }]),
       sheetName: 'Shipments',
       view: { orientation: 'vertical', showTotals: true, isGroupingEnabled: true, expandedLevels: 1 },
     }
@@ -43,7 +50,7 @@ describe('normalizeReportDefinition', () => {
 
     const normalized = normalizeReportDefinition({ version: 'two', fields: [] }, sourceColumns)
 
-    expect(normalized).toEqual(generateDefaultReportDefinition(sourceColumns))
+    expect(normalized).toEqual(generateDefaultReportDefinition())
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Unsupported reportDefinition version'))
   })
 
@@ -71,7 +78,7 @@ describe('normalizeReportDefinition', () => {
   it('returns defaults silently when nothing is passed', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
-    expect(normalizeReportDefinition(undefined, sourceColumns)).toEqual(generateDefaultReportDefinition(sourceColumns))
+    expect(normalizeReportDefinition(undefined, sourceColumns)).toEqual(generateDefaultReportDefinition())
     expect(errorSpy).not.toHaveBeenCalled()
   })
 
@@ -121,7 +128,7 @@ describe('normalizeReportDefinition', () => {
 
   it('reads a definition from a newer version best effort, with a warning', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const newer = { ...generateDefaultReportDefinition(sourceColumns), version: 2, sheetName: 'From v2', somethingNew: true }
+    const newer = { ...generateDefaultReportDefinition(), version: 2, sheetName: 'From v2', somethingNew: true }
 
     const normalized = normalizeReportDefinition(newer, sourceColumns)
 

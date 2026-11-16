@@ -22,7 +22,6 @@ describe('MappingPanelSection', () => {
         maxColumns={15}
         getFieldWarning={() => null}
         showTips
-        minColumns={1}
         draggedFieldId={null}
         dragOverFieldId={null}
         editingFieldId={null}
@@ -55,7 +54,8 @@ describe('MappingPanelSection', () => {
     const heading = screen.getByRole('heading', { name: 'Column Mapping' })
     const section = heading.closest('section')
     expect(section?.id).toBe('fr-report-columns')
-    expect(screen.getByText(/the column that names each row/)).toBeInTheDocument()
+    // The grouping tip only matters once there are columns to order.
+    expect(screen.queryByText(/the column that names each row/)).toBeNull()
   })
 
   it('forwards add column intent', () => {
@@ -67,7 +67,6 @@ describe('MappingPanelSection', () => {
         maxColumns={15}
         getFieldWarning={() => null}
         showTips={false}
-        minColumns={1}
         draggedFieldId={null}
         dragOverFieldId={null}
         editingFieldId={null}

@@ -1,9 +1,9 @@
 import { render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { SchemaField } from '../../services/adapters'
-import { generateDefaultReportDefinition } from '../../services/reportDefinition/normalize'
 import type { ReportDefinition } from '../../services/reportDefinition/types'
 import { installMemoryStorage } from '../../test/memoryStorage'
+import { reportWithColumns } from '../../test/reportWithColumns'
 import ReportBuilderApp from './ReportBuilderApp'
 
 const schema: SchemaField[] = [
@@ -12,7 +12,7 @@ const schema: SchemaField[] = [
 ]
 
 function buildDefinition(): ReportDefinition {
-  const definition = generateDefaultReportDefinition(schema, [{ label: 'Double', expression: '{{hours}} * 2' }])
+  const definition = reportWithColumns(schema, [{ label: 'Double', expression: '{{hours}} * 2' }])
   definition.fields = [
     ...definition.fields,
     { id: 'double', label: 'Double', sourceKey: '%Double', displayType: 'number', aggregation: 'sum' },
