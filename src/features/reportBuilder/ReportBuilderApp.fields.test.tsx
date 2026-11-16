@@ -141,4 +141,14 @@ describe('nested fields in the existing report editor', () => {
     render(<ReportBuilderApp rows={[{ hours: 2 }]} reportDefinition={saved} role="viewer" />)
     expect(screen.queryByRole('note')).toBeNull()
   })
+
+  it('shows everyone a warning when a host passes two formulas with the same name, using the first', () => {
+    const definition = generateDefaultReportDefinition(createRecordsDataSource([{ hours: 2 }]).getSchema(), [])
+    definition.formulas = [{ label: 'Fee', expression: '{{hours}} * 10' }, { label: 'fee', expression: '1' }]
+    definition.fields = [{ id: 'fee', label: 'Fee', sourceKey: '%Fee', displayType: 'number', aggregation: 'none' }]
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    render(<ReportBuilderApp rows={[{ hours: 2 }]} reportDefinition={definition} role="viewer" />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Can\'t have two formulas with the same name: "fee".')
+    expect(within(screen.getByRole('table')).getByRole('cell')).toHaveTextContent('20')
+  })
 })

@@ -29,7 +29,7 @@ function ReportBuilderView() {
   const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
 
   function renderReportIssues() {
-    const issues = [state.sourceError, ...computed.issues].filter(Boolean)
+    const issues = [state.sourceError, ...state.definitionIssues, ...computed.issues].filter(Boolean)
     return issues.length > 0 && <div role="alert">{issues.map((issue, index) => <p key={`${index}-${issue}`}>{issue}</p>)}</div>
   }
 

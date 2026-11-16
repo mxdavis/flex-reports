@@ -150,6 +150,23 @@ function normalizeView(raw: unknown): ReportView {
   }
 }
 
+// Formula names a definition repeats (ignoring case). The editor never saves
+// one, so a repeat comes from the host building or editing the definition: the
+// builder shows it on the page so the developer sees it. The first one is used.
+export function getRepeatedFormulaNames(raw: unknown): string[] {
+  if (!isRecord(raw) || !Array.isArray(raw.formulas)) return []
+  const seen = new Set<string>()
+  const repeated = new Map<string, string>()
+  for (const item of raw.formulas) {
+    const label = isRecord(item) && typeof item.label === 'string' ? item.label.trim() : ''
+    const key = label.toLowerCase()
+    if (!key) continue
+    if (seen.has(key) && !repeated.has(key)) repeated.set(key, label)
+    seen.add(key)
+  }
+  return [...repeated.values()]
+}
+
 // True for a definition saved by a newer version of Flex Reports than this one.
 export function isFromNewerVersion(raw: unknown): boolean {
   return isRecord(raw) && typeof raw.version === 'number' && Number.isInteger(raw.version)

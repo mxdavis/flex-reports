@@ -174,6 +174,8 @@ applied when a definition loads: at most 15 columns (repeated column ids get a f
 and 25 formulas. Saved formulas are kept even when the editor wouldn't accept them (an
 invalid or empty label, an empty expression, an expression over 500 characters, or a label
 that matches a data field): editors see a note in the Formulas panel and fix them there.
+Two formulas with the same name (ignoring case) can't be saved from the editor; if a
+definition you pass in has them, the first is used and a warning shows on the page.
 
 More examples: [docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENCE.md).
 
