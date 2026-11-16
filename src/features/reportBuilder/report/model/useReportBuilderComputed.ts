@@ -5,20 +5,21 @@ import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
 import { getDefaultDisplayType } from '../../../../services/reportDefinition/displayType'
 import { getFormulaError } from '../../../../services/reportDefinition/rules'
 import type { ReportRow, ReportFormula } from '../../../../services/adapters'
-import type { AggregationMode, DisplayType, ReportField, SourceColumn, TableOrientation } from '../../../../services/reportDefinition/types'
+import { DEFAULT_NUMBER_FORMAT, type AggregationMode, type DisplayType, type NumberFormat, type ReportField, type SourceColumn, type TableOrientation } from '../../../../services/reportDefinition/types'
 import { DEFAULT_CURRENCY_SYMBOL } from '../../config'
-import { formatCellValue, isBlankReportValue, isValidReportDate, parseReportNumber, toReportNumber } from '../../../../utils/reportBuilder'
+import { formatCellValue, isBlankReportValue, isValidReportDate, parseReportNumber, toReportNumber, type NumberReadOptions } from '../../../../utils/reportBuilder'
+import { getFormulaReferences } from '../../../../services/formula/formulaReferences'
 import { buildSummaryItems } from '../../summaryItems'
 import { getTotalDisplayType, isNumericDisplayType } from './fieldTotals'
 import { isBlank, type GetFieldValue } from './pivotLayout'
 
 type NonNumbers = { count: number, firstRow: number, firstValue: unknown }
 
-function findNonNumbers(rows: ReportRow[], getValue: (row: ReportRow) => unknown, currencySymbol: string): NonNumbers | undefined {
+function findNonNumbers(rows: ReportRow[], getValue: (row: ReportRow) => unknown, options: NumberReadOptions): NonNumbers | undefined {
   let found: NonNumbers | undefined
   rows.forEach((row, index) => {
     const value = getValue(row)
-    if (isBlankReportValue(value) || parseReportNumber(value, currencySymbol) !== undefined) return
+    if (isBlankReportValue(value) || parseReportNumber(value, options) !== undefined) return
     if (found) found.count += 1
     else found = { count: 1, firstRow: index + 1, firstValue: value }
   })
@@ -30,6 +31,15 @@ function describeNonNumbers({ count, firstRow, firstValue }: NonNumbers): string
   return count === 1
     ? `1 value isn't a number (${example}). It's shown as entered, left out of totals, and counted as 0 in formulas.`
     : `${count.toLocaleString('en-US')} values aren't numbers (first in ${example}). They're shown as entered, left out of totals, and counted as 0 in formulas.`
+}
+
+// For a formula: a field it uses has values that aren't numbers, e.g. after the
+// number format changed. Like a spreadsheet cell a formula relies on.
+function describeFormulaNonNumbers(fieldName: string, { count, firstRow, firstValue }: NonNumbers): string {
+  const example = `row ${firstRow}: ${JSON.stringify(firstValue)}`
+  return count === 1
+    ? `${fieldName} has 1 value that isn't a number (${example}). It's counted as 0.`
+    : `${fieldName} has ${count.toLocaleString('en-US')} values that aren't numbers (first in ${example}). They're counted as 0.`
 }
 
 // In vertical view each data row becomes a column, headed by its first-column value.
@@ -45,6 +55,7 @@ type UseReportBuilderComputedArgs = {
   reportFields: ReportField[]
   formulas: ReportFormula[]
   currencySymbol: string
+  numberFormat?: NumberFormat
   tableOrientation: TableOrientation
   showTips: boolean
 }
@@ -55,6 +66,7 @@ export function useReportBuilderComputed({
   reportFields,
   formulas,
   currencySymbol,
+  numberFormat = DEFAULT_NUMBER_FORMAT,
   tableOrientation,
   showTips,
 }: UseReportBuilderComputedArgs) {
@@ -148,7 +160,11 @@ export function useReportBuilderComputed({
   }
 
   // One currency symbol for the whole report.
-  const formatOptions = useMemo(() => ({ currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL }), [currencySymbol])
+  // How the data's numbers are read, and how money is shown, for the whole report.
+  const formatOptions = useMemo(() => ({
+    currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL,
+    numberFormat,
+  }), [currencySymbol, numberFormat])
 
   const getFormulaValue = useCallback(function getFormulaValue(
     formulaLabel: string,
@@ -165,7 +181,7 @@ export function useReportBuilderComputed({
     const result = evaluateFormula(expression, (reference) => {
       if (reference.startsWith('%')) return getFormulaValue(reference.slice(1), cache, visiting, row)
       const column = getSourceColumn(reference)
-      if (column) return toReportNumber(readFieldPath(row, column.path ?? parseFieldPath(column.key) ?? []), formatOptions.currencySymbol)
+      if (column) return toReportNumber(readFieldPath(row, column.path ?? parseFieldPath(column.key) ?? []), formatOptions)
       return Number.NaN
     })
     const value = result.ok ? result.value : Number.NaN
@@ -203,7 +219,7 @@ export function useReportBuilderComputed({
     const raw = getMappedRawValue(row, field.sourceKey)
     if (!getSourceColumn(field.sourceKey) || !isNumericDisplayType(field.displayType)) return raw
     if (isBlankReportValue(raw)) return null
-    return parseReportNumber(raw, formatOptions.currencySymbol) ?? raw
+    return parseReportNumber(raw, formatOptions) ?? raw
   }, [formatOptions, getMappedRawValue, getSourceColumn])
 
   // A row's value for a column, formatted for display.
@@ -247,7 +263,7 @@ export function useReportBuilderComputed({
     for (const row of rowsToAggregate) {
       const raw = getMappedRawValue(row, sourceKey)
       // Blank and non-numeric source values are left out, so they don't lower averages.
-      const value = isSourceColumn ? parseReportNumber(raw, formatOptions.currencySymbol) : raw
+      const value = isSourceColumn ? parseReportNumber(raw, formatOptions) : raw
       if (typeof value !== 'number') continue
       if (!Number.isFinite(value)) return Number.NaN
       total += value
@@ -296,7 +312,7 @@ export function useReportBuilderComputed({
         issues.push(`Column ${field.label}: use valid dates. Original values are shown.`)
       }
       const nonNumbers = isNumericDisplayType(field.displayType) && getSourceColumn(field.sourceKey)
-        ? findNonNumbers(rows, (row) => getMappedRawValue(row, field.sourceKey), formatOptions.currencySymbol)
+        ? findNonNumbers(rows, (row) => getMappedRawValue(row, field.sourceKey), formatOptions)
         : undefined
       if (nonNumbers) issues.push(`Column ${field.label}: ${describeNonNumbers(nonNumbers)}`)
     }
@@ -304,6 +320,12 @@ export function useReportBuilderComputed({
       // Reuses the per-row values the table already computed.
       if (rows.some((row) => !Number.isFinite(getMappedRawValue(row, `%${formula.label}`) as number))) {
         issues.push(`Formula ${formula.label}: check references, circular dependencies, and arithmetic.`)
+      }
+      const fieldNames = new Set(getFormulaReferences(formula.expression).map((token) => token.reference.trim()))
+      for (const fieldName of fieldNames) {
+        const column = getSourceColumn(fieldName)
+        const nonNumbers = column && findNonNumbers(rows, (row) => getMappedRawValue(row, fieldName), formatOptions)
+        if (nonNumbers) issues.push(`Formula ${formula.label}: ${describeFormulaNonNumbers(fieldName, nonNumbers)}`)
       }
     }
     return issues

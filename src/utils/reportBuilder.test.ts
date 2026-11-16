@@ -69,10 +69,18 @@ describe('explicit numeric interpretation', () => {
   ])('interprets %j as %s', (input, expected) => expect(toReportNumber(input)).toBe(expected))
 
   it('reads the report currency symbol and tells blanks apart from non-numbers', () => {
-    expect(parseReportNumber('€1,250', '€')).toBe(1250)
-    expect(parseReportNumber('$1,250', '€')).toBeUndefined()
+    expect(parseReportNumber('€1,250', { currencySymbol: '€' })).toBe(1250)
+    expect(parseReportNumber('$1,250', { currencySymbol: '€' })).toBeUndefined()
     expect(parseReportNumber('  ')).toBeUndefined()
     expect(parseReportNumber('N/A')).toBeUndefined()
+  })
+
+  it('reads commas only with the 1,234.56 number format', () => {
+    expect(parseReportNumber('1,250.50')).toBe(1250.5)
+    expect(parseReportNumber('1,250.50', { numberFormat: 'plain' })).toBeUndefined()
+    expect(parseReportNumber('1250.50', { numberFormat: 'plain' })).toBe(1250.5)
+    expect(formatCellValue('1,250', 'number', { numberFormat: 'plain' })).toBe('1,250')
+    expect(formatCellValue('1,250', 'string', { numberFormat: 'plain' })).toBe('1,250')
   })
 
   it('rounds presentation only and keeps original text in String mode', () => {

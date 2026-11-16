@@ -19,6 +19,7 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     reportFields: state.fields,
     formulas: state.formulas,
     currencySymbol: state.currencySymbol,
+    numberFormat: state.numberFormat,
     tableOrientation,
     showTips: state.showTips,
   })

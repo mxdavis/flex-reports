@@ -9,10 +9,13 @@ import {
 } from './displayType'
 import {
   AGGREGATION_MODES,
+  DEFAULT_NUMBER_FORMAT,
+  NUMBER_FORMATS,
   DISPLAY_TYPES,
   REPORT_DEFINITION_VERSION,
   type AggregationMode,
   type DisplayType,
+  type NumberFormat,
   type ReportDefinition,
   type ReportField,
   type ReportView,
@@ -55,6 +58,7 @@ export function generateDefaultReportDefinition(
     version: REPORT_DEFINITION_VERSION,
     sheetName: DEFAULT_SHEET_NAME,
     currencySymbol: DEFAULT_CURRENCY_SYMBOL,
+    numberFormat: DEFAULT_NUMBER_FORMAT,
     fields: generateDefaultFields(sourceColumns),
     // Sorted here, the one place definitions are built, so the saved baseline
     // matches the builder's (sorted) state and a fresh report isn't "unsaved".
@@ -216,6 +220,7 @@ export function normalizeReportDefinition(
     version: REPORT_DEFINITION_VERSION,
     sheetName: asNonEmptyString(raw.sheetName) ?? defaults.sheetName,
     currencySymbol: asNonEmptyString(raw.currencySymbol) ?? defaults.currencySymbol,
+    numberFormat: NUMBER_FORMATS.includes(raw.numberFormat as NumberFormat) ? raw.numberFormat as NumberFormat : defaults.numberFormat,
     fields: fields.length > 0 ? repairFields(fields) : defaults.fields,
     formulas: Array.isArray(raw.formulas) ? normalizeFormulas(raw.formulas) : defaults.formulas,
     view: normalizeView(raw.view),

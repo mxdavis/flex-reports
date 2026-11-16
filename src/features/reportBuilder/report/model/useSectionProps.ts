@@ -45,8 +45,10 @@ export function useReportSettingsProps(): Omit<ReportSettingsSectionProps, 'isCo
   return {
     sheetName: state.sheetName,
     currencySymbol: state.currencySymbol,
+    numberFormat: state.numberFormat,
     onSheetNameChange: state.setSheetName,
     onCurrencySymbolChange: state.setCurrencySymbol,
+    onNumberFormatChange: state.setNumberFormat,
   }
 }
 
