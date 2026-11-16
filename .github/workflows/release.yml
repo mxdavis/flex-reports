@@ -1,0 +1,92 @@
+name: Release
+
+# Run by hand (Actions → Release → Run workflow) to publish what's on main as a
+# new version: bumps the latest vX.Y.Z tag, publishes a GitHub release whose
+# notes list every PR merged since the previous one, and deploys that tag as
+# the demo.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Release the next version
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+permissions:
+  contents: read
+
+# One release at a time, so two runs can't pick the same version.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.next.outputs.tag }}
+    steps:
+      - name: Only from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Releases are made from main; this run is on ${{ github.ref_name }}."
+          exit 1
+
+      - name: Checkout (with tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Work out the next version
+        id: next
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          PREVIOUS_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
+          if [ -n "$PREVIOUS_TAG" ] && [ "$(git rev-list --count "$PREVIOUS_TAG..HEAD")" = "0" ]; then
+            echo "::error::Nothing new on main since $PREVIOUS_TAG; there's nothing to release."
+            exit 1
+          fi
+
+          # Before the first release, versions start from 0.0.0.
+          IFS=. read -r MAJOR MINOR PATCH <<< "${PREVIOUS_TAG#v}"
+          MAJOR=${MAJOR:-0} MINOR=${MINOR:-0} PATCH=${PATCH:-0}
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+            *) echo "::error::Unknown bump '$BUMP' (expected patch, minor or major)."; exit 1 ;;
+          esac
+          TAG="v$MAJOR.$MINOR.$PATCH"
+
+          echo "Releasing $TAG ($BUMP bump from ${PREVIOUS_TAG:-nothing})"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Tag and publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.next.outputs.tag }}
+          PREVIOUS_TAG: ${{ steps.next.outputs.previous_tag }}
+        run: |
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "Flex Reports ${TAG#v}" \
+            --generate-notes \
+            ${PREVIOUS_TAG:+--notes-start-tag "$PREVIOUS_TAG"} \
+            --latest
+
+  # Called directly: a release made with the workflow's token doesn't trigger
+  # other workflows.
+  deploy:
+    needs: publish
+    uses: ./.github/workflows/pages.yml
+    with:
+      tag: ${{ needs.publish.outputs.tag }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

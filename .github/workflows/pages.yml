@@ -1,17 +1,28 @@
-name: Deploy demo to GitHub Pages
+name: Deploy demo
 
+# Deploys a release's tag to GitHub Pages. The Release workflow calls this for
+# each new version. To roll back, run it by hand (Actions → Deploy demo → Run
+# workflow) with an earlier tag.
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to deploy (vX.Y.Z)
+        type: string
+        required: true
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to deploy (e.g. v0.1.0)
+        type: string
+        required: true
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# One deploy at a time; a newer push doesn't cancel a deploy in progress.
+# One deploy at a time; a newer one waits instead of cancelling the current deploy.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -20,8 +31,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout the release tag
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
