@@ -46,14 +46,13 @@
 ## Process
 
 - Work on branches; open PRs; never push to `main` without review.
-- Update `README.md` only for infrastructure, high-level architecture, or app setup/startup changes. Keep feature specs and story progress in planning documents and `docs/TODO.md`.
+- Update `README.md` only for infrastructure, high-level architecture, or app setup/startup changes. Keep feature specs and story progress in planning documents.
 - **Stop and ask** whenever any question or clarification comes up, at any point in
   the work. Don't guess or pick a default on the user's behalf.
 - Use latest Node / React / Vite (and keep deps permissively licensed).
 - When PR feedback reveals coding-style preferences, record them in this file
     before continuing so future work follows the updated style.
-- `docs/TODO.md` is the source of truth for status/progress.
-    Keep it current as tasks move through `todo` -> `wip` -> `in-pr` -> `in-main`.
+- Use `docs/TODO.md` only for work deferred until later so it isn't forgotten. Do not add entries for routine changes being completed now.
 - Every PR that includes frontend/UI changes must include localhost preview
     instructions in the PR description:
     - run command (for example `npm run dev`)

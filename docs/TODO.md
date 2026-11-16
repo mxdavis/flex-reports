@@ -1,6 +1,6 @@
-# TODO — live tracker
+# TODO — deferred work
 
-Update this file as work moves from idea -> branch -> PR -> main.
+Record work deferred until later so it isn't forgotten. Do not log routine changes here.
 
 Legend:
 - `[ ]` not started
