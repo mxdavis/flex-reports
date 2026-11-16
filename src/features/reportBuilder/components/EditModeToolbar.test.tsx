@@ -41,14 +41,20 @@ describe('EditModeToolbar', () => {
     expect(screen.queryByRole('button', { name: 'Save report' })).not.toBeInTheDocument()
   })
 
-  it('enables Save only when there are unsaved changes', () => {
+  it('shows Save only in edit mode and enables it for unsaved changes', () => {
     const onSave = vi.fn()
     const { rerender } = render(
       <EditModeToolbar isEditMode={false} onToggle={() => undefined} canSave onSave={onSave} />,
     )
-    expect(screen.getByRole('button', { name: 'Save report' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Save report' })).not.toBeInTheDocument()
 
     rerender(<EditModeToolbar isEditMode={false} onToggle={() => undefined} canSave isDirty onSave={onSave} />)
+    expect(screen.queryByRole('button', { name: 'Save report' })).not.toBeInTheDocument()
+
+    rerender(<EditModeToolbar isEditMode onToggle={() => undefined} canSave onSave={onSave} />)
+    expect(screen.getByRole('button', { name: 'Save report' })).toBeDisabled()
+
+    rerender(<EditModeToolbar isEditMode onToggle={() => undefined} canSave isDirty onSave={onSave} />)
     fireEvent.click(screen.getByRole('button', { name: 'Save report' }))
     expect(onSave).toHaveBeenCalledTimes(1)
   })

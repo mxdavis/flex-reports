@@ -150,7 +150,7 @@ describe('ReportBuilderApp host mode', () => {
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: null },
     }
     // Fully expanded is 2 region rows + 3 detail rows = 5, over a limit of 3.
-    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={fullyExpanded} onSave={vi.fn()} maxVisibleRows={3} />)
+    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={fullyExpanded} onSave={vi.fn()} maxVisibleRows={3} initialEditMode />)
 
     expect(screen.getByRole('combobox', { name: 'Show rows' })).toHaveValue('0')
     expect(screen.getByRole('option', { name: 'All rows (over 3 rows)' })).toBeDisabled()
@@ -188,7 +188,7 @@ describe('ReportBuilderApp host mode', () => {
       ...generateDefaultReportDefinition(groupedSchema),
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: null },
     }
-    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={groupedDefinition} onSave={onSave} />)
+    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={groupedDefinition} onSave={onSave} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'East' }))
     expect(getSaveButton()).toBeDisabled()
@@ -507,7 +507,7 @@ describe('ReportBuilderApp sandbox mode', () => {
   })
 
   it('opens clean: no unsaved changes before any edit', async () => {
-    await renderSandboxApp(<ReportBuilderApp sandbox />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     // The seed's formulas aren't alphabetical; the builder sorts them, and the
     // saved baseline must match or the report would open as unsaved.

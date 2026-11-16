@@ -56,7 +56,7 @@ function EditModeToolbar({
             ))}
           </nav>
         )}
-        {canSave && (
+        {isEditMode && canSave && (
           <button
             type="button"
             className="fr-workspace-toolbar-button fr-workspace-toolbar-save"
