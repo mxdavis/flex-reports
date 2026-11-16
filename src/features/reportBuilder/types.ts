@@ -8,7 +8,7 @@ export type ReportRole = 'editor' | 'viewer'
 export type ExportFormat = 'print' | 'pdf' | 'xlsx' | 'csv'
 
 export type ReportBuilderAppProps = {
-  // Columns available on `rows`. Inferred from the first row when omitted.
+  // Columns available on `rows`. Discovered across all rows as text when omitted.
   schema?: SchemaField[]
   // Host data. While it's undefined the builder shows "Loading report…".
   rows?: ReportRow[]
@@ -19,8 +19,8 @@ export type ReportBuilderAppProps = {
   // Called with the full definition when an editor clicks Save. Throw/reject to show an error.
   onSave?: (definition: ReportDefinition) => void | Promise<void>
   initialEditMode?: boolean
-  // Grouped reports open at the deepest Show rows level that stays within this
-  // many rows. Defaults to 1,000. Ungrouped tables aren't capped.
+  // Maximum displayed/printed report rows (1–1,000; defaults to 1,000).
+  // Calculations and grouping always use every incoming row.
   maxVisibleRows?: number
   // Runs on built-in sample data with localStorage saving, for local
   // development and demos. Host apps never set this; rows/schema are ignored.

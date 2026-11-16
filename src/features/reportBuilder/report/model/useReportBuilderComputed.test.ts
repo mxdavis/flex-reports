@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { ReportRow } from '../../../../services/adapters'
 import type { ReportField, SourceColumn } from '../../../../services/reportDefinition/types'
+import { createRecordsDataSource } from '../../../../services/adapters/recordsDataSource'
 import { useReportBuilderComputed } from './useReportBuilderComputed'
 
 const sourceColumns: SourceColumn[] = [
@@ -143,12 +144,65 @@ describe('useReportBuilderComputed', () => {
     const row = repeatedValueRows[0]
 
     expect(result.current.getFieldValue(row, rate)).toBe('$240.00')
-    expect(result.current.getMappedRawValue(row, 'doubleRate')).toBe(480)
+    expect(result.current.getMappedRawValue(row, '%doubleRate')).toBe(480)
 
     rerender({ currencySymbol: '€', formulas: [{ label: 'doubleRate', expression: '{{rate}} * 3' }] })
 
     expect(result.current.getFieldValue(row, rate)).toBe('€240.00')
-    expect(result.current.getMappedRawValue(row, 'doubleRate')).toBe(720)
+    expect(result.current.getMappedRawValue(row, '%doubleRate')).toBe(720)
     expect(result.current.formatFieldTotal(repeatedValueRows, rate)).toBe('€480.00')
   })
+  it('uses one numeric interpretation for formulas, sums and averages', () => {
+    const rows = [
+      { amount: '250', decimalAmount: '12.5' }, { amount: '50', decimalAmount: '0.75' },
+      { amount: 'bad', decimalAmount: 'invalid' }, { amount: '250abc', decimalAmount: '2.75' },
+    ]
+    const { result } = renderHook(() => useReportBuilderComputed({
+      rows, sourceColumns: createRecordsDataSource(rows).getSchema(), reportFields: [],
+      formulas: [{ label: 'twice', expression: '{{amount}} * 2' }],
+      currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
+    }))
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'amount', displayType: 'decimal', aggregation: 'sum' })).toBe(300)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'amount', displayType: 'decimal', aggregation: 'avg' })).toBe(75)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'decimalAmount', displayType: 'decimal', aggregation: 'sum' })).toBe(16)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: 'decimalAmount', displayType: 'decimal', aggregation: 'avg' })).toBe(4)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: '%twice', displayType: 'decimal', aggregation: 'sum' })).toBe(600)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: '%twice', displayType: 'decimal', aggregation: 'avg' })).toBe(150)
+  })
+
+  it('resolves only actual formula dependencies and preserves reference/calculation errors', () => {
+    const rows = [{ amount: '2' }, {}]
+    const { result } = renderHook(() => useReportBuilderComputed({
+      rows, sourceColumns: createRecordsDataSource(rows).getSchema(), reportFields: [],
+      formulas: [
+        { label: 'base', expression: '{{amount}} * 2' },
+        { label: 'dependent', expression: '{{%BASE}} + 1' },
+        { label: 'unknown', expression: '{{misspelled}} + 1' },
+        { label: 'circular', expression: '{{%circular}} + 1' },
+        { label: 'division', expression: '1 / 0' },
+      ], currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
+    }))
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: '%base', displayType: 'decimal', aggregation: 'sum' })).toBe(4)
+    expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: '%dependent', displayType: 'decimal', aggregation: 'sum' })).toBe(6)
+    for (const field of ['unknown', 'circular', 'division']) {
+      expect(result.current.getFieldValue(rows[0], { id: field, label: field, sourceKey: `%${field}`, displayType: 'number', aggregation: 'sum' })).toBe('Invalid formula')
+      expect(result.current.getFieldTotal(rows, { id: 'test', label: 'Test', sourceKey: `%${field}`, displayType: 'decimal', aggregation: 'sum' })).toBeNaN()
+    }
+    expect(result.current.issues).toHaveLength(3)
+  })
+
+})
+
+it('calculates formulas and totals over more than 1,000 source rows', () => {
+  const rows = Array.from({ length: 1500 }, () => ({ amount: '2' }))
+  const { result } = renderHook(() => useReportBuilderComputed({
+    rows, sourceColumns: createRecordsDataSource(rows).getSchema(), reportFields: [],
+    formulas: [{ label: 'twice', expression: '{{amount}} * 2' }],
+    currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
+  }))
+  const field: ReportField = { id: 'twice', label: 'Twice', sourceKey: '%twice', displayType: 'number', aggregation: 'sum' }
+  expect(result.current.getFieldTotal(rows, field)).toBe(6000)
+  expect(result.current.getFieldRawValue(rows[1499], field)).toBe(4)
+  expect(result.current.getFieldRawValue(rows[0], { ...field, sourceKey: 'amount' })).toBe(2)
+  expect(result.current.getFieldRawValue(rows[0], { ...field, sourceKey: 'amount', displayType: 'string' })).toBe('2')
 })

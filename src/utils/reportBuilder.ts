@@ -12,6 +12,15 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '
 const TWO_DECIMALS_FORMAT = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const WHOLE_NUMBER_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
+export function toReportNumber(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value !== 'string') return 0
+  const text = value.trim()
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text)) return 0
+  const number = Number(text)
+  return Number.isFinite(number) ? number : 0
+}
+
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
 
 // A date-only value ("2026-07-01") is a calendar day, so it's read in the
@@ -21,8 +30,17 @@ function parseDate(value: unknown): Date {
   if (value instanceof Date) return value
   const text = String(value).trim()
   const dateOnly = DATE_ONLY.exec(text)
-  if (dateOnly) return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+  if (dateOnly) {
+    const parsed = new Date(`${text}T00:00:00`)
+    const valid = parsed.getFullYear() === Number(dateOnly[1])
+      && parsed.getMonth() === Number(dateOnly[2]) - 1 && parsed.getDate() === Number(dateOnly[3])
+    return valid ? parsed : new Date(Number.NaN)
+  }
   return new Date(text)
+}
+
+export function isValidReportDate(value: unknown): boolean {
+  return value !== null && value !== undefined && Number.isFinite(parseDate(value).getTime())
 }
 
 export function formatCellValue(
@@ -30,9 +48,7 @@ export function formatCellValue(
   displayType: DisplayType,
   options?: FormatCellOptions,
 ): string {
-  if (value === null || value === undefined) {
-    return ''
-  }
+  if ((displayType === 'string' || displayType === 'date') && value == null) return ''
 
   if (typeof value === 'number' && Number.isNaN(value)) {
     // Broken formulas evaluate to NaN; totals show the same label.
@@ -40,7 +56,7 @@ export function formatCellValue(
   }
 
   if (displayType === 'string') {
-    return String(value)
+    return typeof value === 'object' ? JSON.stringify(value) : String(value)
   }
 
   if (displayType === 'date') {
@@ -52,19 +68,17 @@ export function formatCellValue(
     return DATE_FORMAT.format(parsedDate)
   }
 
-  if (typeof value !== 'number') {
-    return String(value)
-  }
+  const number = toReportNumber(value)
 
   switch (displayType) {
     case 'currency':
-      return `${value < 0 ? '-' : ''}${options?.currencySymbol || DEFAULT_CURRENCY_SYMBOL}${TWO_DECIMALS_FORMAT.format(Math.abs(value))}`
+      return `${number < 0 ? '-' : ''}${options?.currencySymbol || DEFAULT_CURRENCY_SYMBOL}${TWO_DECIMALS_FORMAT.format(Math.abs(number))}`
     case 'number':
-      return WHOLE_NUMBER_FORMAT.format(value)
+      return WHOLE_NUMBER_FORMAT.format(number)
     case 'decimal':
-      return TWO_DECIMALS_FORMAT.format(value)
+      return TWO_DECIMALS_FORMAT.format(number)
     case 'percent':
-      return `${TWO_DECIMALS_FORMAT.format(value * 100)}%`
+      return `${TWO_DECIMALS_FORMAT.format(number * 100)}%`
     default:
       return String(value)
   }

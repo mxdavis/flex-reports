@@ -16,18 +16,18 @@ describe('evaluateFormula', () => {
     })
   })
 
-  it('handles case-insensitive token references and formula labels with spaces', () => {
+  it('handles exact token references and formula labels with spaces', () => {
     expect(evaluateFormula('{{%Write Down}} + {{Hours}}', {
-      'write down': 15,
-      hours: 5,
+      '%Write Down': 15,
+      Hours: 5,
     })).toEqual({
       ok: true,
       value: 20,
     })
   })
 
-  it('substitutes 0 for missing tokens', () => {
-    expect(evaluateFormula('{{missing}} + 20', {})).toEqual({ ok: true, value: 20 })
+  it('rejects missing tokens instead of silently replacing them with zero', () => {
+    expect(evaluateFormula('{{missing}} + 20', {})).toMatchObject({ ok: false, code: 'invalid-reference' })
   })
 
   it('respects operator precedence and parentheses', () => {
@@ -62,12 +62,14 @@ describe('evaluateFormula', () => {
     })
   })
 
-  it('returns NaN when the math result is non-finite', () => {
-    const result = evaluateFormula('10 / 0', {})
+  it('reports division by zero and non-finite results as errors', () => {
+    expect(evaluateFormula('10 / 0', {})).toMatchObject({ ok: false })
+    expect(evaluateFormula('1e308 * 2', {})).toMatchObject({ ok: false })
+  })
 
-    expect(result.ok).toBe(true)
-    if (result.ok) {
-      expect(Number.isNaN(result.value)).toBe(true)
-    }
+  it('handles signed values and exponent notation without changing precedence', () => {
+    expect(evaluateFormula('10 - {{value}}', { value: -3 })).toEqual({ ok: true, value: 13 })
+    expect(evaluateFormula('{{value}} * 2', { value: 1e-7 })).toEqual({ ok: true, value: 2e-7 })
+    expect(evaluateFormula('1e2 + .5', {})).toEqual({ ok: true, value: 100.5 })
   })
 })

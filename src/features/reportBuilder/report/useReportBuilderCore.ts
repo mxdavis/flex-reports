@@ -27,7 +27,9 @@ export function useReportBuilderCore(args: ReportBuilderStateArgs) {
     state,
     computed,
     isVerticalViewAvailable,
-    maxVisibleRows: args.maxVisibleRows ?? DEFAULT_MAX_VISIBLE_ROWS,
+    maxVisibleRows: Number.isFinite(args.maxVisibleRows)
+      ? Math.max(1, Math.min(DEFAULT_MAX_VISIBLE_ROWS, Math.floor(args.maxVisibleRows!)))
+      : DEFAULT_MAX_VISIBLE_ROWS,
     exportFormats: args.exports === false ? [] : Array.isArray(args.exports) ? args.exports : ALL_EXPORT_FORMATS,
   }
 }

@@ -15,8 +15,8 @@ export function createSeedDataSource(
 ): SeedDataSource {
   const schema: SchemaField[] = [
     { id: 'workDate', key: 'workDate', label: 'Work Date', dataType: 'date' },
-    { id: 'personName', key: 'personName', label: 'Person', dataType: 'string' },
-    { id: 'clientName', key: 'clientName', label: 'Client', dataType: 'string' },
+    { id: 'personName', key: 'person.name', path: ['person', 'name'], label: 'Person', dataType: 'string' },
+    { id: 'clientName', key: 'client.name', path: ['client', 'name'], label: 'Client', dataType: 'string' },
     { id: 'task', key: 'task', label: 'Task', dataType: 'string' },
     { id: 'hours', key: 'hours', label: 'Hours', dataType: 'number' },
     { id: 'rate', key: 'rate', label: 'Rate', dataType: 'currency' },
@@ -36,11 +36,13 @@ export function createSeedDataSource(
       return {
         id: entry.id,
         workDate: entry.workDate,
-        personId: entry.personId,
-        personName: peopleById.get(entry.personId) ?? 'Unknown',
-        clientId: entry.clientId,
-        clientName: client?.name ?? 'Unknown',
-        originatingPersonId: client?.originatingPerson ?? '',
+        // Nested like a host's joined records, so the sandbox shows nested fields.
+        person: { id: entry.personId, name: peopleById.get(entry.personId) ?? 'Unknown' },
+        client: {
+          id: entry.clientId,
+          name: client?.name ?? 'Unknown',
+          originatingPersonId: client?.originatingPerson ?? '',
+        },
         task: entry.task,
         hours: entry.timeWorked,
         rate: entry.rate,

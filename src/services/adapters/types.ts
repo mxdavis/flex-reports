@@ -1,9 +1,5 @@
-// A single row the report engine works over. Rows come from the host app (or
-// the sandbox seed) and can have any shape; only a unique `id` is required.
-export type ReportRow = {
-  id: string
-  [key: string]: unknown
-}
+// Host data stays unchanged; rendering keys are managed separately.
+export type ReportRow = Readonly<Record<string, unknown>>
 
 export type SchemaDataType = 'string' | 'number' | 'date' | 'currency'
 
@@ -11,6 +7,7 @@ export type SchemaDataType = 'string' | 'number' | 'date' | 'currency'
 export type SchemaField = {
   id: string
   key: string
+  path?: readonly string[]
   label: string
   dataType: SchemaDataType
 }

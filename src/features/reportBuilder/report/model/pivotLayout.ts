@@ -1,3 +1,4 @@
+import { getRowKey } from '../../../../services/adapters/recordsDataSource'
 import type { ReportRow } from '../../../../services/adapters'
 import type { ReportField } from '../../../../services/reportDefinition/types'
 import { isNumericDisplayType, isNumericTotal } from './fieldTotals'
@@ -162,7 +163,7 @@ export function buildTreeRows({ showTotals, formatFieldTotal, isGroupExpanded, .
       for (const row of node.rows) {
         output.push({
           kind: 'detail',
-          key: `detail-${row.id}`,
+          key: `detail-${getRowKey(row)}`,
           level: groupCount,
           label: getFieldValue(row, fields[labelIndex]),
           values: valueFields.map((field) => ({

@@ -163,7 +163,7 @@ function ReportTableSection({
         ref={tableProps.scrollContainerRef}
       >
         <table>
-          <ReportTableContent {...tableProps} />
+          <ReportTableContent {...tableProps} maxVisibleRows={maxVisibleRows} />
         </table>
       </div>
     </section>

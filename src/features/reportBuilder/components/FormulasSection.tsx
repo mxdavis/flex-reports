@@ -16,6 +16,7 @@ export type FormulasSectionProps = {
   editingFormula: ReportFormula | null
   editingFormulaError: string
   formulaTokenOptions: string[]
+  notes?: string[] // Saved formulas that need the editor's attention.
   onStartAddFormula: () => void
   onCancelAddFormula: () => void
   onSetNewFormulaLabel: (value: string) => void
@@ -41,6 +42,7 @@ function FormulasSection({
   editingFormula,
   editingFormulaError,
   formulaTokenOptions,
+  notes = [],
   onStartAddFormula,
   onCancelAddFormula,
   onSetNewFormulaLabel,
@@ -78,6 +80,7 @@ function FormulasSection({
             Use {'{{fieldName}}'} for data fields and {'{{%Formula Label}}'} for formulas.
             {` Available formulas: ${formulas.map((formula) => formula.label).join(', ') || 'none yet'}.`}
           </p>
+          {notes.map((note) => <p key={note} className="fr-mapping-tip" role="note">{note}</p>)}
           {!isAddingFormula && (
             <div className="fr-add-card">
               <button

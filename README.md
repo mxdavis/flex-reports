@@ -69,7 +69,7 @@ function SalesReport({ report, rows, currentUser }) {
 
 ### 1. Pass your data
 
-`rows` is an array of plain objects in any shape. Each row needs a unique `id`:
+`rows` is an array of plain objects in any shape. An `id` is optional; render keys are managed internally:
 
 ```ts
 const rows = [
@@ -87,8 +87,8 @@ const rows = [
 | `label` | The default column header. |
 | `dataType` | `'string'`, `'number'`, `'date'`, or `'currency'`. Sets the default format and total type. |
 
-If you leave `schema` out, fields are worked out from the first row, and a warning is
-logged to the console. Passing a schema gives you proper labels and formats.
+If you leave `schema` out, keys from every row become text fields, and a warning is
+logged to the console. Passing a schema gives you explicit labels and formats.
 
 `rows` and `schema` can change at any time, for example after a refetch, and the table
 updates. Passing `schema` inline is fine: it's compared by content. If you don't pass a
@@ -131,7 +131,7 @@ Viewers can try anything without risk, and they don't see authoring tips.
 | `initialEditMode` | `boolean` | `false` | Open straight into edit mode. |
 | `sandbox` | `boolean` | `false` | Run on built-in sample data for local development and demos (see [Sandbox mode](#sandbox-mode)). Host apps don't set this. |
 | `exports` | `boolean \| ('print' \| 'pdf' \| 'xlsx' \| 'csv')[]` | all | Which export formats appear in the **Export** menu, for viewers and editors alike. `false` hides the menu. |
-| `maxVisibleRows` | `number` | `1000` | Grouped reports that would show more rows than this fully expanded open at the deepest **Show rows** level that fits. Ungrouped tables aren't capped. |
+| `maxVisibleRows` | `number` | `1000` | Maximum displayed/printed report rows (1–1,000). Grouped reports open at the deepest **Show rows** level that fits. All incoming rows still contribute to formulas and totals. |
 
 ### Report definition
 
@@ -156,7 +156,7 @@ This is the only thing you store. Save it as-is:
 
 | Key | Meaning |
 |---|---|
-| `fields` | The report's columns, in order. `sourceKey` is a schema `key` or a formula `label`. |
+| `fields` | The report's columns, in order. `sourceKey` is a schema `key`, or `%` plus a formula `label` (for example `%lineTotal`). |
 | `fields[].displayType` | `'currency' \| 'number' \| 'decimal' \| 'percent' \| 'date' \| 'string'` |
 | `fields[].aggregation` | How the column totals: `'none' \| 'sum' \| 'avg' \| 'count' \| 'distinct'` |
 | `formulas` | Per-row calculations. See [Formulas](docs/FUNCTIONALITY.md#formulas). |
@@ -171,8 +171,11 @@ You can also build a starter definition on your server, for example to ship a de
 report. Invalid or partial definitions don't crash the page: the bad parts fall back to
 defaults and a `[flex-reports]` error is logged to the console. The same rules the editor enforces are
 applied when a definition loads: at most 15 columns (repeated column ids get a fresh id)
-and 25 formulas, and formulas with an invalid label, a label that matches a data field, or
-an expression over 500 characters are dropped, each with a `[flex-reports]` error.
+and 25 formulas. Saved formulas are kept even when the editor wouldn't accept them (an
+invalid or empty label, an empty expression, an expression over 500 characters, or a label
+that matches a data field): editors see a note in the Formulas panel and fix them there.
+Two formulas with the same name (ignoring case) can't be saved from the editor; if a
+definition you pass in has them, the first is used and a warning shows on the page.
 
 More examples: [docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENCE.md).
 

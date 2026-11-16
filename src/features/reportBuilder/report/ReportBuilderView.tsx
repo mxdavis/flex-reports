@@ -28,6 +28,15 @@ function ReportBuilderView() {
   const [isColumnsCollapsed, setIsColumnsCollapsed] = useState(false)
   const [isFormulasCollapsed, setIsFormulasCollapsed] = useState(false)
 
+  function renderReportIssues() {
+    const issues = [state.sourceError, ...state.definitionIssues, ...computed.issues].filter(Boolean)
+    return issues.length > 0 && <div role="alert">{issues.map((issue, index) => <p key={`${index}-${issue}`}>{issue}</p>)}</div>
+  }
+
+  function renderEmptyReportMessage() {
+    return state.rows.length === 0 && !state.sourceError && <p role="status">No rows</p>
+  }
+
   return (
     <PrintModeContext.Provider value={isPrinting}>
       <div className="fr-report-builder" ref={rootRef}>
@@ -67,6 +76,8 @@ function ReportBuilderView() {
           <SummaryChips items={summaryItems} />
         )}
 
+        {renderReportIssues()}
+        {renderEmptyReportMessage()}
         <ReportTableSection {...tableSectionProps} />
       </div>
     </PrintModeContext.Provider>

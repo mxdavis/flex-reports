@@ -1,6 +1,7 @@
 import type { Row, Worksheet } from 'exceljs'
 import type { ReportRow } from '../../../../services/adapters'
 import type { DisplayType, ReportField } from '../../../../services/reportDefinition/types'
+import { isValidReportDate } from '../../../../utils/reportBuilder'
 import { getTotalDisplayType } from './fieldTotals'
 import { buildGroupTree, getTreeLayout, joinFieldLabels, type GetFieldValue, type GroupNode } from './pivotLayout'
 
@@ -13,6 +14,7 @@ export type XlsxExportArgs = {
   fields: ReportField[]
   isGrouped: boolean
   showTotals: boolean
+  getFieldRawValue: (row: ReportRow, field: ReportField) => unknown
   getFieldValue: GetFieldValue
   getRawValue: (row: ReportRow, sourceKey: string) => unknown
   getFieldTotal: (rows: ReportRow[], field: ReportField) => number | null
@@ -41,6 +43,7 @@ function numberFormat(displayType: DisplayType, currencySymbol: string): string 
 // that calendar day (at UTC midnight, which is how ExcelJS serializes dates).
 function toExcelDate(value: unknown): Date | string | null {
   if (value === null || value === undefined || value === '') return null
+  if (!isValidReportDate(value)) return String(value)
   if (value instanceof Date) return value
   const text = String(value).trim()
   const dateOnly = DATE_ONLY.exec(text)
@@ -53,7 +56,7 @@ function toCellValue(value: unknown, displayType: DisplayType): CellValue {
   if (value === null || value === undefined || value === '') return null
   if (typeof value === 'number') return Number.isNaN(value) ? INVALID_FORMULA : value
   if (displayType === 'date') return toExcelDate(value)
-  return String(value)
+  return typeof value === 'object' ? JSON.stringify(value) : String(value)
 }
 
 function toTotalValue(total: number | null): CellValue {
@@ -82,7 +85,7 @@ function addStyledRow(sheet: Worksheet, values: CellValue[], options: { bold?: b
 // collapsed on screen included but collapsed.
 export async function buildXlsx(args: XlsxExportArgs): Promise<ArrayBuffer> {
   const { default: ExcelJS } = await import('exceljs')
-  const { fields, rows, currencySymbol, getFieldValue, getRawValue, getFieldTotal } = args
+  const { fields, rows, currencySymbol, getFieldValue, getRawValue, getFieldRawValue, getFieldTotal } = args
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet(toSheetName(args.sheetName), {
     views: [{ state: 'frozen', ySplit: 1 }],
@@ -105,7 +108,7 @@ export async function buildXlsx(args: XlsxExportArgs): Promise<ArrayBuffer> {
     if (format) column.numFmt = format
   })
 
-  const valueCells = (row: ReportRow) => valueFields.map((field) => toCellValue(getRawValue(row, field.sourceKey), field.displayType))
+  const valueCells = (row: ReportRow) => valueFields.map((field) => toCellValue(getFieldRawValue(row, field), field.displayType))
   const totalCells = (groupRows: ReportRow[]) => valueFields.map((field) => toTotalValue(getFieldTotal(groupRows, field)))
   const formatTotals = (row: Row) => valueFields.forEach((field, index) => {
     row.getCell(index + 2).numFmt = numberFormat(getTotalDisplayType(field), currencySymbol) ?? 'General'
@@ -130,7 +133,7 @@ export async function buildXlsx(args: XlsxExportArgs): Promise<ArrayBuffer> {
     addGroups(buildGroupTree({ rows, fields, getFieldValue, getRawValue }), false)
   } else {
     for (const row of rows) {
-      sheet.addRow([toCellValue(getRawValue(row, labelField.sourceKey), labelField.displayType), ...valueCells(row)])
+      sheet.addRow([toCellValue(getFieldRawValue(row, labelField), labelField.displayType), ...valueCells(row)])
     }
   }
 

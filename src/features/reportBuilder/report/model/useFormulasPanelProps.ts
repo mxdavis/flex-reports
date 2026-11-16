@@ -52,10 +52,10 @@ export function useFormulasPanelProps(): FormulasPanelProps {
     }
 
     setFormulas((previous) => sortFormulasByLabel(previous.map((formula) => (formula.label === originalLabel ? candidate : formula))))
-    const originalKey = originalLabel.toLowerCase()
+    const originalKey = `%${originalLabel}`.toLowerCase()
     state.setFields((previous) => previous.map((field) => (field.sourceKey.toLowerCase() !== originalKey ? field : {
       ...field,
-      sourceKey: candidate.label,
+      sourceKey: `%${candidate.label}`,
       label: field.label === originalLabel ? candidate.label : field.label,
     })))
     stopEditingFormula()
@@ -72,6 +72,7 @@ export function useFormulasPanelProps(): FormulasPanelProps {
     editingFormula: editingFormula?.draft ?? null,
     editingFormulaError: state.editingFormulaError,
     formulaTokenOptions: computed.formulaTokenOptions,
+    notes: state.showTips ? computed.formulaNotes : [],
     onStartAddFormula: () => {
       setFormulaError('')
       setIsAddingFormula(true)

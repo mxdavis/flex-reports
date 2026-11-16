@@ -33,6 +33,7 @@ async function exportAndRead(overrides: Partial<XlsxExportArgs> = {}) {
     isGrouped: false,
     showTotals: true,
     getFieldValue: plainFieldValue,
+    getFieldRawValue: (row, field) => row[field.sourceKey],
     getRawValue: rawValue,
     getFieldTotal: sumOrAvg,
     isGroupExpanded: () => true,

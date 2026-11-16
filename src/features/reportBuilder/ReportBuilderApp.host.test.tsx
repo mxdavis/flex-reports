@@ -150,7 +150,7 @@ describe('ReportBuilderApp host mode', () => {
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: null },
     }
     // Fully expanded is 2 region rows + 3 detail rows = 5, over a limit of 3.
-    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={fullyExpanded} onSave={vi.fn()} maxVisibleRows={3} />)
+    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={fullyExpanded} onSave={vi.fn()} maxVisibleRows={3} initialEditMode />)
 
     expect(screen.getByRole('combobox', { name: 'Show rows' })).toHaveValue('0')
     expect(screen.getByRole('option', { name: 'All rows (over 3 rows)' })).toBeDisabled()
@@ -188,7 +188,7 @@ describe('ReportBuilderApp host mode', () => {
       ...generateDefaultReportDefinition(groupedSchema),
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: null },
     }
-    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={groupedDefinition} onSave={onSave} />)
+    render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={groupedDefinition} onSave={onSave} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'East' }))
     expect(getSaveButton()).toBeDisabled()
@@ -460,7 +460,7 @@ describe('ReportBuilderApp host mode', () => {
       vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
         downloads.push(this.download)
       })
-      render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} role="viewer" />)
+      render(<ReportBuilderApp schema={schema} rows={[{ ...rows[0], units: '12' }, { ...rows[1], units: 'invalid' }]} reportDefinition={savedDefinition} role="viewer" />)
 
       await user.click(screen.getByRole('button', { name: 'Export' }))
       await user.click(screen.getByRole('menuitem', { name: 'Download Excel (.xlsx)' }))
@@ -473,6 +473,7 @@ describe('ReportBuilderApp host mode', () => {
       expect(sheet.name).toBe('Inventory')
       expect(sheet.getRow(2).getCell(1).value).toBe('Austin')
       expect(sheet.getRow(2).getCell(2).value).toBe(12)
+      expect(sheet.getRow(3).getCell(2).value).toBe(0)
     })
 
     it('hides the Export button when the host turns exports off', () => {
@@ -506,7 +507,7 @@ describe('ReportBuilderApp sandbox mode', () => {
   })
 
   it('opens clean: no unsaved changes before any edit', async () => {
-    await renderSandboxApp(<ReportBuilderApp sandbox />)
+    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
 
     // The seed's formulas aren't alphabetical; the builder sorts them, and the
     // saved baseline must match or the report would open as unsaved.
@@ -547,5 +548,29 @@ describe('ReportBuilderApp sandbox mode', () => {
 
     expect(screen.queryByRole('button', { name: 'Save report' })).not.toBeInTheDocument()
     expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
+  })
+})
+
+describe('generic host records after merging the host API', () => {
+  it('discovers all keys as text, accepts duplicate ids, and refreshes on new rows', () => {
+    const records = [{ id: 'same', item: 'Cable' }, { id: 'same', extra: '250.50' }]
+    const { rerender } = render(<ReportBuilderApp rows={records} role="viewer" />)
+    expect(screen.getByRole('columnheader', { name: 'extra' })).toBeInTheDocument()
+    expect(screen.getByText('250.50')).toBeInTheDocument()
+    expect(screen.getAllByText('same')).toHaveLength(2)
+    rerender(<ReportBuilderApp rows={[{ item: 'Updated' }]} role="viewer" />)
+    expect(screen.getByText('Updated')).toBeInTheDocument()
+    expect(screen.queryByText('Cable')).toBeNull()
+    rerender(<ReportBuilderApp rows={[]} role="viewer" />)
+    expect(screen.getByRole('status')).toHaveTextContent('No rows')
+    expect(screen.queryByText('Updated')).toBeNull()
+  })
+
+  it('shows invalid incoming data as an actionable error and recovers on replacement', () => {
+    const { rerender } = render(<ReportBuilderApp rows={[null!]} role="viewer" />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Row 1 must be a record object')
+    rerender(<ReportBuilderApp rows={[{ item: 'Recovered' }]} role="viewer" />)
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByText('Recovered')).toBeInTheDocument()
   })
 })

@@ -115,7 +115,7 @@ describe('ReportTableContent', () => {
     renderTable({
       isHorizontalTable: false,
       fields: verticalFields,
-      verticalColumns: groupedRows.map((row) => ({ key: row.id, headerValue: String(row.store), row })),
+      verticalColumns: groupedRows.map((row) => ({ key: String(row.id), headerValue: String(row.store), row })),
     })
 
     expect(screen.getAllByRole('columnheader', { name: 'Ames' })).toHaveLength(2)

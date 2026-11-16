@@ -1,3 +1,4 @@
+import { PrintModeContext } from '../../../shared/hooks/usePrintMode'
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { ReportRow } from '../../../services/adapters'
@@ -15,8 +16,9 @@ function makeRows(count: number): ReportRow[] {
   return Array.from({ length: count }, (_, index) => ({ id: `r${index}`, region: index % 2 ? 'North' : 'South', store: `Store ${index}`, units: 1 }))
 }
 
-function renderTable(isGrouped: boolean, rows: ReportRow[] = makeRows(3)) {
+function renderTable(isGrouped: boolean, rows: ReportRow[] = makeRows(3), isPrinting = false, isExpanded = true) {
   return render(
+    <PrintModeContext.Provider value={isPrinting}>
     <table>
       <HorizontalTableContent
         showTotals
@@ -28,10 +30,11 @@ function renderTable(isGrouped: boolean, rows: ReportRow[] = makeRows(3)) {
         getRawValue={rawValue}
         formatFieldTotal={simpleFieldTotal}
         getFieldWarning={() => null}
-        isGroupExpanded={() => true}
+        isGroupExpanded={() => isExpanded}
         onToggleGroup={() => undefined}
       />
-    </table>,
+    </table>
+    </PrintModeContext.Provider>,
   )
 }
 
@@ -61,4 +64,25 @@ describe('HorizontalTableContent', () => {
     // Totals still cover every row, not just the drawn ones.
     expect(within(container.querySelector('tfoot')!).getByText('5000')).toBeInTheDocument()
   })
+})
+
+it('prints at most 1,000 detail rows while totalling the full dataset', () => {
+  const { container } = renderTable(false, makeRows(1500), true)
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(1000)
+  expect(screen.queryByText('Store 1000')).toBeNull()
+  expect(within(container.querySelector('tfoot')!).getByText('1500')).toBeInTheDocument()
+  expect(screen.getByText(/Calculations and totals use all 1,500 source rows/)).toBeInTheDocument()
+})
+
+it('groups all source rows before applying the display and print limit', () => {
+  const { container } = renderTable(true, makeRows(1500), true, false)
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
+  expect(within(container.querySelector('tbody')!).getAllByText('750')).toHaveLength(2)
+  expect(within(container.querySelector('tfoot')!).getByText('1500')).toBeInTheDocument()
+})
+
+it('caps manually expanded groups when printing without changing their totals', () => {
+  const { container } = renderTable(true, makeRows(1500), true)
+  expect(container.querySelectorAll('tbody tr')).toHaveLength(1000)
+  expect(within(container.querySelector('tfoot')!).getByText('1500')).toBeInTheDocument()
 })

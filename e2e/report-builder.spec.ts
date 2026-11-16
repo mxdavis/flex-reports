@@ -44,8 +44,8 @@ test('grouping toggle switches to nested group rows', async ({ page }) => {
 
   await enterEditMode(page)
   const mappingSection = getMappingSection(page)
-  await setColumnSource(page, mappingSection, 1, 'personName')
-  await setColumnSource(page, mappingSection, 2, 'clientName')
+  await setColumnSource(page, mappingSection, 1, 'person.name')
+  await setColumnSource(page, mappingSection, 2, 'client.name')
 
   const alexGroup = page.getByRole('button', { name: 'Alex Rivera', exact: true })
   await expect(alexGroup).toHaveCount(0)
@@ -60,8 +60,8 @@ test('groups collapse and expand by hand and by outline level', async ({ page })
 
   await enterEditMode(page)
   const mappingSection = getMappingSection(page)
-  await setColumnSource(page, mappingSection, 1, 'personName')
-  await setColumnSource(page, mappingSection, 2, 'clientName')
+  await setColumnSource(page, mappingSection, 1, 'person.name')
+  await setColumnSource(page, mappingSection, 2, 'client.name')
 
   await page.getByRole('button', { name: 'Totals' }).click()
   await page.getByRole('button', { name: 'Grouping' }).click()
@@ -93,8 +93,8 @@ test('groups nest by the leading text columns, the last one names each row, numb
   await enterEditMode(page)
   const mappingSection = getMappingSection(page)
 
-  await setColumnSource(page, mappingSection, 1, 'personName')
-  await setColumnSource(page, mappingSection, 2, 'clientName')
+  await setColumnSource(page, mappingSection, 1, 'person.name')
+  await setColumnSource(page, mappingSection, 2, 'client.name')
   await setColumnSource(page, mappingSection, 3, 'task')
   await setColumnSource(page, mappingSection, 4, 'rate')
   await setColumnSource(page, mappingSection, 5, 'grossFees')
@@ -121,8 +121,8 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
   await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
 
   const column1SourceInput = mappingSection.getByRole('textbox', { name: 'COLUMN' }).first()
-  await column1SourceInput.fill('grossFees')
-  await expect(column1SourceInput).toHaveValue('grossFees')
+  await column1SourceInput.fill('%grossFees')
+  await expect(column1SourceInput).toHaveValue('%grossFees')
   await mappingSection.getByRole('button', { name: 'Save COLUMN 1' }).click()
 
   const formulasSection = page.locator('section', {
@@ -136,7 +136,7 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
   await formulasSection.getByRole('button', { name: 'Save', exact: true }).click()
 
   await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
-  await expect(column1SourceInput).toHaveValue('Gross Renamed')
+  await expect(column1SourceInput).toHaveValue('%Gross Renamed')
 })
 
 test('add column uses shared field editor controls and persists total type', async ({ page }) => {

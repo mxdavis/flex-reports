@@ -1,6 +1,6 @@
-# TODO — live tracker
+# TODO — deferred work
 
-Update this file as work moves from idea -> branch -> PR -> main.
+Record work deferred until later so it isn't forgotten. Do not log routine changes here.
 
 Legend:
 - `[ ]` not started
@@ -16,6 +16,13 @@ Status tags used in each item:
 ## Success definition
 
 - [ ] (todo) Project success milestone: recreate the exact reference spreadsheet in this app using seed-data attributes and UI mappings/formulas, with no hardcoded customer values in code.
+
+## Story 1 — generic records
+
+- [x] (in-pr) Refactor existing report input/state/calculations to accept host records, update live, and interpret numeric text without billing assumptions. Branch: `feat/generic-report-records`. File/API loading and stories 2–6 remain separate.
+  - PR #12: integrates with main’s `rows`/`schema`/`onSave` API and existing sandbox.
+  - No incoming row cap. Display/print up to 1,000 report rows; formulas, grouping and totals use the full dataset.
+  - Preview: `npm run dev` → `http://localhost:6060`; original sandbox only. Generic records, live updates, empty data, and numeric conversion are checked in automated tests; no sample-category UI or extra runtime seeds.
 
 ## Current status
 
@@ -68,6 +75,9 @@ Status tags used in each item:
 - [x] (in-main) Scope decision: no value-template columns; use direct source-key/formula mapping only.
 - [ ] (todo) Improve table readability (header styling, alternating row colors)
 - [x] (in-main) Design seeded formula authoring UX baseline (formulas can be created, edited, and validated in-app)
+- [ ] when its grouped (which means it shows subtotals) each group can be expanded or minimized. so if its minizmed you just the total row of that group but if its expanded we see what we see now. can we try to implement that? we can use the icons we have for up and down, but instead have it for left anf right
+- [ ] make the seed one step further to see how much we can do with our reporting. add matters which belong to clients and have a matter_category which is category: id, name (litigation, employment, corporate, 3 examples). now move the billing time to a matter and attorney. now lets see if we can group by client than matter, or even group by category, so col 1 person, col 2 category, col 3 time. lets see what kind of nested data we can handle or if it will need to be handled before being passed in.
+- [ ] Add percentage to a grouping total
 - [ ] (todo) Add filtering, sorting, etc. also should be able to filter by date range. add filters would be another thing on the sticky when in the view mode. When in edit mode be able to set the default for the filters created.
 - [~] (in-pr) Make filters, columns, and formulas collapsable and expandable when in edit mode
   - PR #10: settings, columns, and formulas collapse. Filters follow when filters exist.

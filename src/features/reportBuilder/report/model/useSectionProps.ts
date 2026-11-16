@@ -101,6 +101,7 @@ export function useTableSectionProps({ onPrint }: { onPrint: () => void }): Repo
           isGrouped,
           showTotals: ui.showTotals,
           getFieldValue,
+          getFieldRawValue: computed.getFieldRawValue,
           getRawValue: computed.getMappedRawValue,
           getFieldTotal: computed.getFieldTotal,
           isGroupExpanded,

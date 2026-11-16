@@ -16,6 +16,8 @@ export type MappingPanelSectionProps = {
   newColumn: NewColumnDraft | null
   maxColumns: number
   showTips: boolean
+  // Fields that hold several entries per row, so can't be a column.
+  skippedFields?: string[]
   getFieldWarning: (field: ReportField) => string | null
   minColumns: number
   draggedFieldId: string | null
@@ -52,6 +54,7 @@ function MappingPanelSection({
   newColumn,
   maxColumns,
   showTips,
+  skippedFields = [],
   getFieldWarning,
   minColumns,
   draggedFieldId,
@@ -107,6 +110,13 @@ function MappingPanelSection({
               group by first, then the column that names each row, then your numbers. To choose how
               a column adds up in group totals, edit the column and set
               its <strong>Total type</strong> (for example Sum for hours, Average for a rate).
+            </p>
+          )}
+          {showTips && skippedFields.length > 0 && (
+            <p className="fr-mapping-tip" role="note">
+              <strong>Not available as a column:</strong> {skippedFields.join(', ')}. Each row has
+              more than one entry for {skippedFields.length === 1 ? 'this' : 'these'} (for example,
+              several invoices for one client). Ask whoever provided the data to give one entry per row.
             </p>
           )}
           {!newColumn && (

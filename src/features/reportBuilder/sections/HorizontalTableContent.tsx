@@ -1,3 +1,5 @@
+import { DEFAULT_MAX_VISIBLE_ROWS } from '../config'
+import { getRowKey } from '../../../services/adapters/recordsDataSource'
 import { useMemo, type RefObject } from 'react'
 import type { ReportRow } from '../../../services/adapters'
 import type { ReportField } from '../../../services/reportDefinition/types'
@@ -9,6 +11,7 @@ import VirtualTableBody from './VirtualTableBody'
 import './HorizontalTableContent.css'
 
 export type HorizontalTableContentProps = {
+  maxVisibleRows?: number
   showTotals: boolean
   // Grouping is on and there's at least one column to group by.
   isGrouped: boolean
@@ -24,6 +27,7 @@ export type HorizontalTableContentProps = {
 }
 
 export function HorizontalTableContent({
+  maxVisibleRows = DEFAULT_MAX_VISIBLE_ROWS,
   showTotals,
   isGrouped,
   fields,
@@ -39,6 +43,9 @@ export function HorizontalTableContent({
   const treeRows = useMemo(() => (isGrouped
     ? buildTreeRows({ rows, fields, showTotals, getFieldValue, getRawValue, formatFieldTotal, isGroupExpanded })
     : []), [fields, formatFieldTotal, getFieldValue, getRawValue, isGroupExpanded, isGrouped, rows, showTotals])
+
+  const reportRowCount = isGrouped ? treeRows.length : rows.length
+  const visibleRowCount = Math.min(reportRowCount, maxVisibleRows)
 
   // The first column is the label column: grouped, it nests the group columns
   // and the row-naming column under one header. Every other column is a value.
@@ -79,7 +86,7 @@ export function HorizontalTableContent({
 
   const body = isGrouped ? (
     <VirtualTableBody
-      rowCount={treeRows.length}
+      rowCount={visibleRowCount}
       columnCount={valueFields.length + 1}
       scrollContainerRef={scrollContainerRef}
       renderRow={(index, measureRef) => (
@@ -88,11 +95,11 @@ export function HorizontalTableContent({
     />
   ) : (
     <VirtualTableBody
-      rowCount={rows.length}
+      rowCount={visibleRowCount}
       columnCount={fields.length}
       scrollContainerRef={scrollContainerRef}
       renderRow={(index, measureRef) => (
-        <tr key={rows[index].id} ref={measureRef}>
+        <tr key={getRowKey(rows[index])} ref={measureRef}>
           {fields.map((field) => (
             <td
               key={field.id}
@@ -108,6 +115,12 @@ export function HorizontalTableContent({
 
   return (
     <>
+      {reportRowCount > visibleRowCount && (
+        <caption className="fr-outline-note">
+          Showing and printing the first {visibleRowCount.toLocaleString('en-US')} report rows.
+          Calculations and totals use all {rows.length.toLocaleString('en-US')} source rows.
+        </caption>
+      )}
       {header}
       {body}
       {footer}

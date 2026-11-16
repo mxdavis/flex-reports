@@ -70,8 +70,8 @@ describe('ReportBuilderApp', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     let columnOneSource = screen.getByLabelText('COLUMN 1') as HTMLInputElement
-    fireEvent.change(columnOneSource, { target: { value: 'grossFees' } })
-    expect(columnOneSource.value).toBe('grossFees')
+    fireEvent.change(columnOneSource, { target: { value: '%grossFees' } })
+    expect(columnOneSource.value).toBe('%grossFees')
     await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
 
     await user.click(screen.getAllByRole('button', { name: 'Edit' })[0])
@@ -83,7 +83,7 @@ describe('ReportBuilderApp', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }))
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     columnOneSource = screen.getByLabelText('COLUMN 1') as HTMLInputElement
-    expect(columnOneSource.value).toBe('Gross Renamed')
+    expect(columnOneSource.value).toBe('%Gross Renamed')
   })
 
   it('reverts blank column edits on save', async () => {

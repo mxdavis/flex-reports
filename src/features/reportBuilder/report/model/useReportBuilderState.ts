@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { ReportFormula, SandboxData, SchemaField } from '../../../../services/adapters'
-import { generateDefaultReportDefinition, isFromNewerVersion, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
+import { generateDefaultReportDefinition, getRepeatedFormulaNames, isFromNewerVersion, normalizeReportDefinition } from '../../../../services/reportDefinition/normalize'
 import { loadSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import {
   REPORT_DEFINITION_VERSION,
@@ -38,6 +38,9 @@ export function useReportBuilderState({
     [hostRows, stableSchema, sandboxData],
   )
   const { rows, isSandbox } = source
+  useEffect(() => {
+    if (source.error) console.error(`[flex-reports] ${source.error}`)
+  }, [source.error])
   const sourceColumns: SourceColumn[] = source.schema
 
   const [initialDefinition, setInitialDefinition] = useState<ReportDefinition>(() => (isSandbox
@@ -61,6 +64,9 @@ export function useReportBuilderState({
     }
   }
   const [formulas, setFormulas] = useState<ReportFormula[]>(initialDefinition.formulas)
+  // Shown to everyone: only a host can pass these in, and its developer needs to see it.
+  const [definitionIssues] = useState(() => (isSandbox ? [] : getRepeatedFormulaNames(reportDefinition)
+    .map((label) => `Can't have two formulas with the same name: "${label}".`)))
   const [sheetName, setSheetName] = useState(initialDefinition.sheetName)
   const [currencySymbol, setCurrencySymbol] = useState(initialDefinition.currencySymbol)
   const [newFormula, setNewFormula] = useState<ReportFormula>(() => ({
@@ -88,7 +94,7 @@ export function useReportBuilderState({
   const isMissingSchema = !isSandbox && hostSchema === undefined
   useEffect(() => {
     if (isMissingSchema) {
-      console.warn('[flex-reports] `rows` was passed without `schema`; inferring columns from the first row.')
+      console.warn('[flex-reports] `rows` was passed without `schema`; discovering columns across all rows as text.')
     }
   }, [isMissingSchema])
   useEffect(() => {
@@ -131,6 +137,9 @@ export function useReportBuilderState({
   }, [ui.isTableFullscreen])
 
   return {
+    sourceError: source.error,
+    definitionIssues,
+    skippedFields: source.skippedFields,
     rows,
     sourceColumns,
     fields,
