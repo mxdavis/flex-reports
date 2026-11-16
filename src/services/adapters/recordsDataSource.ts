@@ -41,6 +41,15 @@ export function createRecordsDataSource(records: readonly ReportRow[]) {
   const schema: SchemaField[] = Array.from(keys, (key, index) => ({
     id: `field-${index + 1}`, key, label: key, dataType: 'string',
   }))
-  const rows = records.map((record) => ({ ...record }))
+  // Host objects are kept as-is so their render keys and cached values survive a
+  // re-render; only an object repeated in the list is copied to get its own key.
+  const seen = new Set<ReportRow>()
+  const rows = records.map((record) => {
+    if (!seen.has(record)) {
+      seen.add(record)
+      return record
+    }
+    return { ...record }
+  })
   return { getReportRows: () => rows, getSchema: () => schema }
 }
