@@ -206,7 +206,8 @@ A formula label must start with a letter and use only letters, numbers, spaces, 
 It can't match a data field's name or another formula's (ignoring case), and an
 expression can be up to 500 characters.
 
-To show a formula, add a column and set its **Source** to the formula's label.
+To show a formula, add a column and set its **Source** to `%` and the formula's label,
+for example `%lineTotal`.
 Example: a formula labelled `lineTotal` with `{{units}} * {{price}}`, shown in a column
 labelled *Line total* with display type *Currency*.
 
@@ -243,8 +244,9 @@ Refreshing the page puts them back on the saved default view.
 ## How data is handled
 
 - Flex Reports only displays the data passed to it. It never stores rows.
-- Rows can be any shape, as long as each has a unique `id`.
-- Without a schema, columns are worked out from the first row.
+- Rows can be any shape. They don't need an `id`.
+- Without a schema, every field found across all rows becomes a column you can pick,
+  including fields inside other fields (`client.name`). Fields that hold a list are left out.
 - Default display types come from each field's data type:
   - currency → currency
   - number → decimal number

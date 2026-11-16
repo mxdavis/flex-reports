@@ -71,8 +71,8 @@ function ColumnDetailEditor({
         id={displayTypeId}
         value={field.displayType}
         title={'Choose how values in this column are formatted. Number, Decimal, Currency, and Percent read numbers '
-          + 'even when they include commas or the currency symbol. Blank cells stay blank and aren\'t counted. '
-          + 'Anything else is shown as entered, left out of totals, and flagged. Percent shows 0.25 as 25.00%.'}
+          + 'like 1250.50 or 1,250.50. Blank cells stay blank and aren\'t counted. Anything else, such as $40 or N/A, '
+          + 'is shown as entered, left out of totals, and flagged. Percent shows 0.25 as 25.00%.'}
         onChange={(event) => {
           onDisplayTypeChange(event.target.value as DisplayType)
         }}
