@@ -3,12 +3,13 @@ import { DEFAULT_CURRENCY_SYMBOL } from '../services/reportDefinition/displayTyp
 import type { DisplayType, NumberFormat } from '../services/reportDefinition/types'
 
 export type NumberReadOptions = {
-  currencySymbol?: string
   // 'plain' doesn't read commas, so "1,250" isn't a number. Defaults to 'commas'.
   numberFormat?: NumberFormat
 }
 
-type FormatCellOptions = NumberReadOptions
+type FormatCellOptions = NumberReadOptions & {
+  currencySymbol?: string
+}
 
 // Built once: constructing Intl formatters per cell dominated render time on
 // large reports.
@@ -23,21 +24,16 @@ export function isBlankReportValue(value: unknown): boolean {
   return value === null || value === undefined || (typeof value === 'string' && value.trim() === '')
 }
 
-// Reads numeric text such as "1,250.50", "$1,250.50" or "-$3" (with the report's
-// currency symbol). Returns undefined for blanks and anything that isn't a number.
-export function parseReportNumber(value: unknown, options: NumberReadOptions = {}): number | undefined {
-  const { currencySymbol = DEFAULT_CURRENCY_SYMBOL, numberFormat = 'commas' } = options
+// Reads numeric text such as "1250.50" or "-3", and "1,250.50" with the default
+// number format. Currency symbols and other text aren't read: "$40" and
+// "120USD" aren't numbers. Returns undefined for blanks and anything else.
+export function parseReportNumber(value: unknown, { numberFormat = 'commas' }: NumberReadOptions = {}): number | undefined {
   if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
   if (typeof value !== 'string') return undefined
   const text = value.trim()
-  const sign = /^[+-]/.test(text) ? text[0] : ''
-  let digits = text.slice(sign.length).trim()
-  const symbol = currencySymbol.trim()
-  if (symbol && digits.startsWith(symbol)) digits = digits.slice(symbol.length).trim()
-  const candidate = sign + digits
-  if (numberFormat === 'commas' && GROUPED_NUMBER.test(candidate)) return Number(candidate.replaceAll(',', ''))
-  if (!PLAIN_NUMBER.test(candidate)) return undefined
-  const number = Number(candidate)
+  if (numberFormat === 'commas' && GROUPED_NUMBER.test(text)) return Number(text.replaceAll(',', ''))
+  if (!PLAIN_NUMBER.test(text)) return undefined
+  const number = Number(text)
   return Number.isFinite(number) ? number : undefined
 }
 
@@ -96,7 +92,7 @@ export function formatCellValue(
   }
 
   const currencySymbol = options?.currencySymbol || DEFAULT_CURRENCY_SYMBOL
-  const number = parseReportNumber(value, { ...options, currencySymbol })
+  const number = parseReportNumber(value, options)
   if (number === undefined) return toText(value)
 
   switch (displayType) {

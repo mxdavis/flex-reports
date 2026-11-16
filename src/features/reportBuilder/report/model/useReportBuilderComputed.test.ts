@@ -171,7 +171,7 @@ describe('useReportBuilderComputed', () => {
   })
 
   it('keeps blanks blank, shows non-numbers as entered and leaves both out of averages', () => {
-    const rows = [{ amount: '$1,200.00' }, { amount: null }, { amount: 'N/A' }, { amount: '1,250' }, { amount: '' }]
+    const rows = [{ amount: '1,200.00' }, { amount: null }, { amount: 'N/A' }, { amount: '1,250' }, { amount: '' }]
     const amount: ReportField = { id: 'amount', label: 'Amount', sourceKey: 'amount', displayType: 'currency', aggregation: 'avg' }
     const { result } = renderHook(() => useReportBuilderComputed({
       rows, sourceColumns: createRecordsDataSource(rows).getSchema(), reportFields: [amount],

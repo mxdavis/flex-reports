@@ -63,14 +63,14 @@ describe('formatCellValue dates across timezones', () => {
 describe('explicit numeric interpretation', () => {
   it.each([
     ['250', 250], ['  -12.5 ', -12.5], ['.75', .75], ['+2e2', 200], [2.75, 2.75],
-    ['$250', 250], ['1,000', 1000], ['-$1,250.50', -1250.5], ['$-3', -3],
+    ['1,000', 1000], ['-1,250.50', -1250.5], ['$250', 0], ['-$1,250.50', 0], ['120USD', 0], ['US120', 0],
     ['250abc', 0], ['0x10', 0], ['0b10', 0], ['1,00', 0], ['1e999', 0], ['€5', 0],
     ['', 0], [' ', 0], [null, 0], [undefined, 0], [true, 0], [{}, 0], [[2], 0], [NaN, 0], [Infinity, 0],
   ])('interprets %j as %s', (input, expected) => expect(toReportNumber(input)).toBe(expected))
 
-  it('reads the report currency symbol and tells blanks apart from non-numbers', () => {
-    expect(parseReportNumber('€1,250', { currencySymbol: '€' })).toBe(1250)
-    expect(parseReportNumber('$1,250', { currencySymbol: '€' })).toBeUndefined()
+  it('does not read currency symbols, and tells blanks apart from non-numbers', () => {
+    expect(parseReportNumber('$40')).toBeUndefined()
+    expect(parseReportNumber('€1,250')).toBeUndefined()
     expect(parseReportNumber('  ')).toBeUndefined()
     expect(parseReportNumber('N/A')).toBeUndefined()
   })
