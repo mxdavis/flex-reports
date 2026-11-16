@@ -41,7 +41,10 @@ export function useReportBuilderComputed({
     return new Map(sourceColumns.map((column) => [String(column.key), column]))
   }, [sourceColumns])
 
+  // "%Fee" is always the Fee formula, never a data field: formulas are the
+  // user's own, kept apart from the host's data even when names overlap.
   const getSourceColumn = useCallback((reference: string) => {
+    if (reference.startsWith('%')) return undefined
     const column = sourceColumnByKey.get(reference)
     if (column) return column
     const path = parseFieldPath(reference)
@@ -49,7 +52,9 @@ export function useReportBuilderComputed({
   }, [sourceColumnByKey])
 
   // A new column's default header: the field's label, or the formula's name.
-  const getSourceLabel = (reference: string) => getSourceColumn(reference)?.label ?? reference
+  const getSourceLabel = (reference: string) => (
+    getSourceColumn(reference)?.label ?? (reference.startsWith('%') ? reference.slice(1) : reference)
+  )
 
   const getSourcePath = (reference: string) => {
     const column = getSourceColumn(reference)
@@ -57,7 +62,7 @@ export function useReportBuilderComputed({
   }
 
   const sourceOptions = useMemo(() => {
-    const formulaLabels = formulas.map((formula) => formula.label)
+    const formulaLabels = formulas.map((formula) => `%${formula.label}`)
     return Array
       .from(new Set([...sourceColumns.map((column) => String(column.key)), ...formulaLabels]))
       .sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }))
@@ -69,6 +74,18 @@ export function useReportBuilderComputed({
     return mapped
   }, [formulas])
 
+  // A column source names a formula as "%Label".
+  const isFormulaSource = useCallback((sourceKey: string) => (
+    sourceKey.startsWith('%') && formulasByLabel.has(sourceKey.slice(1).trim().toLowerCase())
+  ), [formulasByLabel])
+
+  // Formulas sharing a name with a data field. Both keep working (%Fee is the
+  // formula, Fee the field); editors are asked to rename the formula.
+  const formulaNameClashes = useMemo(() => {
+    const fieldNames = new Set(sourceColumns.map((column) => String(column.key).toLowerCase()))
+    return formulas.map((formula) => formula.label).filter((label) => fieldNames.has(label.toLowerCase()))
+  }, [formulas, sourceColumns])
+
   const formulaTokenOptions = useMemo(() => {
     return Array.from(new Set([
       ...sourceColumns.map((column) => String(column.key)),
@@ -79,8 +96,8 @@ export function useReportBuilderComputed({
   // A column whose source isn't in the data or formulas stays put and renders
   // blank, rather than being silently pointed at another field.
   const missingSourceFields = useMemo(() => reportFields.filter((field) => (
-    !getSourceColumn(field.sourceKey) && !formulasByLabel.has(field.sourceKey.toLowerCase())
-  )), [formulasByLabel, reportFields, getSourceColumn])
+    !getSourceColumn(field.sourceKey) && !isFormulaSource(field.sourceKey)
+  )), [isFormulaSource, reportFields, getSourceColumn])
 
   const missingSourceSummary = missingSourceFields.map((field) => `"${field.label}" → "${field.sourceKey}"`).join(', ')
   useEffect(() => {
@@ -98,7 +115,7 @@ export function useReportBuilderComputed({
   const isHorizontalTable = tableOrientation === 'horizontal'
 
   function getPreferredDisplayType(sourceKey: string): DisplayType {
-    if (formulasByLabel.has(sourceKey.toLowerCase().trim())) return 'decimal'
+    if (isFormulaSource(sourceKey.trim())) return 'decimal'
     const schemaField = getSourceColumn(sourceKey)
     return getDefaultDisplayType(schemaField)
   }
@@ -119,7 +136,7 @@ export function useReportBuilderComputed({
       if (reference.startsWith('%')) return getFormulaValue(reference.slice(1), cache, visiting, row)
       const column = getSourceColumn(reference)
       if (column) return toReportNumber(readFieldPath(row, column.path ?? parseFieldPath(column.key) ?? []))
-      return getFormulaValue(reference, cache, visiting, row)
+      return Number.NaN
     })
     const value = result.ok ? result.value : Number.NaN
     cache.set(label, value)
@@ -136,7 +153,7 @@ export function useReportBuilderComputed({
     return (row: ReportRow, sourceKey: string): unknown => {
       const mappedColumn = getSourceColumn(sourceKey)
       if (mappedColumn) return readFieldPath(row, mappedColumn.path ?? parseFieldPath(mappedColumn.key) ?? [])
-      if (!formulasByLabel.has(sourceKey.toLowerCase())) return null
+      if (!isFormulaSource(sourceKey)) return null
 
       let rowCache = cache.get(row)
       if (!rowCache) {
@@ -144,11 +161,11 @@ export function useReportBuilderComputed({
         cache.set(row, rowCache)
       }
       if (rowCache.has(sourceKey)) return rowCache.get(sourceKey)
-      const value = getFormulaValue(sourceKey, new Map(), new Set(), row)
+      const value = getFormulaValue(sourceKey.slice(1).trim(), new Map(), new Set(), row)
       rowCache.set(sourceKey, value)
       return value
     }
-  }, [formulasByLabel, getFormulaValue, getSourceColumn])
+  }, [getFormulaValue, getSourceColumn, isFormulaSource])
 
   // One currency symbol for the whole report.
   const formatOptions = useMemo(() => ({ currencySymbol: currencySymbol.trim() || DEFAULT_CURRENCY_SYMBOL }), [currencySymbol])
@@ -269,6 +286,7 @@ export function useReportBuilderComputed({
     getPreferredDisplayType,
     getSourcePath,
     getSourceLabel,
+    formulaNameClashes,
     getFieldValue,
     getMappedRawValue,
     getFieldRawValue,

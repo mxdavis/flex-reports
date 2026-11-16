@@ -156,7 +156,7 @@ This is the only thing you store. Save it as-is:
 
 | Key | Meaning |
 |---|---|
-| `fields` | The report's columns, in order. `sourceKey` is a schema `key` or a formula `label`. |
+| `fields` | The report's columns, in order. `sourceKey` is a schema `key`, or `%` plus a formula `label` (for example `%lineTotal`). |
 | `fields[].displayType` | `'currency' \| 'number' \| 'decimal' \| 'percent' \| 'date' \| 'string'` |
 | `fields[].aggregation` | How the column totals: `'none' \| 'sum' \| 'avg' \| 'count' \| 'distinct'` |
 | `formulas` | Per-row calculations. See [Formulas](docs/FUNCTIONALITY.md#formulas). |

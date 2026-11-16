@@ -92,15 +92,16 @@ function logRepair(message: string): void {
 }
 
 // Keeps the formulas the editor would accept (see getFormulaError), up to
-// MAX_FORMULAS, and logs each one it drops.
-function normalizeFormulas(raw: unknown[], fieldKeys: string[]): ReportFormula[] {
+// MAX_FORMULAS, and logs each one it drops. A formula named like a data field
+// is kept: the data may have gained that field after the report was saved.
+function normalizeFormulas(raw: unknown[]): ReportFormula[] {
   const formulas: ReportFormula[] = []
   for (const item of raw) {
     const formula = {
       label: isRecord(item) && typeof item.label === 'string' ? item.label.trim() : '',
       expression: isRecord(item) && typeof item.expression === 'string' ? item.expression.trim() : '',
     }
-    const error = getFormulaError(formula, { existingLabels: formulas.map((kept) => kept.label), fieldKeys })
+    const error = getFormulaError(formula, { existingLabels: formulas.map((kept) => kept.label) })
     if (error) {
       logRepair(`Dropped formula "${formula.label}" from reportDefinition: ${error}`)
       continue
@@ -189,14 +190,13 @@ export function normalizeReportDefinition(
   if (fields.length < rawFields.length) {
     logRepair(`Dropped ${rawFields.length - fields.length} invalid field(s) from reportDefinition.`)
   }
-  const fieldKeys = sourceColumns.map((column) => column.key)
 
   return {
     version: REPORT_DEFINITION_VERSION,
     sheetName: asNonEmptyString(raw.sheetName) ?? defaults.sheetName,
     currencySymbol: asNonEmptyString(raw.currencySymbol) ?? defaults.currencySymbol,
     fields: fields.length > 0 ? repairFields(fields) : defaults.fields,
-    formulas: Array.isArray(raw.formulas) ? normalizeFormulas(raw.formulas, fieldKeys) : defaults.formulas,
+    formulas: Array.isArray(raw.formulas) ? normalizeFormulas(raw.formulas) : defaults.formulas,
     view: normalizeView(raw.view),
   }
 }

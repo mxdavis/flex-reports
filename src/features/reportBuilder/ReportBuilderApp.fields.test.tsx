@@ -75,7 +75,7 @@ describe('nested fields in the existing report editor', () => {
     definition.fields = [
       ...definition.fields.filter((field) => ['client.name', 'task'].includes(field.sourceKey)),
       { id: 'hours', label: 'Hours', sourceKey: 'metrics.hours', displayType: 'number', aggregation: 'sum' },
-      { id: 'fee', label: 'Fee', sourceKey: 'fee', displayType: 'currency', aggregation: 'sum' },
+      { id: 'fee', label: 'Fee', sourceKey: '%fee', displayType: 'currency', aggregation: 'sum' },
     ]
     definition.view = { ...definition.view, isGroupingEnabled: true, expandedLevels: 0, showTotals: true }
     render(<ReportBuilderApp rows={rows} reportDefinition={definition} role="viewer" />)
@@ -99,5 +99,27 @@ describe('nested fields in the existing report editor', () => {
     expect(screen.getByRole('columnheader', { name: 'clientId' })).toBeInTheDocument()
     expect(screen.queryByRole('columnheader', { name: 'entries' })).toBeNull()
     expect(screen.queryByText('Not joined')).toBeNull()
+  })
+
+  it('keeps a saved formula working when new data gains a field with the same name', () => {
+    const definition = generateDefaultReportDefinition(createRecordsDataSource([{ hours: 2 }]).getSchema(), [
+      { label: 'Fee', expression: '{{hours}} * 10' },
+      { label: 'Both', expression: '{{%Fee}} + {{Fee}}' },
+    ])
+    definition.fields = [
+      { id: 'formula', label: 'Formula fee', sourceKey: '%Fee', displayType: 'number', aggregation: 'none' },
+      { id: 'data', label: 'Data fee', sourceKey: 'Fee', displayType: 'number', aggregation: 'none' },
+      { id: 'both', label: 'Both', sourceKey: '%Both', displayType: 'number', aggregation: 'none' },
+    ]
+    const saved = JSON.parse(JSON.stringify(definition))
+    const rows = [{ hours: 2, Fee: 7 }]
+    const { unmount } = render(<ReportBuilderApp rows={rows} reportDefinition={saved} onSave={vi.fn()} initialEditMode />)
+    const cells = within(screen.getByRole('table')).getAllByRole('cell').map((cell) => cell.textContent)
+    expect(cells).toEqual(['20', '7', '27'])
+    expect(screen.getByRole('note')).toHaveTextContent('Your data now has a field called Fee, the same name as your formula.')
+    unmount()
+
+    render(<ReportBuilderApp rows={rows} reportDefinition={saved} role="viewer" />)
+    expect(screen.queryByRole('note')).toBeNull()
   })
 })

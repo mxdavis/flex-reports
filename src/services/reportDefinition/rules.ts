@@ -14,12 +14,13 @@ const FORMULA_LABEL_PATTERN = /^[A-Za-z][A-Za-z0-9_ ]*$/
 type FormulaCheckOptions = {
   // Labels already taken by other formulas.
   existingLabels: string[]
-  // The data's field keys: a formula can't share a name with one.
-  fieldKeys: string[]
+  // The data's field keys: a new formula can't share a name with one. Saved
+  // formulas are checked without them, since data can change after saving.
+  fieldKeys?: string[]
 }
 
 // The problem with a formula, or '' when it's valid.
-export function getFormulaError(formula: ReportFormula, { existingLabels, fieldKeys }: FormulaCheckOptions): string {
+export function getFormulaError(formula: ReportFormula, { existingLabels, fieldKeys = [] }: FormulaCheckOptions): string {
   const label = formula.label.trim()
   const expression = formula.expression.trim()
   if (!label || !expression) return 'Label and expression are required.'

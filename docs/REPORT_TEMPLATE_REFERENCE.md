@@ -18,9 +18,14 @@ A report column (`fields[]` entry) points at one `sourceKey`, which is either:
 1. **A source column.** A key from the host's `schema`.
    Example: `{ "sourceKey": "warehouse", "label": "Warehouse" }`.
 
-2. **A formula.** The label of an entry in `formulas[]`, evaluated per row.
+2. **A formula.** `%` followed by the label of an entry in `formulas[]`, evaluated per row.
    Example formula: `{ "label": "lineTotal", "expression": "{{units}} * {{price}}" }`,
-   then a column with `"sourceKey": "lineTotal"`.
+   then a column with `"sourceKey": "%lineTotal"`.
+
+The `%` keeps formulas (the report's own calculations) apart from the host's data, the same
+way formulas refer to each other as `{{%lineTotal}}`. If the data later gains a field with a
+formula's name, both keep working and editors are asked to rename the formula. Saved formulas
+are never dropped for this.
 
 To use an outside constant such as a quota or target, put it on the rows as a field,
 where it can also vary per row.
