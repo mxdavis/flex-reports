@@ -252,7 +252,7 @@ export function useReportBuilderComputed({
       if (rows.length === 0) continue
       if (field.displayType === 'date' && rows.some((row) => {
         const value = getMappedRawValue(row, field.sourceKey)
-        return value != null && !isValidReportDate(value)
+        return !isBlankReportValue(value) && !isValidReportDate(value)
       })) {
         issues.push(`Column ${field.label}: use valid dates. Original values are shown.`)
       }
@@ -262,7 +262,12 @@ export function useReportBuilderComputed({
       if (nonNumbers) issues.push(`Column ${field.label}: ${describeNonNumbers(nonNumbers)}`)
     }
     for (const formula of formulas) {
-      if (rows.some((row) => !Number.isFinite(getFormulaValue(formula.label, new Map(), new Set(), row)))) {
+      // Reuses the per-row values the table already computed, unless a source
+      // column with the same name hides the formula there.
+      const getValue = sourceColumnByKey.has(formula.label)
+        ? (row: ReportRow) => getFormulaValue(formula.label, new Map(), new Set(), row)
+        : (row: ReportRow) => getMappedRawValue(row, formula.label) as number
+      if (rows.some((row) => !Number.isFinite(getValue(row)))) {
         issues.push(`Formula ${formula.label}: check references, circular dependencies, and arithmetic.`)
       }
     }

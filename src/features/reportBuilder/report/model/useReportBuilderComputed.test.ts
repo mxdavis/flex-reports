@@ -185,6 +185,17 @@ describe('useReportBuilderComputed', () => {
     ])
   })
 
+  it('does not flag blank dates as invalid', () => {
+    const rows = [{ day: '2026-07-01' }, { day: '' }, { day: null }, { day: '  ' }]
+    const day: ReportField = { id: 'day', label: 'Day', sourceKey: 'day', displayType: 'date', aggregation: 'distinct' }
+    const render = (testRows: ReportRow[]) => renderHook(() => useReportBuilderComputed({
+      rows: testRows, sourceColumns: createRecordsDataSource(testRows).getSchema(), reportFields: [day],
+      formulas: [], currencySymbol: '$', tableOrientation: 'horizontal', showTips: true,
+    })).result.current
+    expect(render(rows).issues).toEqual([])
+    expect(render([...rows, { day: 'soon' }]).issues).toEqual(['Column Day: use valid dates. Original values are shown.'])
+  })
+
   it('resolves only actual formula dependencies and preserves reference/calculation errors', () => {
     const rows = [{ amount: '2' }, {}]
     const { result } = renderHook(() => useReportBuilderComputed({
