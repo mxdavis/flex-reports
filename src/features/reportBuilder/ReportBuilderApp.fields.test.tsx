@@ -122,4 +122,23 @@ describe('nested fields in the existing report editor', () => {
     render(<ReportBuilderApp rows={rows} reportDefinition={saved} role="viewer" />)
     expect(screen.queryByRole('note')).toBeNull()
   })
+
+  it('keeps saved formulas the editor would reject and tells editors what to fix', () => {
+    const definition = generateDefaultReportDefinition(createRecordsDataSource([{ hours: 2 }]).getSchema(), [
+      { label: '9 Fees', expression: '{{hours}} * 10' },
+      { label: 'Blank', expression: '' },
+    ])
+    definition.fields = [{ id: 'fees', label: 'Fees', sourceKey: '%9 Fees', displayType: 'number', aggregation: 'none' }]
+    const saved = JSON.parse(JSON.stringify(definition))
+    const { unmount } = render(<ReportBuilderApp rows={[{ hours: 2 }]} reportDefinition={saved} onSave={vi.fn()} initialEditMode />)
+    expect(within(screen.getByRole('table')).getByRole('cell')).toHaveTextContent('20')
+    expect(screen.getAllByRole('note').map((note) => note.textContent)).toEqual([
+      'Formula "9 Fees": Label must start with a letter and use only letters, numbers, spaces, and _.',
+      'Formula "Blank": Label and expression are required.',
+    ])
+    unmount()
+
+    render(<ReportBuilderApp rows={[{ hours: 2 }]} reportDefinition={saved} role="viewer" />)
+    expect(screen.queryByRole('note')).toBeNull()
+  })
 })

@@ -171,8 +171,9 @@ You can also build a starter definition on your server, for example to ship a de
 report. Invalid or partial definitions don't crash the page: the bad parts fall back to
 defaults and a `[flex-reports]` error is logged to the console. The same rules the editor enforces are
 applied when a definition loads: at most 15 columns (repeated column ids get a fresh id)
-and 25 formulas, and formulas with an invalid label, a label that matches a data field, or
-an expression over 500 characters are dropped, each with a `[flex-reports]` error.
+and 25 formulas. Saved formulas are kept even when the editor wouldn't accept them (an
+invalid or empty label, an empty expression, an expression over 500 characters, or a label
+that matches a data field): editors see a note in the Formulas panel and fix them there.
 
 More examples: [docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENCE.md).
 

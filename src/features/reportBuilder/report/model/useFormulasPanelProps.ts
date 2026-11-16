@@ -72,7 +72,7 @@ export function useFormulasPanelProps(): FormulasPanelProps {
     editingFormula: editingFormula?.draft ?? null,
     editingFormulaError: state.editingFormulaError,
     formulaTokenOptions: computed.formulaTokenOptions,
-    nameClashes: state.showTips ? computed.formulaNameClashes : [],
+    notes: state.showTips ? computed.formulaNotes : [],
     onStartAddFormula: () => {
       setFormulaError('')
       setIsAddingFormula(true)

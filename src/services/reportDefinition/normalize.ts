@@ -1,7 +1,7 @@
 import { formatFieldPath, isFieldPath } from '../adapters/fieldPath'
 import type { ReportFormula } from '../adapters'
 import { getNextSequencedName, sortFormulasByLabel } from '../../utils/reportBuilder'
-import { getFormulaError, MAX_FORMULAS, MAX_REPORT_COLUMNS } from './rules'
+import { MAX_FORMULAS, MAX_REPORT_COLUMNS } from './rules'
 import {
   DEFAULT_CURRENCY_SYMBOL,
   getDefaultAggregation,
@@ -91,19 +91,23 @@ function logRepair(message: string): void {
   console.error(`[flex-reports] ${message}`)
 }
 
-// Keeps the formulas the editor would accept (see getFormulaError), up to
-// MAX_FORMULAS, and logs each one it drops. A formula named like a data field
-// is kept: the data may have gained that field after the report was saved.
+// Keeps every saved formula, even one the editor wouldn't accept (editors see
+// a note and fix it themselves), and logs each one it drops: entries that
+// aren't formulas at all, repeated names, and anything past MAX_FORMULAS.
 function normalizeFormulas(raw: unknown[]): ReportFormula[] {
   const formulas: ReportFormula[] = []
   for (const item of raw) {
-    const formula = {
-      label: isRecord(item) && typeof item.label === 'string' ? item.label.trim() : '',
-      expression: isRecord(item) && typeof item.expression === 'string' ? item.expression.trim() : '',
+    if (!isRecord(item)) {
+      logRepair('Dropped an entry from reportDefinition.formulas that is not a formula object.')
+      continue
     }
-    const error = getFormulaError(formula, { existingLabels: formulas.map((kept) => kept.label) })
-    if (error) {
-      logRepair(`Dropped formula "${formula.label}" from reportDefinition: ${error}`)
+    const formula = {
+      label: typeof item.label === 'string' ? item.label.trim() : '',
+      expression: typeof item.expression === 'string' ? item.expression.trim() : '',
+    }
+    const label = formula.label.toLowerCase()
+    if (label && formulas.some((kept) => kept.label.toLowerCase() === label)) {
+      logRepair(`Dropped formula "${formula.label}" from reportDefinition: a formula with that name already exists.`)
       continue
     }
     if (formulas.length >= MAX_FORMULAS) {

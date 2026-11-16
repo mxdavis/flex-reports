@@ -16,7 +16,7 @@ export type FormulasSectionProps = {
   editingFormula: ReportFormula | null
   editingFormulaError: string
   formulaTokenOptions: string[]
-  nameClashes?: string[] // Formulas named like a data field (editors only).
+  notes?: string[] // Saved formulas that need the editor's attention.
   onStartAddFormula: () => void
   onCancelAddFormula: () => void
   onSetNewFormulaLabel: (value: string) => void
@@ -42,7 +42,7 @@ function FormulasSection({
   editingFormula,
   editingFormulaError,
   formulaTokenOptions,
-  nameClashes = [],
+  notes = [],
   onStartAddFormula,
   onCancelAddFormula,
   onSetNewFormulaLabel,
@@ -80,8 +80,7 @@ function FormulasSection({
             Use {'{{fieldName}}'} for data fields and {'{{%Formula Label}}'} for formulas.
             {` Available formulas: ${formulas.map((formula) => formula.label).join(', ') || 'none yet'}.`}
           </p>
-          {nameClashes.map((label) => <p key={label} className="fr-mapping-tip" role="note">Your data now has a field
-            called <strong>{label}</strong>, the same name as your formula. Rename the formula so they don't get mixed up.</p>)}
+          {notes.map((note) => <p key={note} className="fr-mapping-tip" role="note">{note}</p>)}
           {!isAddingFormula && (
             <div className="fr-add-card">
               <button

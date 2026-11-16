@@ -3,6 +3,7 @@ import { getRowKey } from '../../../../services/adapters/recordsDataSource'
 import { useCallback, useEffect, useMemo } from 'react'
 import { evaluateFormula } from '../../../../services/formula/evaluateFormula'
 import { getDefaultDisplayType } from '../../../../services/reportDefinition/displayType'
+import { getFormulaError } from '../../../../services/reportDefinition/rules'
 import type { ReportRow, ReportFormula } from '../../../../services/adapters'
 import type { AggregationMode, DisplayType, ReportField, SourceColumn, TableOrientation } from '../../../../services/reportDefinition/types'
 import { DEFAULT_CURRENCY_SYMBOL } from '../../config'
@@ -79,11 +80,20 @@ export function useReportBuilderComputed({
     sourceKey.startsWith('%') && formulasByLabel.has(sourceKey.slice(1).trim().toLowerCase())
   ), [formulasByLabel])
 
-  // Formulas sharing a name with a data field. Both keep working (%Fee is the
-  // formula, Fee the field); editors are asked to rename the formula.
-  const formulaNameClashes = useMemo(() => {
+  // Notes for editors about saved formulas that need their attention. Saved
+  // formulas are never dropped or renamed: they keep working as far as they
+  // can, and the editor decides what to change. A formula sharing a name with a
+  // data field keeps working too (%Fee is the formula, Fee the field).
+  const formulaNotes = useMemo(() => {
     const fieldNames = new Set(sourceColumns.map((column) => String(column.key).toLowerCase()))
-    return formulas.map((formula) => formula.label).filter((label) => fieldNames.has(label.toLowerCase()))
+    return formulas.flatMap((formula) => {
+      const problem = getFormulaError(formula, { existingLabels: [] })
+      if (problem) return [formula.label.trim() ? `Formula "${formula.label}": ${problem}` : `A formula has no label: ${problem}`]
+      if (fieldNames.has(formula.label.trim().toLowerCase())) {
+        return [`Your data now has a field called ${formula.label}, the same name as your formula. Rename the formula so they don't get mixed up.`]
+      }
+      return []
+    })
   }, [formulas, sourceColumns])
 
   const formulaTokenOptions = useMemo(() => {
@@ -286,7 +296,7 @@ export function useReportBuilderComputed({
     getPreferredDisplayType,
     getSourcePath,
     getSourceLabel,
-    formulaNameClashes,
+    formulaNotes,
     getFieldValue,
     getMappedRawValue,
     getFieldRawValue,

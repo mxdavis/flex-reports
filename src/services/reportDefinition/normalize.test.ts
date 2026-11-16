@@ -63,7 +63,7 @@ describe('normalizeReportDefinition', () => {
     expect(normalized.fields).toEqual([
       { id: 'a', sourceKey: 'price', label: 'price', displayType: 'currency', aggregation: 'sum' },
     ])
-    expect(normalized.formulas).toEqual([{ label: 'x', expression: '1' }])
+    expect(normalized.formulas).toEqual([{ label: '', expression: '3' }, { label: 'x', expression: '1' }])
     expect(normalized.view).toEqual({ orientation: 'horizontal', showTotals: false, isGroupingEnabled: false, expandedLevels: null })
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Dropped 1 invalid field'))
   })
@@ -88,7 +88,7 @@ describe('normalizeReportDefinition', () => {
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('repeated id "dup"'))
   })
 
-  it('drops formulas the editor would reject, and keeps at most 25', () => {
+  it('keeps formulas the editor would reject, for editors to fix, and keeps at most 25', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const valid = Array.from({ length: 30 }, (_, index) => ({ label: `f${index}`, expression: '1' }))
 
@@ -103,8 +103,8 @@ describe('normalizeReportDefinition', () => {
     }, sourceColumns)
 
     expect(normalized.formulas).toHaveLength(25)
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Dropped formula "9bad"'))
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Dropped formula "long"'))
+    expect(normalized.formulas.map((formula) => formula.label)).toEqual(expect.arrayContaining(['9bad', 'long']))
+    expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining('Dropped formula "9bad"'))
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('more than 25 formulas'))
   })
 
