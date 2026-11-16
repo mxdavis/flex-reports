@@ -1,13 +1,8 @@
 import type { ReportFormula } from '../services/adapters'
 import { DEFAULT_CURRENCY_SYMBOL } from '../services/reportDefinition/displayType'
-import type { DisplayType, NumberFormat } from '../services/reportDefinition/types'
+import type { DisplayType } from '../services/reportDefinition/types'
 
-export type NumberReadOptions = {
-  // 'plain' doesn't read commas, so "1,250" isn't a number. Defaults to 'commas'.
-  numberFormat?: NumberFormat
-}
-
-type FormatCellOptions = NumberReadOptions & {
+type FormatCellOptions = {
   currencySymbol?: string
 }
 
@@ -24,22 +19,22 @@ export function isBlankReportValue(value: unknown): boolean {
   return value === null || value === undefined || (typeof value === 'string' && value.trim() === '')
 }
 
-// Reads numeric text such as "1250.50" or "-3", and "1,250.50" with the default
-// number format. Currency symbols and other text aren't read: "$40" and
-// "120USD" aren't numbers. Returns undefined for blanks and anything else.
-export function parseReportNumber(value: unknown, { numberFormat = 'commas' }: NumberReadOptions = {}): number | undefined {
+// Reads numeric text such as "1250.50", "-3" or "1,250.50". Currency symbols and
+// other text aren't read: "$40" and "120USD" aren't numbers. Returns undefined
+// for blanks and anything else.
+export function parseReportNumber(value: unknown): number | undefined {
   if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
   if (typeof value !== 'string') return undefined
   const text = value.trim()
-  if (numberFormat === 'commas' && GROUPED_NUMBER.test(text)) return Number(text.replaceAll(',', ''))
+  if (GROUPED_NUMBER.test(text)) return Number(text.replaceAll(',', ''))
   if (!PLAIN_NUMBER.test(text)) return undefined
   const number = Number(text)
   return Number.isFinite(number) ? number : undefined
 }
 
 // Formulas treat blank and non-numeric values as 0.
-export function toReportNumber(value: unknown, options?: NumberReadOptions): number {
-  return parseReportNumber(value, options) ?? 0
+export function toReportNumber(value: unknown): number {
+  return parseReportNumber(value) ?? 0
 }
 
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -92,7 +87,7 @@ export function formatCellValue(
   }
 
   const currencySymbol = options?.currencySymbol || DEFAULT_CURRENCY_SYMBOL
-  const number = parseReportNumber(value, options)
+  const number = parseReportNumber(value)
   if (number === undefined) return toText(value)
 
   switch (displayType) {

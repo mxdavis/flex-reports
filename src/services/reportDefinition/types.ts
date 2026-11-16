@@ -31,12 +31,6 @@ export type ReportView = {
   expandedLevels: number | null
 }
 
-// How numbers are written in the data. 'commas' reads "1,250.50" as 1250.5;
-// 'plain' reads only "1250.50", and anything with a comma isn't a number.
-export const NUMBER_FORMATS = ['commas', 'plain'] as const
-export type NumberFormat = typeof NUMBER_FORMATS[number]
-export const DEFAULT_NUMBER_FORMAT: NumberFormat = 'commas'
-
 export const REPORT_DEFINITION_VERSION = 1
 
 // The only artifact Flex Reports persists. The host stores it however it likes
@@ -45,7 +39,6 @@ export type ReportDefinition = {
   version: typeof REPORT_DEFINITION_VERSION
   sheetName: string
   currencySymbol: string
-  numberFormat: NumberFormat
   fields: ReportField[]
   formulas: ReportFormula[]
   view: ReportView

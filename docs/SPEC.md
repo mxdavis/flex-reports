@@ -36,8 +36,7 @@ The host passes plain data to the component. Flex Reports does no fetching:
 
 ### 3.2 Report definition (the only persisted artifact, JSON)
 One versioned object, passed in as `reportDefinition` and returned through `onSave`:
-- `version`, `sheetName`, `currencySymbol`, `numberFormat` (one each for the whole report;
-  `numberFormat` says whether numbers in the data use comma thousands separators)
+- `version`, `sheetName`, `currencySymbol` (one for the whole report)
 - `fields[]` — each column points at a schema key **or** a formula label, with a display
   label, display type, and aggregation (how it totals in chips, group totals, and the
   grand total)

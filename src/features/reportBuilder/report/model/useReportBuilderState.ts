@@ -69,7 +69,6 @@ export function useReportBuilderState({
     .map((label) => `Can't have two formulas with the same name: "${label}".`)))
   const [sheetName, setSheetName] = useState(initialDefinition.sheetName)
   const [currencySymbol, setCurrencySymbol] = useState(initialDefinition.currencySymbol)
-  const [numberFormat, setNumberFormat] = useState(initialDefinition.numberFormat)
   const [newFormula, setNewFormula] = useState<ReportFormula>(() => ({
     label: getNextSequencedName('formula', initialDefinition.formulas.map((formula) => formula.label)),
     expression: '',
@@ -108,7 +107,6 @@ export function useReportBuilderState({
     version: REPORT_DEFINITION_VERSION,
     sheetName,
     currencySymbol,
-    numberFormat,
     fields,
     formulas,
     view: {
@@ -117,7 +115,7 @@ export function useReportBuilderState({
       isGroupingEnabled: ui.isGroupingEnabled,
       expandedLevels: ui.expandedLevels,
     },
-  }), [currencySymbol, fields, formulas, numberFormat, sheetName, ui.expandedLevels, ui.isGroupingEnabled, ui.showTotals, ui.tableOrientation])
+  }), [currencySymbol, fields, formulas, sheetName, ui.expandedLevels, ui.isGroupingEnabled, ui.showTotals, ui.tableOrientation])
 
   const saveState = useReportSave({ definition, baseline: initialDefinition, canSave, isSandbox, onSave })
 
@@ -158,8 +156,6 @@ export function useReportBuilderState({
     setSheetName,
     currencySymbol,
     setCurrencySymbol,
-    numberFormat,
-    setNumberFormat,
     canSave,
     saveBlockedReason,
     showTips,

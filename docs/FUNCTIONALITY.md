@@ -251,6 +251,9 @@ Refreshing the page puts them back on the saved default view.
   - date → date
   - text → string
 - Default total types: sum for number columns, distinct count for text and date columns.
+- Number columns read plain numbers like `1250.50` or `1,250.50`. Anything else, such
+  as `$40`, `120USD` or `N/A`, is shown as typed, flagged with a warning, left out of
+  totals, and counted as 0 in formulas.
 - Date-only values like `2026-07-01` show as that calendar day for every viewer,
   whatever their timezone. Values with a time (`2026-07-01T23:30:00Z`) are shown in
   the viewer's local time.

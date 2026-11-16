@@ -160,7 +160,6 @@ This is the only thing you store. Save it as-is:
 | `fields[].displayType` | `'currency' \| 'number' \| 'decimal' \| 'percent' \| 'date' \| 'string'` |
 | `fields[].aggregation` | How the column totals: `'none' \| 'sum' \| 'avg' \| 'count' \| 'distinct'` |
 | `formulas` | Per-row calculations. See [Formulas](docs/FUNCTIONALITY.md#formulas). |
-| `numberFormat` | How numbers are written in the data: `'commas'` (default) reads `"1,250.50"` as 1250.5; `'plain'` reads only `"1250.50"`, so values with a comma show as typed and are flagged, and formulas using them warn. |
 | `view` | The default view everyone opens. |
 | `version` | The format version (currently `1`). A definition from a newer version of Flex Reports opens read-only, with Save turned off, so an older copy of the component can't overwrite it. An unreadable version falls back to defaults. |
 | `view.expandedLevels` | How many grouping levels start open: `0` shows only the first column's groups, `null` opens everything. |

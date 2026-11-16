@@ -75,14 +75,6 @@ describe('explicit numeric interpretation', () => {
     expect(parseReportNumber('N/A')).toBeUndefined()
   })
 
-  it('reads commas only with the 1,234.56 number format', () => {
-    expect(parseReportNumber('1,250.50')).toBe(1250.5)
-    expect(parseReportNumber('1,250.50', { numberFormat: 'plain' })).toBeUndefined()
-    expect(parseReportNumber('1250.50', { numberFormat: 'plain' })).toBe(1250.5)
-    expect(formatCellValue('1,250', 'number', { numberFormat: 'plain' })).toBe('1,250')
-    expect(formatCellValue('1,250', 'string', { numberFormat: 'plain' })).toBe('1,250')
-  })
-
   it('rounds presentation only and keeps original text in String mode', () => {
     expect(formatCellValue('12.5', 'number')).toBe('13')
     expect(toReportNumber('12.5')).toBe(12.5)
