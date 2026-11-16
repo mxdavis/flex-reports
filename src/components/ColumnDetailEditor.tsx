@@ -40,7 +40,6 @@ function ColumnDetailEditor({
   onDisplayTypeChange,
   onAggregationChange,
 }: ColumnDetailEditorProps) {
-  const typeHelpId = useElementId(`type-help-${field.id}`)
   const sourceId = useElementId(`mapping-${field.id}`)
   const labelId = useElementId(`label-${field.id}`)
   const displayTypeId = useElementId(`display-type-${field.id}`)
@@ -67,22 +66,13 @@ function ColumnDetailEditor({
         }}
       />
 
-      <div className="fr-display-type-heading">
-        <label htmlFor={displayTypeId}>Display type</label>
-        <span className="fr-display-type-help">
-          <button type="button" aria-label="About numeric conversion" aria-describedby={typeHelpId}>
-            ?
-          </button>
-          <span id={typeHelpId} role="tooltip">
-            Number, Decimal, and Currency convert numeric text to numbers. Invalid or missing values count as 0
-            in calculations and totals. Original data is unchanged. Percent uses the same conversion: 0.25 is 25.00%.
-          </span>
-        </span>
-      </div>
+      <label htmlFor={displayTypeId}>Display type</label>
       <select
         id={displayTypeId}
         value={field.displayType}
-        title="Choose how values in this column are formatted."
+        title={'Choose how values in this column are formatted. Number, Decimal, and Currency convert numeric text '
+          + 'to numbers. Invalid or missing values count as 0 in calculations and totals. Original data is unchanged. '
+          + 'Percent uses the same conversion: 0.25 is 25.00%.'}
         onChange={(event) => {
           onDisplayTypeChange(event.target.value as DisplayType)
         }}
