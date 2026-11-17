@@ -134,7 +134,8 @@ function MappingPanelSection({
                 <label htmlFor={addColumnPositionId}>Column number</label>
                 <select
                   id={addColumnPositionId}
-                  value={newColumn.position}
+                  // Columns can be removed while this is open; saving then adds it at the end.
+                  value={Math.min(newColumn.position, fields.length + 1)}
                   title="Insert this new column at the selected position. Existing columns will shift right."
                   onChange={(event) => {
                     onAddColumnPositionChange(Number(event.target.value))

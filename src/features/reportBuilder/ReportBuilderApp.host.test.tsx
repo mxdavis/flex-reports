@@ -330,6 +330,18 @@ describe('ReportBuilderApp host mode', () => {
     expect(options.map((option) => option.textContent)).toEqual(['units', 'warehouse'])
   })
 
+  it('shows the column number the new column will get after a column is removed', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+    const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
+
+    await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
+    expect(within(mapping).getByLabelText('Column number')).toHaveValue('3')
+
+    await user.click(within(mapping).getAllByRole('button', { name: 'Remove' })[0])
+    expect(within(mapping).getByLabelText('Column number')).toHaveValue('2')
+  })
+
   it('rejects a new formula named like a data field', async () => {
     const user = userEvent.setup()
     render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
