@@ -124,7 +124,7 @@ export function useReportBuilderState({
   return {
     sourceError: source.error,
     // Getting started is for setting up a new report, so it goes once one is saved with columns.
-    isGettingStartedOpen: !saveState.hasSavedColumns,
+    showGettingStarted: !saveState.hasSavedColumns,
     definitionIssues,
     skippedFields: source.skippedFields,
     rows,

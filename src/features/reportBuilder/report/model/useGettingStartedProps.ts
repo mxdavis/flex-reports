@@ -9,7 +9,7 @@ import { useReportBuilder } from '../useReportBuilder'
 export function useGettingStartedProps(): GettingStartedProps | null {
   const { state } = useReportBuilder()
   const { fields, setFields, sourceColumns, ui, dispatchUi } = state
-  if (!state.isGettingStartedOpen) return null
+  if (!state.showGettingStarted) return null
 
   const selectedKeys = fields.map((field) => field.sourceKey)
 

@@ -18,26 +18,24 @@ function GettingStarted({ fields, selectedKeys, rowCount, canAddMore, onToggleFi
   return (
     <section className="fr-getting-started" aria-labelledby={titleId}>
       <h2 id={titleId}>Getting started</h2>
-      <div className="fr-getting-started-body">
-        <p className="fr-getting-started-help">
-          Tick the fields to show as columns. {rowCount.toLocaleString('en-US')} {rowCount === 1 ? 'row' : 'rows'} loaded.
-        </p>
-        <div className="fr-getting-started-fields">
-          {fields.map((field) => {
-            const isSelected = selectedKeys.includes(field.key)
-            return (
-              <label key={field.key}>
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  disabled={!isSelected && !canAddMore}
-                  onChange={() => onToggleField(field.key)}
-                />
-                {field.label}
-              </label>
-            )
-          })}
-        </div>
+      <p className="fr-getting-started-help">
+        Tick the fields to show as columns. {rowCount.toLocaleString('en-US')} {rowCount === 1 ? 'row' : 'rows'} loaded.
+      </p>
+      <div className="fr-getting-started-fields">
+        {fields.map((field) => {
+          const isSelected = selectedKeys.includes(field.key)
+          return (
+            <label key={field.key}>
+              <input
+                type="checkbox"
+                checked={isSelected}
+                disabled={!isSelected && !canAddMore}
+                onChange={() => onToggleField(field.key)}
+              />
+              {field.label}
+            </label>
+          )
+        })}
       </div>
     </section>
   )

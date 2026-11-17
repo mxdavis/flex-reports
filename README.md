@@ -52,7 +52,7 @@ function SalesReport({ report, rows, currentUser }) {
         { id: 'price', key: 'price', label: 'Price', dataType: 'currency' },
       ]}
       rows={rows}
-      reportDefinition={report.definition} // omit the first time to start from defaults
+      reportDefinition={report.definition} // omit for a new report; editors pick its columns
       role={currentUser.canEditReports ? 'editor' : 'viewer'}
       onSave={async (definition: ReportDefinition) => {
         const response = await fetch(`/api/reports/${report.id}`, {
