@@ -7,6 +7,9 @@ and total the data, then save a default view that everyone else opens.
 Flex Reports never stores your data. Your app passes rows in, and Flex Reports hands back
 a small JSON **report definition** for your app to save.
 
+**[See a demo →](https://mxdavis.github.io/flex-reports/)**: the latest release, published
+with GitHub Pages and running on built-in sample data.
+
 **[How it works →](docs/FUNCTIONALITY.md)**: a full guide to grouping, totals,
 collapsing, formulas, saving, and roles.
 
@@ -208,6 +211,23 @@ don't carry it.
 | `npm run lint` | Lint (oxlint) |
 | `npm run check:practices` | Repo rules: component size, sibling CSS and test files, duplication |
 | `npm run build` | Type-check and production build |
+
+---
+
+## Releases
+
+Releases are made by hand from `main`, once its CI checks are green:
+
+1. Open **Actions → Release → Run workflow**.
+2. Pick **patch** (fixes), **minor** (new features) or **major** (big or breaking changes).
+3. Click **Run workflow**.
+
+The workflow tags the next version (for example `v1.0.0` → `v1.1.0`), publishes a
+[GitHub release](https://github.com/mxdavis/flex-reports/releases) listing every PR merged
+since the last one, and deploys that version as the [demo](https://mxdavis.github.io/flex-reports/).
+
+To roll the demo back, open **Actions → Deploy demo → Run workflow** and enter an earlier
+tag, such as `v1.0.0`.
 
 ---
 
