@@ -165,9 +165,8 @@ export function isFromNewerVersion(raw: unknown): boolean {
 export function normalizeReportDefinition(
   raw: unknown,
   sourceColumns: SourceColumn[],
-  fallbackFormulas: ReportFormula[] = [],
 ): ReportDefinition {
-  const defaults = generateDefaultReportDefinition(fallbackFormulas)
+  const defaults = generateDefaultReportDefinition()
   if (!isRecord(raw)) {
     if (raw !== undefined && raw !== null) {
       console.error('[flex-reports] reportDefinition must be an object; using defaults.', raw)

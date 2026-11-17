@@ -2,6 +2,23 @@
 
 Newest at top. Each entry: what we decided and why.
 
+## The app and the sample endpoint (story 7)
+
+- **The component has no sandbox mode.** The `sandbox` prop, the bundled seed data, and
+  the component's localStorage saving are gone. The browser app around it (`src/App.tsx`,
+  `src/app/`) is now an ordinary host: it loads records from an endpoint, passes them as
+  `rows`, and saves the report in localStorage through `onSave`. So nothing app-only can
+  ship in the package. Supersedes the sandbox entries below.
+- **The sample data is an endpoint.** `public/sample-data.json` is published next to the
+  app (GitHub Pages serves it with open CORS), and the app loads it with the same loader a
+  visitor's URL will use. Tests read the same file.
+- **Columns come from the data.** The app passes no `schema`: every field name and key is
+  discovered from the records, starting as text until an editor picks a type. A new sample
+  report starts with no columns and no formulas.
+- **No server, ever.** People self-host the static app next to their data, load public
+  endpoints that allow browser access (CORS), or use the package in their own server app.
+  No proxy will be added.
+
 ## Host integration & scope (PR #10)
 
 - **Plain data props, not an adapter.** The host renders

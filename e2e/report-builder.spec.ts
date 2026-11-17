@@ -1,13 +1,35 @@
 import { expect, test } from '@playwright/test'
 
-// A new report starts blank. Each test starts from a saved report showing every
-// sample field, set up the way a user would: tick them all in Getting started.
+// A new report starts blank. Each test starts from a report saved in the app's
+// browser storage, as a returning visitor would have: the sample's main fields
+// as typed, labelled columns, and three formulas.
+const column = (id: string, label: string, sourceKey: string, displayType: string, aggregation: string) =>
+  ({ id, label, sourceKey, displayType, aggregation })
+const savedReport = {
+  version: 1,
+  sheetName: 'Report',
+  currencySymbol: '$',
+  fields: [
+    column('workDate', 'Work Date', 'workDate', 'date', 'distinct'),
+    column('personName', 'Person', 'person.name', 'string', 'distinct'),
+    column('clientName', 'Client', 'client.name', 'string', 'distinct'),
+    column('task', 'Task', 'task', 'string', 'distinct'),
+    column('hours', 'Hours', 'hours', 'decimal', 'sum'),
+    column('rate', 'Rate', 'rate', 'currency', 'sum'),
+    column('total', 'Total', 'total', 'currency', 'sum'),
+  ],
+  formulas: [
+    { label: 'grossFees', expression: '{{hours}} * {{rate}}' },
+    { label: 'netFees', expression: '{{%grossFees}} - {{%writeDown}}' },
+    { label: 'writeDown', expression: '{{%grossFees}} * 10%' },
+  ],
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Edit mode' }).click()
-  const gettingStarted = page.locator('section', { has: page.getByRole('heading', { name: 'Getting started' }) })
-  for (const checkbox of await gettingStarted.getByRole('checkbox').all()) await checkbox.check()
-  await page.getByRole('button', { name: 'Save report' }).click()
+  await page.evaluate((report) => {
+    window.localStorage.setItem('flex-reports.app.reportDefinition.v1', JSON.stringify(report))
+  }, savedReport)
   await page.reload()
 })
 
@@ -21,9 +43,11 @@ async function setColumnSource(
   mappingSection: ReturnType<typeof getMappingSection>,
   column: number,
   sourceKey: string,
+  displayType?: string,
 ) {
   await mappingSection.getByRole('button', { name: `Edit COLUMN ${column}` }).click()
   await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill(sourceKey)
+  if (displayType) await mappingSection.getByLabel('Display type').selectOption(displayType)
   await mappingSection.getByRole('button', { name: `Save COLUMN ${column}` }).click()
 }
 
@@ -107,7 +131,8 @@ test('groups nest by the leading text columns, the last one names each row, numb
   await setColumnSource(page, mappingSection, 1, 'person.name')
   await setColumnSource(page, mappingSection, 2, 'client.name')
   await setColumnSource(page, mappingSection, 3, 'task')
-  await setColumnSource(page, mappingSection, 4, 'rate')
+  // Fields from the data start as text, so the editor sets the number type.
+  await setColumnSource(page, mappingSection, 4, 'rate', 'currency')
   await setColumnSource(page, mappingSection, 5, '%grossFees')
 
   await page.getByRole('button', { name: 'Totals' }).click()

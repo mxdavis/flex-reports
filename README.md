@@ -24,8 +24,9 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:6060**. The local app runs the builder in
-[sandbox mode](#sandbox-mode) on built-in sample data, so you can try every feature right away.
+Open **http://localhost:6060**. The local app loads the sample data from
+`public/sample-data.json`, the same way it would load any endpoint (see [The app](#the-app)),
+so you can try every feature right away.
 
 ---
 
@@ -129,7 +130,6 @@ Viewers can try anything without risk, and they don't see authoring tips.
 | `role` | `'editor' \| 'viewer'` | `'editor'` | Controls the Save button and tips. |
 | `onSave` | `(definition) => void \| Promise<void>` | — | Required for editors. Without it the Save button is hidden and an error is logged. |
 | `initialEditMode` | `boolean` | `false` | Open straight into edit mode. |
-| `sandbox` | `boolean` | `false` | Run on built-in sample data for local development and demos (see [Sandbox mode](#sandbox-mode)). Host apps don't set this. |
 | `exports` | `boolean \| ('print' \| 'pdf' \| 'xlsx' \| 'csv')[]` | all | Which export formats appear in the **Export** menu, for viewers and editors alike. `false` hides the menu. |
 | `maxVisibleRows` | `number` | `1000` | Maximum displayed/printed report rows (1–1,000). Grouped reports open at the deepest **Show rows** level that fits. All incoming rows still contribute to formulas and totals. |
 
@@ -181,20 +181,20 @@ More examples: [docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENC
 
 ---
 
-## Sandbox mode
+## The app
 
-With the `sandbox` prop, Flex Reports loads sample data from `src/seeds/`, and **Save
-report** stores the definition in your browser's `localStorage`. Use it for local
-development and demos; the local app (`src/App.tsx`) runs this way. Without `sandbox`,
-nothing is written to the browser, and missing `rows` mean "still loading", never sample
-data.
+This repo also runs as a small browser app around the component (`src/App.tsx` and
+`src/app/`), which is what the [demo](https://mxdavis.github.io/flex-reports/) shows. It's
+a host like any other: it loads records from an endpoint, passes them in as `rows` with no
+`schema` (so every column name and key comes from the data), and saves the report in this
+browser's `localStorage`. None of this is part of the component, which never touches
+browser storage.
 
-The sample data is a separate file that's only downloaded in sandbox mode, so host apps
-don't carry it.
-
-- Try the viewer role by changing `src/App.tsx` to `<ReportBuilderApp sandbox role="viewer" />`.
-- Start fresh by clearing the `flex-reports.sandbox.reportDefinition.v1` key in
-  localStorage.
+- The sample records are `public/sample-data.json`, published next to the app, so the
+  demo reads them from `https://mxdavis.github.io/flex-reports/sample-data.json`. Any site
+  can read that address too.
+- **Reset to sample** deletes the saved report and starts again.
+- Try the viewer role by changing `<App />` in `src/main.tsx` to `<App role="viewer" />`.
 
 ---
 

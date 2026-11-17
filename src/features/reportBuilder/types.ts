@@ -22,9 +22,6 @@ export type ReportBuilderAppProps = {
   // Maximum displayed/printed report rows (1–1,000; defaults to 1,000).
   // Calculations and grouping always use every incoming row.
   maxVisibleRows?: number
-  // Runs on built-in sample data with localStorage saving, for local
-  // development and demos. Host apps never set this; rows/schema are ignored.
-  sandbox?: boolean
   // Which export formats viewers and editors can use. Defaults to all of them;
   // false turns exporting off.
   exports?: boolean | ExportFormat[]

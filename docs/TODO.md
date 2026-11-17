@@ -85,7 +85,8 @@ Status tags used in each item:
 - [ ] (todo) Add CSV export
 - [ ] (todo) Add non-enforcing licenseKey seam
 - [ ] (todo) Seed demo report for first-load wow factor
-- [ ] (todo) Sandbox playground: paste schema/rows/definition JSON, switch roles, and try a report before plugging it into a host
+- [ ] (todo) App: paste or open JSON (with a JSON validator), then load from a URL, switch roles, and try a report before plugging it into a host
+- [ ] (todo) App: load records from an open endpoint URL the visitor enters; it must allow browser access (CORS), and the app explains when it doesn't
 - [ ] (todo) Package as an installable npm library (build + exports) instead of importing from source
 
 ## Follow-ups from the PR #10 staff review
@@ -96,7 +97,7 @@ cheapest before anything ships.
 - [ ] (todo) Column headers go stale: changing a column's source keeps the old label (grouped header reads "WORK DATE › PERSON › …"). Update the label when it's still the old source's default; show the source on each column card.
 - [ ] (todo) Formula engine rework (wrong numbers today): results depend on evaluation order (`B = {{%C}} + {{%A}}` gives 1, not 2); self-references and cycles show numbers instead of *Invalid formula*; values like `1e-7` break formulas; keys such as `unit-price` can't be referenced; a formula named `constructor` breaks; renaming or removing a formula silently breaks formulas that use it. Resolve only referenced formulas per row with real cycle detection, tokenize instead of rewriting text, rewrite `{{%old}}` on rename.
 - [ ] (todo) Accessibility pass: windowing hides rows from screen readers (`aria-rowcount`, or skip windowing under ~300 rows); focus lost when a focused row scrolls out and after Edit/Cancel/Add/Save; keyboard way to reorder columns; disabled-button reasons only in hover titles (`aria-disabled` + description); no "Report saved" status; formula errors not announced; suggestion lists aren't ARIA comboboxes and the highlight can be off screen; sticky first column on narrow screens.
-- [ ] (todo) Embedding: component relies on sandbox-only `index.css` globals (box-sizing, font, margins), so scope them under the root class; fixed `min(1100px, 96%)` width with no `className` prop; CSS custom properties for theming.
+- [ ] (todo) Embedding: component relies on the app's `index.css` globals (box-sizing, font, margins), so scope them under the root class; fixed `min(1100px, 96%)` width with no `className` prop; CSS custom properties for theming.
 - [ ] (todo, contract) Formula ids and typed column sources (`source: { kind: 'field', key } | { kind: 'formula', id }`) instead of `sourceKey` meaning two things.
 - [ ] (todo, contract) Locale and currency: a `locale` prop and an ISO currency code (`'USD'`) instead of a symbol.
 - [ ] (todo, contract) Host callbacks `onDirtyChange` (in-app navigation guards) and `onDiagnostic` (repair warnings to host telemetry); props as a union so editors require `onSave`; reconsider `role` defaulting to `'editor'`.

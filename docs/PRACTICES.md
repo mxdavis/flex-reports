@@ -64,15 +64,21 @@
 
 - Flex Reports never owns data. The host passes `schema`, `rows`, `reportDefinition`,
   `role`, and `onSave` as props (see README → "Add it to your app").
-- **Generic first:** code must work with any row shape the host sends. Never hardcode
-  domain keys, labels, or formulas (hours, rate, client, etc.) outside `src/seeds/`.
-- Seed data is just mock data that mimics a host app plugging in rows, so we can
-  build and test the flow. It must never leak hardcoded customer values into code.
-- Sandbox mode (the `sandbox` prop → seed data) must always stay runnable for debugging and
+- **Generic first:** code must work with any row shape the host sends. Column names,
+  keys, and types come from the data itself. Never hardcode domain keys, labels, or
+  formulas (hours, rate, client, etc.) in the package or the app; only tests may describe
+  a report on the sample data.
+- **Package vs app:** the package is the `ReportBuilderApp` component. The app
+  (`src/App.tsx` and `src/app/`) is the browser app around it: it loads records from an
+  endpoint and saves reports in the browser. The package never knows about sample data,
+  endpoints, or browser storage, and never imports from `src/app/`.
+- The sample data is `public/sample-data.json`, served next to the app like any other
+  endpoint. Tests read the same file (`src/test/sampleReport.ts`). It must never leak
+  hardcoded customer values into code.
+- The app on localhost must always stay runnable on the sample endpoint for debugging and
   repro workflows, independent of host-app integrations.
-- `localStorage` is used **only in sandbox mode**. In host mode nothing is written to the
-  browser; the definition goes out through `onSave`, and the host persists it and
-  enforces permissions.
+- The package never writes to the browser: the definition goes out through `onSave`, and
+  the host persists it and enforces permissions. Only the app uses `localStorage`.
 
 ## Toolchain
 

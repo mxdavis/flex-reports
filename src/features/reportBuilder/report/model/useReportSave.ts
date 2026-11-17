@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { saveSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import type { ReportDefinition } from '../../../../services/reportDefinition/types'
 
 type UseReportSaveArgs = {
@@ -7,7 +6,6 @@ type UseReportSaveArgs = {
   // The definition the report opened with: nothing to save until it changes.
   baseline: ReportDefinition
   canSave: boolean
-  isSandbox: boolean
   onSave?: (definition: ReportDefinition) => void | Promise<void>
 }
 
@@ -17,7 +15,7 @@ function getErrorMessage(error: unknown): string {
 
 // Explicit save: edits stay local until Save, so half-finished changes never
 // reach everyone viewing the report. The last saved definition is the baseline.
-export function useReportSave({ definition, baseline, canSave, isSandbox, onSave }: UseReportSaveArgs) {
+export function useReportSave({ definition, baseline, canSave, onSave }: UseReportSaveArgs) {
   const [savedDefinition, setSavedDefinition] = useState(baseline)
   const savedJson = useMemo(() => JSON.stringify(savedDefinition), [savedDefinition])
   const [isSaving, setIsSaving] = useState(false)
@@ -39,11 +37,7 @@ export function useReportSave({ definition, baseline, canSave, isSandbox, onSave
     setIsSaving(true)
     setSaveError('')
     try {
-      if (isSandbox) {
-        saveSandboxDefinition(definition)
-      } else {
-        await onSave?.(definition)
-      }
+      await onSave?.(definition)
       setSavedDefinition(definition)
     } catch (error) {
       console.error('[flex-reports] Saving the report definition failed.', error)

@@ -1,0 +1,7 @@
+.fr-app-load-error {
+  width: min(1100px, 96%);
+  margin: 24px auto;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}

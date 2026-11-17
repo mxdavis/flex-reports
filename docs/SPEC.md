@@ -28,11 +28,13 @@ Four layers, kept small and testable.
 ### 3.1 Host data (props)
 The host passes plain data to the component. Flex Reports does no fetching:
 - `schema` → columns with types (drives `{{field}}` autocomplete and default formatting).
-  Optional; inferred from the first row when omitted (with a console warning).
-- `rows` → array of `{ id, ...anything }`. Any shape works; nothing is domain-specific.
-- **Sandbox mode:** with the `sandbox` prop, the builder loads mock seed data so local
-  development and repro never depend on a host. Without it, `rows` being undefined means
-  the host is still loading, and the builder shows "Loading report…".
+  Optional; without it, every field across all rows is offered as text (with a console warning).
+- `rows` → array of records. Any shape works; nothing is domain-specific.
+- `rows` being undefined means the host is still loading, and the builder shows
+  "Loading report…".
+- **The app** (`src/App.tsx`, `src/app/`) is a host around the component: it loads
+  `public/sample-data.json` like any endpoint and saves reports in the browser. The
+  component knows nothing about it.
 
 ### 3.2 Report definition (the only persisted artifact, JSON)
 One versioned object, passed in as `reportDefinition` and returned through `onSave`:
@@ -101,19 +103,19 @@ polished web page.
 ## 7. POC scope
 
 Included:
-- Sandbox mode on seed data (demo needs no backend).
+- The app on the sample endpoint (demo needs no backend).
 - Host mode via props: schema, rows, report definition, role, onSave.
 - Edit mode: field/formula columns with live preview.
 - Formula engine: `+ - / * % ( )`, `{{refs}}`, per-row, cycle detection.
 - View mode: aggregates, grouping with group totals, orientation toggle, filters (todo).
-- Explicit save; localStorage only in sandbox mode.
+- Explicit save; only the app uses localStorage, never the component.
 - CSV export (todo).
 - Tests for formula, aggregation, definition, and UI behavior.
 - `licenseKey` no-op seam (todo).
 
 Deferred (not in POC): auth, payments/license issuer, PDF export, charts, per-cell
-formula overrides, full Excel function library, real-time collab, sandbox playground
-(paste JSON data and switch roles).
+formula overrides, full Excel function library, real-time collab, paste JSON data and
+switch roles in the app.
 
 ## 8. Tech stack
 
@@ -136,10 +138,10 @@ src/
     sections/             # table bodies (horizontal/grouped, vertical)
     state/                # UI reducer
   services/
-    adapters/             # row/schema types + sandbox data access
+    adapters/             # row/schema types + record reading
     formula/              # safe expression evaluator
-    reportDefinition/     # definition types, defaults/normalization, sandbox storage
-  seeds/                  # sandbox-only mock data
+    reportDefinition/     # definition types, defaults/normalization
+  app/                    # the app: endpoint loading, saved report, data bar (not the package)
   shared/                 # reusable components + icons
   components/             # shared editors (column, formula, card)
   utils/                  # formatting + formula helpers

@@ -3,10 +3,9 @@ import ExcelJS from 'exceljs'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReportRow, SchemaField } from '../../services/adapters'
-import { SANDBOX_DEFINITION_STORAGE_KEY } from '../../services/reportDefinition/storage'
 import type { ReportDefinition } from '../../services/reportDefinition/types'
 import { installMemoryStorage } from '../../test/memoryStorage'
-import { renderSandboxApp } from '../../test/renderSandboxApp'
+import { sampleReportProps } from '../../test/sampleReport'
 import { createRecordsDataSource } from '../../services/adapters/recordsDataSource'
 import { reportWithColumns } from '../../test/reportWithColumns'
 import ReportBuilderApp from './ReportBuilderApp'
@@ -55,7 +54,7 @@ describe('ReportBuilderApp host mode', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders host rows and the passed definition instead of seed data', () => {
+  it('renders host rows and the passed definition', () => {
     render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} />)
 
     const table = screen.getByRole('table')
@@ -80,7 +79,7 @@ describe('ReportBuilderApp host mode', () => {
     expect(onSave).toHaveBeenCalledTimes(1)
     expect(onSave.mock.calls[0][0]).toMatchObject({ version: 1, sheetName: 'Stock', fields: savedDefinition.fields })
     expect(getSaveButton()).toBeDisabled()
-    expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
+    expect(window.localStorage).toHaveLength(0)
   })
 
   it('shows the host error when onSave rejects and keeps changes unsaved', async () => {
@@ -278,7 +277,7 @@ describe('ReportBuilderApp host mode', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading report…')
     expect(screen.queryByRole('table')).toBeNull()
-    expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
+    expect(window.localStorage).toHaveLength(0)
 
     rerender(<ReportBuilderApp schema={schema} rows={rows} onSave={vi.fn()} initialEditMode />)
 
@@ -481,16 +480,15 @@ describe('ReportBuilderApp host mode', () => {
   })
 })
 
-describe('ReportBuilderApp sandbox mode', () => {
+describe('ReportBuilderApp with a saved report', () => {
   beforeEach(() => {
-    installMemoryStorage()
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
-  it('opens clean: no unsaved changes before any edit', async () => {
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+  it('opens clean: no unsaved changes before any edit', () => {
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
-    // The seed's formulas aren't alphabetical; the builder sorts them, and the
+    // The saved formulas aren't alphabetical; the builder sorts them, and the
     // saved baseline must match or the report would open as unsaved.
     expect(getSaveButton()).toBeDisabled()
     const leaveEvent = new Event('beforeunload', { cancelable: true })
@@ -498,37 +496,6 @@ describe('ReportBuilderApp sandbox mode', () => {
       window.dispatchEvent(leaveEvent)
     })
     expect(leaveEvent.defaultPrevented).toBe(false)
-  })
-
-  it('shows a loading state until the sample data arrives, then a blank report', async () => {
-    render(<ReportBuilderApp sandbox />)
-
-    expect(screen.getByRole('status')).toHaveTextContent('Loading sample data…')
-    expect(await screen.findByText('This report has no columns yet.')).toBeInTheDocument()
-    expect(screen.queryByText('Loading sample data…')).toBeNull()
-  })
-
-  it('does not autosave; Save writes the definition to localStorage', async () => {
-    const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
-
-    await renameSheet(user, 'Sandbox report')
-    expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
-
-    await user.click(getSaveButton())
-
-    const stored = JSON.parse(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY) ?? '{}')
-    expect(stored).toMatchObject({ version: 1, sheetName: 'Sandbox report' })
-  })
-
-  it('never writes to localStorage for a sandbox viewer', async () => {
-    const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox role="viewer" initialEditMode />)
-
-    await renameSheet(user, 'Viewer edit')
-
-    expect(screen.queryByRole('button', { name: 'Save report' })).not.toBeInTheDocument()
-    expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
   })
 })
 
