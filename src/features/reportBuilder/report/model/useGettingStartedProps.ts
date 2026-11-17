@@ -15,9 +15,9 @@ export function useGettingStartedProps(): GettingStartedProps | null {
 
   function toggleField(key: string): void {
     if (selectedKeys.includes(key)) {
-      const removedIds = fields.filter((field) => field.sourceKey === key).map((field) => field.id)
-      setFields((previous) => previous.filter((field) => !removedIds.includes(field.id)))
-      if (ui.editingField && removedIds.includes(ui.editingField.id)) dispatchUi({ type: 'stopEditField' })
+      setFields((previous) => previous.filter((field) => field.sourceKey !== key))
+      const editingId = ui.editingField?.id
+      if (fields.some((field) => field.id === editingId && field.sourceKey === key)) dispatchUi({ type: 'stopEditField' })
       return
     }
     const column = sourceColumns.find((candidate) => candidate.key === key)
