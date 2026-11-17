@@ -1,7 +1,7 @@
-# Software Development Practices
+# Contributing
 
-> **This file is yours.** Edit it anytime to change how I work. I read it before writing
-> code and follow it. If anything here conflicts with a request, I'll ask.
+How we work on Flex Reports. Read it before writing code; if a request conflicts with it,
+ask first.
 
 ## Code style
 
@@ -33,9 +33,8 @@
 
 - Write tests for engine/logic (formulas, pivot, services).
 - Prefer small, focused unit tests with clear names.
-- Default workflow: do not run local e2e routinely; rely on CI e2e as the
-  enforcement gate. Run local e2e only when actively debugging a failing e2e
-  scenario.
+- Don't run e2e locally by default; CI is the gate. Run it locally when debugging a
+  failing e2e test or changing what the e2e tests drive.
 
 ## UI
 
@@ -46,19 +45,17 @@
 ## Process
 
 - Work on branches; open PRs; never push to `main` without review.
-- Update `README.md` only for infrastructure, high-level architecture, or app setup/startup changes. Keep feature specs and story progress in planning documents.
+- Docs by reader: `README.md` for setup and integrating the component,
+  `FUNCTIONALITY.md` for people using reports, this file for working on the code. Update
+  the README only for setup, integration, or architecture changes.
 - **Stop and ask** whenever any question or clarification comes up, at any point in
   the work. Don't guess or pick a default on the user's behalf.
 - Use latest Node / React / Vite (and keep deps permissively licensed).
-- When PR feedback reveals coding-style preferences, record them in this file
-    before continuing so future work follows the updated style.
-- Use `docs/TODO.md` only for work deferred until later so it isn't forgotten. Do not add entries for routine changes being completed now.
-- Every PR that includes frontend/UI changes must include localhost preview
-    instructions in the PR description:
-    - run command (for example `npm run dev`)
-    - local URL (for example `http://localhost:5173`)
-- Merge rule: practices + lint + test + build + e2e CI checks must be green before merging.
-- While iterating on MVP behavior, it is OK to skip running local lint/test/practices checks, but do not merge until all CI checks are green.
+- When PR feedback reveals coding-style preferences, record them here before continuing.
+- Every PR with UI changes includes localhost preview steps in its description: the run
+  command (`npm run dev`) and the URL (`http://localhost:6060`).
+- Merge only when the practices, lint, test, build, and e2e CI checks are green. Skipping
+  local checks while iterating is fine.
 
 ## Data sources
 
@@ -85,16 +82,14 @@
 - Node >=22 required (declared in `engines.node`). Run `nvm use` (reads
   `.nvmrc`) before `npm run test` / `lint` / `build`.
 
-## Add your own rules below
+## Checked in CI
 
-<!-- e.g. "prefer named exports", "no default exports", "max 200 lines per file" -->
+`npm run check:practices` runs on every PR and push:
 
-## CI-enforced subset
-
-- `npm run check:practices` runs in CI on every PR/push.
-- UI component files in `src/components/`, `src/features/reportBuilder/components/`, `src/features/reportBuilder/sections/`, and `src/shared/components/` must have matching sibling files:
-  - `<Component>.css`
-  - `<Component>.test.tsx`
-- UI component `.tsx` files (excluding tests) must stay at or below 220 lines.
-- `src/features/reportBuilder/ReportBuilderApp.tsx` must stay at or below 1000 lines until further split milestones lower the cap.
-- Source files in `src/**/*.ts` and `src/**/*.tsx` (excluding `*.test.ts` and `*.test.tsx`) must not contain duplicated normalized blocks of 20 consecutive non-empty lines.
+- UI components in `src/components/`, `src/features/reportBuilder/components/`,
+  `src/features/reportBuilder/sections/`, and `src/shared/components/` each have a sibling
+  `<Component>.css` and `<Component>.test.tsx`, and stay at or under 220 lines.
+- `src/features/reportBuilder/ReportBuilderApp.tsx` stays at or under 1,000 lines.
+- No source file (tests excluded) repeats a block of 20 consecutive non-empty lines.
+- Every CSS class is prefixed `fr-`, so it can't clash with a host page. (Element IDs
+  are prefixed per builder by `useElementId`; that isn't checked.)

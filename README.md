@@ -7,11 +7,12 @@ and total the data, then save a default view that everyone else opens.
 Flex Reports never stores your data. Your app passes rows in, and Flex Reports hands back
 a small JSON **report definition** for your app to save.
 
-**[How it works →](docs/FUNCTIONALITY.md)**: a full guide to grouping, totals,
+**[How it works →](FUNCTIONALITY.md)**: a full guide to grouping, totals,
 collapsing, formulas, saving, and roles.
 
-Large reports stay fast: only the rows in view are drawn, and grouped reports open at a
-summary level when fully expanding them would show more than 1,000 rows.
+Large reports stay fast: only the rows in view are drawn, and a report shows at most
+1,000 rows (grouped reports open at a summary level that fits), while totals and formulas
+use every row.
 
 ---
 
@@ -88,8 +89,8 @@ const rows = [
 | `label` | The default column header. |
 | `dataType` | `'string'`, `'number'`, `'date'`, or `'currency'`. Sets the default format and total type. |
 
-If you leave `schema` out, keys from every row become text fields, and a warning is
-logged to the console. Passing a schema gives you explicit labels and formats.
+If you leave `schema` out, every field found across all rows (including nested ones like
+`client.name`) becomes a text field. Passing a schema gives you explicit labels and formats.
 
 `rows` and `schema` can change at any time, for example after a refetch, and the table
 updates. Passing `schema` inline is fine: it's compared by content. If you don't pass a
@@ -124,8 +125,8 @@ Viewers can try anything without risk, and they don't see authoring tips.
 
 | Prop | Type | Default | Notes |
 |---|---|---|---|
-| `rows` | `Array<{ id: string, [key: string]: unknown }>` | — | Your data. While it's `undefined` (still loading), the builder shows "Loading report…". Once rows have arrived, a refetch that briefly clears them keeps the current report and edits. |
-| `schema` | `Array<{ id, key, label, dataType }>` | Inferred | The fields available on `rows`. |
+| `rows` | `Array<Record<string, unknown>>` | — | Your data. While it's `undefined` (still loading), the builder shows "Loading report…". Once rows have arrived, a refetch that briefly clears them keeps the current report and edits. |
+| `schema` | `Array<{ id, key, label, dataType }>` | Discovered | The fields available on `rows`. Without it, every field in the rows is offered as text. |
 | `reportDefinition` | `ReportDefinition` | Generated | The saved report to open. |
 | `role` | `'editor' \| 'viewer'` | `'editor'` | Controls the Save button and tips. |
 | `onSave` | `(definition) => void \| Promise<void>` | — | Required for editors. Without it the Save button is hidden and an error is logged. |
@@ -145,7 +146,7 @@ This is the only thing you store. Save it as-is:
   "fields": [
     { "id": "region", "label": "Region", "sourceKey": "region", "displayType": "string", "aggregation": "none" },
     { "id": "units", "label": "Units", "sourceKey": "units", "displayType": "number", "aggregation": "sum" },
-    { "id": "field-1", "label": "Revenue", "sourceKey": "revenue", "displayType": "currency", "aggregation": "sum" }
+    { "id": "field-1", "label": "Revenue", "sourceKey": "%revenue", "displayType": "currency", "aggregation": "sum" }
   ],
   "formulas": [
     { "label": "revenue", "expression": "{{units}} * {{price}}" }
@@ -159,7 +160,7 @@ This is the only thing you store. Save it as-is:
 | `fields` | The report's columns, in order. `sourceKey` is a schema `key`, or `%` plus a formula `label` (for example `%lineTotal`). |
 | `fields[].displayType` | `'currency' \| 'number' \| 'decimal' \| 'percent' \| 'date' \| 'string'` |
 | `fields[].aggregation` | How the column totals: `'none' \| 'sum' \| 'avg' \| 'count' \| 'distinct'` |
-| `formulas` | Per-row calculations. See [Formulas](docs/FUNCTIONALITY.md#formulas). |
+| `formulas` | Per-row calculations. See [Formulas](FUNCTIONALITY.md#formulas). |
 | `view` | The default view everyone opens. |
 | `version` | The format version (currently `1`). A definition from a newer version of Flex Reports opens read-only, with Save turned off, so an older copy of the component can't overwrite it. An unreadable version falls back to defaults. |
 | `view.expandedLevels` | How many grouping levels start open: `0` shows only the first column's groups, `null` opens everything. |
@@ -177,7 +178,8 @@ that matches a data field): editors see a note in the Formulas panel and fix the
 Two formulas with the same name (ignoring case) can't be saved from the editor; if a
 definition you pass in has them, the first is used and a warning shows on the page.
 
-More examples: [docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENCE.md).
+To use an outside constant such as a quota or target, put it on the rows as a field,
+where it can also vary per row.
 
 ---
 
@@ -213,13 +215,6 @@ browser storage.
 
 ## Documentation
 
-- **[docs/FUNCTIONALITY.md](docs/FUNCTIONALITY.md)**: how every feature works.
-- **[docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENCE.md)**: column types
-  and report definition examples.
-
-Contributing:
-
-- **[docs/PRACTICES.md](docs/PRACTICES.md)**: coding practices. Read before writing code.
-- **[docs/SPEC.md](docs/SPEC.md)**: product spec and architecture.
-- **[docs/DECISIONS.md](docs/DECISIONS.md)**: decisions log.
-- **[docs/TODO.md](docs/TODO.md)**: task tracker and parking lot.
+- **[FUNCTIONALITY.md](FUNCTIONALITY.md)**: how every feature works, for the people
+  building and reading reports.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: how we work on the code. Read before writing code.
