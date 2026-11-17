@@ -76,9 +76,9 @@ Newest at top. Each entry: what we decided and why.
 - **New reports start blank, with Getting started.** Filling a new report with the first
   fields found gave a meaningless report that took a click per column to clear. Like an
   Excel PivotTable, a report without a saved definition starts with no columns, and
-  **Getting started** lists every field to tick. It shows when the report opens blank,
-  closes with Done (or on reload once there are columns), and shows again whenever the
-  report has no columns. Ticking only adds the column; it doesn't open the column editor.
+  **Getting started** lists every field to tick. It shows until the report is saved with
+  columns (worked out from the saved report, so there's no open/closed state), then
+  **Add column** takes over. Ticking only adds the column; it doesn't open the column editor.
   The schema is compared by content, so an inline `schema={[...]}` doesn't recompute on
   every render.
 - **Reports from a newer version open read-only.** Resetting an unknown version to

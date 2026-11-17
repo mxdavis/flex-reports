@@ -5,7 +5,7 @@ import { getNextSequencedName } from '../../../../utils/reportBuilder'
 import { useReportBuilder } from '../useReportBuilder'
 
 // Getting started: tick a field to add it as the last column, untick to remove
-// the columns showing it. Null while it's closed.
+// the columns showing it. Null once the report is saved with columns.
 export function useGettingStartedProps(): GettingStartedProps | null {
   const { state } = useReportBuilder()
   const { fields, setFields, sourceColumns, ui, dispatchUi } = state
@@ -34,6 +34,5 @@ export function useGettingStartedProps(): GettingStartedProps | null {
     rowCount: state.rows.length,
     canAddMore: fields.length < MAX_REPORT_COLUMNS,
     onToggleField: toggleField,
-    onDone: state.closeGettingStarted,
   }
 }

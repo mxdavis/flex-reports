@@ -37,7 +37,8 @@ function ReportBuilderView() {
   }
 
   function renderNoColumnsMessage() {
-    const nextStep = showAuthoring ? 'Tick fields under Getting started to add them.' : 'Open Edit mode to choose its columns.'
+    let nextStep = 'Open Edit mode to choose its columns.'
+    if (showAuthoring) nextStep = gettingStartedProps ? 'Tick fields under Getting started to add them.' : 'Add one with Add column.'
     return (
       <p className="fr-no-columns" role="status">
         <strong>This report has no columns yet.</strong> {nextStep}

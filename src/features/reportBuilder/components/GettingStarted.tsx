@@ -10,13 +10,11 @@ export type GettingStartedProps = {
   rowCount: number
   canAddMore: boolean
   onToggleField: (key: string) => void
-  onDone: () => void
 }
 
 // A blank report's first step: tick the fields to show as columns.
-function GettingStarted({ fields, selectedKeys, rowCount, canAddMore, onToggleField, onDone }: GettingStartedProps) {
+function GettingStarted({ fields, selectedKeys, rowCount, canAddMore, onToggleField }: GettingStartedProps) {
   const titleId = useElementId('getting-started-title')
-  const hasColumns = selectedKeys.length > 0
   return (
     <section className="fr-getting-started" aria-labelledby={titleId}>
       <h2 id={titleId}>Getting started</h2>
@@ -40,11 +38,6 @@ function GettingStarted({ fields, selectedKeys, rowCount, canAddMore, onToggleFi
             )
           })}
         </div>
-        {hasColumns && (
-          <button type="button" className="fr-getting-started-done" onClick={onDone} title="Close Getting started. Add more columns with Add column.">
-            Done
-          </button>
-        )}
       </div>
     </section>
   )

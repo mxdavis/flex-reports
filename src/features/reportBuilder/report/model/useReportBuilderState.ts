@@ -48,11 +48,6 @@ export function useReportBuilderState({
     : normalizeReportDefinition(reportDefinition, sourceColumns)))
 
   const [fields, setFields] = useState<ReportField[]>(initialDefinition.fields)
-  // Getting started shows when the report opens blank, stays until Done (or a
-  // reload), and shows again whenever the report has no columns.
-  const [isGettingStartedOpen, setIsGettingStartedOpen] = useState(initialDefinition.fields.length === 0)
-  if (fields.length === 0 && !isGettingStartedOpen) setIsGettingStartedOpen(true)
-
   const [formulas, setFormulas] = useState<ReportFormula[]>(initialDefinition.formulas)
   // Shown to everyone: only a host can pass these in, and its developer needs to see it.
   const [definitionIssues] = useState(() => (isSandbox ? [] : getRepeatedFormulaNames(reportDefinition)
@@ -128,8 +123,8 @@ export function useReportBuilderState({
 
   return {
     sourceError: source.error,
-    isGettingStartedOpen,
-    closeGettingStarted: () => setIsGettingStartedOpen(false),
+    // Getting started is for setting up a new report, so it goes once one is saved with columns.
+    isGettingStartedOpen: !saveState.hasSavedColumns,
     definitionIssues,
     skippedFields: source.skippedFields,
     rows,

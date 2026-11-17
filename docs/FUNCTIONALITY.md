@@ -165,9 +165,9 @@ and **Table**, and each section collapses with its chevron.
 
 A new report starts with no columns. **Getting started** lists every field in your data,
 with how many rows loaded. Tick a field to add it as the last column; untick it to remove
-it. Then use **Edit** on each column to name it and pick its type. Click **Done** to close
-Getting started; it also goes away when you reload a report that has columns, and comes
-back if you remove every column.
+it. Then use **Edit** on each column to name it and pick its type. Getting started goes
+away once you save the report with at least one column; after that, add columns with
+**Add column**.
 
 ### Report settings
 

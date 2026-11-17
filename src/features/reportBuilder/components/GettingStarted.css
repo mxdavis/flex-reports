@@ -34,15 +34,6 @@
   justify-self: stretch;
 }
 
-.fr-getting-started-done {
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 6px 14px;
-  font: inherit;
-  cursor: pointer;
-}
-
 .fr-getting-started-fields label {
   display: flex;
   align-items: center;
@@ -52,7 +43,6 @@
   cursor: pointer;
   overflow-wrap: anywhere;
 }
-
 
 .fr-getting-started-fields label:has(input:disabled) {
   color: #98a2b3;
