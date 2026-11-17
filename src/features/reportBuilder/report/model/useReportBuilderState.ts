@@ -70,12 +70,6 @@ export function useReportBuilderState({
     : ''
   // Authoring tips are for editors only; viewers can explore but never see them.
   const showTips = role === 'editor'
-  const isMissingSchema = hostSchema === undefined
-  useEffect(() => {
-    if (isMissingSchema) {
-      console.warn('[flex-reports] `rows` was passed without `schema`; discovering columns across all rows as text.')
-    }
-  }, [isMissingSchema])
   useEffect(() => {
     if (role === 'editor' && !onSave) {
       console.error('[flex-reports] role="editor" was passed without `onSave`; the Save button is hidden.')

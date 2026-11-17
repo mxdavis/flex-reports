@@ -28,7 +28,7 @@ Four layers, kept small and testable.
 ### 3.1 Host data (props)
 The host passes plain data to the component. Flex Reports does no fetching:
 - `schema` → columns with types (drives `{{field}}` autocomplete and default formatting).
-  Optional; without it, every field across all rows is offered as text (with a console warning).
+  Optional; without it, every field across all rows is offered as text.
 - `rows` → array of records. Any shape works; nothing is domain-specific.
 - `rows` being undefined means the host is still loading, and the builder shows
   "Loading report…".

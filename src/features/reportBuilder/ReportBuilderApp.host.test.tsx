@@ -463,12 +463,12 @@ describe('ReportBuilderApp host mode', () => {
     })
   })
 
-  it('offers every field found in the rows, and logs, when rows come without a schema', () => {
+  it('offers every field found in the rows, without warning, when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     render(<ReportBuilderApp rows={rows} onSave={vi.fn()} initialEditMode />)
 
     expect(screen.getByRole('checkbox', { name: 'warehouse' })).toBeInTheDocument()
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('without `schema`'))
+    expect(warnSpy).not.toHaveBeenCalled()
   })
 
   it('logs and hides Save when an editor has no onSave', () => {
