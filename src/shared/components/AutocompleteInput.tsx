@@ -13,7 +13,7 @@ type AutocompleteInputProps = {
 
 export default function AutocompleteInput({ id, value, options, onChange, title }: AutocompleteInputProps) {
   const allOptions = useMemo(
-    () => filterOptions([...options].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' })), ''),
+    () => Array.from(new Set(options)).sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' })),
     [options],
   )
   // The list narrows only to what the user is typing. A value that was filled

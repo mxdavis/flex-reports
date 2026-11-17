@@ -65,4 +65,18 @@ describe('AutocompleteInput', () => {
     expect(shownOptions()).toHaveLength(3)
     expect(shownOptions()[1]).toHaveAttribute('aria-selected', 'true')
   })
+
+  it('scrolls the highlighted option into view', () => {
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scrollIntoView, configurable: true })
+    render(<AutocompleteInput id="source" value="hours" options={['alpha', 'bravo', 'hours']} onChange={() => undefined} />)
+
+    fireEvent.focus(screen.getByRole('textbox'))
+    expect(scrollIntoView.mock.contexts.at(-1)).toHaveTextContent('hours')
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest' })
+
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'ArrowUp' })
+    expect(scrollIntoView.mock.contexts.at(-1)).toHaveTextContent('bravo')
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
+  })
 })
