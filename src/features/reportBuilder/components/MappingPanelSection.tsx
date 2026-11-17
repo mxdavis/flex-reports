@@ -19,7 +19,6 @@ export type MappingPanelSectionProps = {
   // Fields that hold several entries per row, so can't be a column.
   skippedFields?: string[]
   getFieldWarning: (field: ReportField) => string | null
-  minColumns: number
   draggedFieldId: string | null
   dragOverFieldId: string | null
   editingFieldId: string | null
@@ -56,7 +55,6 @@ function MappingPanelSection({
   showTips,
   skippedFields = [],
   getFieldWarning,
-  minColumns,
   draggedFieldId,
   dragOverFieldId,
   editingFieldId,
@@ -104,12 +102,10 @@ function MappingPanelSection({
             Build your report layout here. Choose what each column pulls from,
             rename the header users see, and drag cards to reorder the final output.
           </p>
-          {showTips && (
+          {showTips && fields.length > 1 && (
             <p className="fr-mapping-tip">
               <strong>Tip:</strong> Grouping nests by each column from the left. Put the columns you
-              group by first, then the column that names each row, then your numbers. To choose how
-              a column adds up in group totals, edit the column and set
-              its <strong>Total type</strong> (for example Sum for hours, Average for a rate).
+              group by first, then the column that names each row, then your numbers.
             </p>
           )}
           {showTips && skippedFields.length > 0 && (
@@ -184,7 +180,6 @@ function MappingPanelSection({
                   field={field}
                   warning={getFieldWarning(field)}
                   index={index}
-                  fieldsLength={fields.length}
                   draggedFieldId={draggedFieldId}
                   dragOverFieldId={dragOverFieldId}
                   editingFieldId={editingFieldId}
@@ -192,7 +187,6 @@ function MappingPanelSection({
                   sourceOptions={sourceOptions}
                   displayTypeOptions={displayTypeOptions}
                   aggregationOptions={aggregationOptions}
-                  minColumns={minColumns}
                   onMoveField={onMoveField}
                   onStartEditField={onStartEditField}
                   onCancelEditField={onCancelEditField}

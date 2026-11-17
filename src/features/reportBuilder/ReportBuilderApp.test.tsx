@@ -2,12 +2,14 @@ import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { installMemoryStorage } from '../../test/memoryStorage'
+import { saveSandboxReportWithColumns } from '../../test/saveSandboxReport'
 import ReportBuilderApp from './ReportBuilderApp'
 import { renderSandboxApp } from '../../test/renderSandboxApp'
 
 describe('ReportBuilderApp', () => {
   beforeEach(() => {
     installMemoryStorage()
+    saveSandboxReportWithColumns()
 
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       value: () => undefined,

@@ -21,7 +21,6 @@ describe('MappingFieldCard', () => {
       <MappingFieldCard
         field={createField()}
         index={0}
-        fieldsLength={2}
         draggedFieldId={null}
         dragOverFieldId={null}
         editingFieldId={null}
@@ -29,7 +28,6 @@ describe('MappingFieldCard', () => {
         sourceOptions={['hours']}
         displayTypeOptions={[{ value: 'number', label: 'Number' }]}
         aggregationOptions={[{ value: 'sum', label: 'Sum' }]}
-        minColumns={1}
         onMoveField={() => undefined}
         onStartEditField={onStartEditField}
         onCancelEditField={() => undefined}
@@ -50,12 +48,12 @@ describe('MappingFieldCard', () => {
     expect(onStartEditField).toHaveBeenCalledWith(expect.objectContaining({ id: 'field-1' }))
   })
 
-  it('disables remove when at minimum column count', () => {
+  it('lets the last column be removed', () => {
+    const onRemoveField = vi.fn()
     render(
       <MappingFieldCard
         field={createField()}
         index={0}
-        fieldsLength={1}
         draggedFieldId={null}
         dragOverFieldId={null}
         editingFieldId={null}
@@ -63,12 +61,11 @@ describe('MappingFieldCard', () => {
         sourceOptions={['hours']}
         displayTypeOptions={[{ value: 'number', label: 'Number' }]}
         aggregationOptions={[{ value: 'sum', label: 'Sum' }]}
-        minColumns={1}
         onMoveField={() => undefined}
         onStartEditField={() => undefined}
         onCancelEditField={() => undefined}
         onSaveEditField={() => undefined}
-        onRemoveField={() => undefined}
+        onRemoveField={onRemoveField}
         onSetDraggedFieldId={() => undefined}
         onSetDragOverFieldId={() => undefined}
         onSetEditingFieldSourceKey={() => undefined}
@@ -78,6 +75,7 @@ describe('MappingFieldCard', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Remove' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    expect(onRemoveField).toHaveBeenCalledWith('field-1')
   })
 })

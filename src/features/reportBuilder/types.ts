@@ -12,7 +12,7 @@ export type ReportBuilderAppProps = {
   schema?: SchemaField[]
   // Host data. While it's undefined the builder shows "Loading report…".
   rows?: ReportRow[]
-  // Saved report to start from. Defaults are generated from the schema when omitted.
+  // Saved report to start from. Without one, the report starts with no columns.
   reportDefinition?: ReportDefinition
   // Viewers can explore but never save. Hosts must still check permissions in onSave.
   role?: ReportRole

@@ -12,7 +12,6 @@ type MappingFieldCardProps = {
   field: ReportField
   warning?: string | null
   index: number
-  fieldsLength: number
   draggedFieldId: string | null
   dragOverFieldId: string | null
   editingFieldId: string | null
@@ -20,7 +19,6 @@ type MappingFieldCardProps = {
   sourceOptions: string[]
   displayTypeOptions: Array<{ value: DisplayType, label: string }>
   aggregationOptions: Array<{ value: AggregationMode, label: string }>
-  minColumns: number
   onMoveField: (sourceId: string, targetId: string) => void
   onStartEditField: (field: ReportField) => void
   onCancelEditField: () => void
@@ -38,7 +36,6 @@ function MappingFieldCard({
   field,
   warning,
   index,
-  fieldsLength,
   draggedFieldId,
   dragOverFieldId,
   editingFieldId,
@@ -46,7 +43,6 @@ function MappingFieldCard({
   sourceOptions,
   displayTypeOptions,
   aggregationOptions,
-  minColumns,
   onMoveField,
   onStartEditField,
   onCancelEditField,
@@ -149,7 +145,6 @@ function MappingFieldCard({
           <button
             type="button"
             onClick={() => onRemoveField(field.id)}
-            disabled={fieldsLength <= minColumns}
             title="Remove this column from the report layout."
           >
             Remove

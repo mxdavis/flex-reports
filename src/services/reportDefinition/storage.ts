@@ -12,11 +12,11 @@ export function loadSandboxDefinition(
 ): ReportDefinition {
   try {
     const raw = window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)
-    if (!raw) return generateDefaultReportDefinition(sourceColumns, seedFormulas)
+    if (!raw) return generateDefaultReportDefinition(seedFormulas)
     return normalizeReportDefinition(JSON.parse(raw), sourceColumns, seedFormulas)
   } catch (error) {
     console.error('[flex-reports] Could not load the sandbox report definition; using defaults.', error)
-    return generateDefaultReportDefinition(sourceColumns, seedFormulas)
+    return generateDefaultReportDefinition(seedFormulas)
   }
 }
 

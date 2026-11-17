@@ -52,7 +52,7 @@ function SalesReport({ report, rows, currentUser }) {
         { id: 'price', key: 'price', label: 'Price', dataType: 'currency' },
       ]}
       rows={rows}
-      reportDefinition={report.definition} // omit the first time to start from defaults
+      reportDefinition={report.definition} // omit for a new report; editors pick its columns
       role={currentUser.canEditReports ? 'editor' : 'viewer'}
       onSave={async (definition: ReportDefinition) => {
         const response = await fetch(`/api/reports/${report.id}`, {
@@ -92,8 +92,8 @@ logged to the console. Passing a schema gives you explicit labels and formats.
 
 `rows` and `schema` can change at any time, for example after a refetch, and the table
 updates. Passing `schema` inline is fine: it's compared by content. If you don't pass a
-`reportDefinition`, the default columns are rebuilt whenever the schema changes (say, you
-mounted with empty rows while loading), as long as nobody has edited them yet.
+`reportDefinition`, the report starts with no columns, and editors pick them under
+**Getting started** in edit mode.
 
 ### 2. Save the report
 

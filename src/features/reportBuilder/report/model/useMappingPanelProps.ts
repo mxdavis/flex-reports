@@ -1,4 +1,4 @@
-import { AGGREGATION_OPTIONS, DISPLAY_TYPE_OPTIONS, MAX_REPORT_COLUMNS, MIN_REPORT_COLUMNS, getDefaultAggregation } from '../../config'
+import { AGGREGATION_OPTIONS, DISPLAY_TYPE_OPTIONS, MAX_REPORT_COLUMNS, getDefaultAggregation } from '../../config'
 import type { MappingPanelSectionProps } from '../../components/MappingPanelSection'
 import type { AggregationMode, DisplayType, ReportField } from '../../../../services/reportDefinition/types'
 import { getNextSequencedName } from '../../../../utils/reportBuilder'
@@ -103,7 +103,6 @@ export function useMappingPanelProps(): MappingPanelProps {
     showTips: state.showTips,
     skippedFields: state.skippedFields,
     getFieldWarning: computed.getFieldWarning,
-    minColumns: MIN_REPORT_COLUMNS,
     draggedFieldId: ui.draggedFieldId,
     dragOverFieldId: ui.dragOverFieldId,
     editingFieldId: editingField?.id ?? null,
@@ -127,7 +126,7 @@ export function useMappingPanelProps(): MappingPanelProps {
     onCancelEditField: stopEditingField,
     onSaveEditField: saveEditingField,
     onRemoveField: (fieldId: string) => {
-      setFields((previous) => (previous.length <= MIN_REPORT_COLUMNS ? previous : previous.filter((field) => field.id !== fieldId)))
+      setFields((previous) => previous.filter((field) => field.id !== fieldId))
       if (editingField?.id === fieldId) stopEditingField()
     },
     onSetDraggedFieldId: (value: string | null) => dispatchUi({ type: 'set', changes: { draggedFieldId: value } }),

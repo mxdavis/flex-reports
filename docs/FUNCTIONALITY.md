@@ -161,6 +161,14 @@ each column's **Total type**. Columns set to **None** don't get a chip.
 Click **Edit mode** in the toolbar. The toolbar can jump to **Columns**, **Formulas**,
 and **Table**, and each section collapses with its chevron.
 
+### Getting started
+
+A new report starts with no columns. **Getting started** lists every field in your data,
+with how many rows loaded. Tick a field to add it as the last column; untick it to remove
+it. Then use **Edit** on each column to name it and pick its type. Getting started goes
+away once you save the report with at least one column; after that, add columns with
+**Add column**.
+
 ### Report settings
 
 - **Sheet name:** the heading shown above the table.
@@ -168,13 +176,13 @@ and **Table**, and each section collapses with its chevron.
 
 ### Column mapping
 
-Reports have 1 to 15 columns. You can:
+Reports have up to 15 columns. You can:
 
 - **Add** a column at any position.
 - **Remove** a column.
 - **Drag** cards to reorder columns. Order controls [grouping](#grouping).
 - **Edit** a column to set:
-  - **Source:** a data field, or a formula's label.
+  - **Source:** a data field, or `%` and a formula's label (for example `%lineTotal`).
   - **Label:** the header users see.
   - **Display type:** currency, number, decimal number, percent, date, or string.
   - **Total type:** sum, average, count, distinct count, or none (see [Totals](#totals)).

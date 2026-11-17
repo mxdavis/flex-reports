@@ -3,7 +3,6 @@ import type { ReportFormula } from '../adapters'
 // The rules a report definition must follow. The editor enforces them as users
 // type, and normalizeReportDefinition repairs saved definitions that break them
 // (a host may build definitions on its server).
-export const MIN_REPORT_COLUMNS = 1
 export const MAX_REPORT_COLUMNS = 15
 export const MAX_FORMULAS = 25
 // Keeps every expression cheap to evaluate for every row.

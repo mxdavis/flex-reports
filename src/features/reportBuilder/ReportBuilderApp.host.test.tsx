@@ -3,11 +3,12 @@ import ExcelJS from 'exceljs'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReportRow, SchemaField } from '../../services/adapters'
-import { generateDefaultReportDefinition } from '../../services/reportDefinition/normalize'
 import { SANDBOX_DEFINITION_STORAGE_KEY } from '../../services/reportDefinition/storage'
 import type { ReportDefinition } from '../../services/reportDefinition/types'
 import { installMemoryStorage } from '../../test/memoryStorage'
 import { renderSandboxApp } from '../../test/renderSandboxApp'
+import { createRecordsDataSource } from '../../services/adapters/recordsDataSource'
+import { reportWithColumns } from '../../test/reportWithColumns'
 import ReportBuilderApp from './ReportBuilderApp'
 
 // A non-billing dataset: the builder must work with whatever the host sends.
@@ -30,7 +31,7 @@ const groupedRows: ReportRow[] = [
   { id: 'r3', region: 'West', warehouse: 'Denver', units: 5 },
 ]
 const savedDefinition: ReportDefinition = {
-  ...generateDefaultReportDefinition(schema),
+  ...reportWithColumns(schema),
   sheetName: 'Inventory',
 }
 
@@ -128,7 +129,7 @@ describe('ReportBuilderApp host mode', () => {
   it('opens collapsed to the saved outline level and lets anyone open a single group', async () => {
     const user = userEvent.setup()
     const outlineDefinition: ReportDefinition = {
-      ...generateDefaultReportDefinition(groupedSchema),
+      ...reportWithColumns(groupedSchema),
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: 0 },
     }
     render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={outlineDefinition} role="viewer" />)
@@ -146,7 +147,7 @@ describe('ReportBuilderApp host mode', () => {
   it('opens a large grouped report at the deepest level under maxVisibleRows, without marking it unsaved', async () => {
     const user = userEvent.setup()
     const fullyExpanded: ReportDefinition = {
-      ...generateDefaultReportDefinition(groupedSchema),
+      ...reportWithColumns(groupedSchema),
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: null },
     }
     // Fully expanded is 2 region rows + 3 detail rows = 5, over a limit of 3.
@@ -185,7 +186,7 @@ describe('ReportBuilderApp host mode', () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
     const groupedDefinition: ReportDefinition = {
-      ...generateDefaultReportDefinition(groupedSchema),
+      ...reportWithColumns(groupedSchema),
       view: { orientation: 'horizontal', showTotals: true, isGroupingEnabled: true, expandedLevels: null },
     }
     render(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={groupedDefinition} onSave={onSave} initialEditMode />)
@@ -249,8 +250,8 @@ describe('ReportBuilderApp host mode', () => {
       { id: 'city', key: 'city', label: 'City', dataType: 'string' },
     ]
     const definition: ReportDefinition = {
-      ...generateDefaultReportDefinition(textSchema),
-      fields: generateDefaultReportDefinition(textSchema).fields.map((field) => (
+      ...reportWithColumns(textSchema),
+      fields: reportWithColumns(textSchema).fields.map((field) => (
         field.sourceKey === 'warehouse' ? { ...field, aggregation: 'none' } : field
       )),
     }
@@ -272,19 +273,18 @@ describe('ReportBuilderApp host mode', () => {
     expect(onSave.mock.calls[0][0].fields[0]).toMatchObject({ sourceKey: 'units', displayType: 'decimal', aggregation: 'sum' })
   })
 
-  it('shows a loading state while rows are undefined, never the sample data, then builds from the real schema', () => {
-    const { rerender } = render(<ReportBuilderApp schema={schema} onSave={vi.fn()} />)
+  it('shows a loading state while rows are undefined, never the sample data, then the real fields', () => {
+    const { rerender } = render(<ReportBuilderApp schema={schema} onSave={vi.fn()} initialEditMode />)
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading report…')
     expect(screen.queryByRole('table')).toBeNull()
     expect(window.localStorage.getItem(SANDBOX_DEFINITION_STORAGE_KEY)).toBeNull()
 
-    rerender(<ReportBuilderApp schema={schema} rows={rows} onSave={vi.fn()} />)
+    rerender(<ReportBuilderApp schema={schema} rows={rows} onSave={vi.fn()} initialEditMode />)
 
-    const table = screen.getByRole('table')
-    expect(within(table).getByRole('columnheader', { name: 'Warehouse' })).toBeInTheDocument()
-    expect(within(table).getByText('Austin')).toBeInTheDocument()
-    expect(screen.queryByText('Work Date')).toBeNull()
+    expect(screen.getByText('This report has no columns yet.')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'warehouse' })).toBeInTheDocument()
+    expect(screen.queryByText('workDate')).toBeNull()
   })
 
   it('keeps the builder and unsaved edits when a refetch briefly clears rows', async () => {
@@ -346,41 +346,22 @@ describe('ReportBuilderApp host mode', () => {
   })
 
   describe('when mounted before the data arrives', () => {
-    it('builds the default columns once rows arrive, without marking the report unsaved', () => {
+    it('lists the fields under Getting started once rows arrive, without marking the report unsaved', () => {
       vi.spyOn(console, 'warn').mockImplementation(() => undefined)
       const { rerender } = render(<ReportBuilderApp rows={[]} onSave={vi.fn()} initialEditMode />)
-      expect(screen.queryAllByRole('columnheader')).toHaveLength(0)
+      expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
 
       rerender(<ReportBuilderApp rows={rows} onSave={vi.fn()} initialEditMode />)
 
-      const table = screen.getByRole('table')
-      expect(within(table).getByRole('columnheader', { name: 'warehouse' })).toBeInTheDocument()
-      expect(within(table).getByText('Austin')).toBeInTheDocument()
+      expect(screen.getAllByRole('checkbox').map((box) => box.getAttribute('aria-label') ?? box.parentElement?.textContent))
+        .toEqual(['id', 'warehouse', 'units'])
       expect(getSaveButton()).toBeDisabled()
-    })
-
-    it('builds the default columns when an empty schema is filled in', () => {
-      const { rerender } = render(<ReportBuilderApp schema={[]} rows={[]} onSave={vi.fn()} />)
-
-      rerender(<ReportBuilderApp schema={schema} rows={rows} onSave={vi.fn()} />)
-
-      expect(within(screen.getByRole('table')).getByRole('columnheader', { name: 'Warehouse' })).toBeInTheDocument()
     })
 
     it('never replaces a saved definition\'s columns', () => {
       const { rerender } = render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} />)
 
       rerender(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} reportDefinition={savedDefinition} onSave={vi.fn()} />)
-
-      expect(screen.queryByRole('columnheader', { name: 'Region' })).toBeNull()
-    })
-
-    it('keeps columns the user already changed', async () => {
-      const user = userEvent.setup()
-      const { rerender } = render(<ReportBuilderApp schema={schema} rows={rows} onSave={vi.fn()} initialEditMode />)
-      await user.click(screen.getAllByRole('button', { name: 'Remove' })[1])
-
-      rerender(<ReportBuilderApp schema={groupedSchema} rows={groupedRows} onSave={vi.fn()} initialEditMode />)
 
       expect(screen.queryByRole('columnheader', { name: 'Region' })).toBeNull()
     })
@@ -483,11 +464,11 @@ describe('ReportBuilderApp host mode', () => {
     })
   })
 
-  it('infers columns and logs when rows come without a schema', () => {
+  it('offers every field found in the rows, and logs, when rows come without a schema', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    render(<ReportBuilderApp rows={rows} role="viewer" />)
+    render(<ReportBuilderApp rows={rows} onSave={vi.fn()} initialEditMode />)
 
-    expect(within(screen.getByRole('table')).getByRole('columnheader', { name: 'warehouse' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'warehouse' })).toBeInTheDocument()
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('without `schema`'))
   })
 
@@ -519,12 +500,12 @@ describe('ReportBuilderApp sandbox mode', () => {
     expect(leaveEvent.defaultPrevented).toBe(false)
   })
 
-  it('shows a loading state until the sample data arrives', async () => {
+  it('shows a loading state until the sample data arrives, then a blank report', async () => {
     render(<ReportBuilderApp sandbox />)
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading sample data…')
-    expect(await screen.findByRole('table')).toBeInTheDocument()
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(await screen.findByText('This report has no columns yet.')).toBeInTheDocument()
+    expect(screen.queryByText('Loading sample data…')).toBeNull()
   })
 
   it('does not autosave; Save writes the definition to localStorage', async () => {
@@ -554,22 +535,24 @@ describe('ReportBuilderApp sandbox mode', () => {
 describe('generic host records after merging the host API', () => {
   it('discovers all keys as text, accepts duplicate ids, and refreshes on new rows', () => {
     const records = [{ id: 'same', item: 'Cable' }, { id: 'same', extra: '250.50' }]
-    const { rerender } = render(<ReportBuilderApp rows={records} role="viewer" />)
+    const definition = reportWithColumns(createRecordsDataSource(records).getSchema())
+    const { rerender } = render(<ReportBuilderApp rows={records} reportDefinition={definition} role="viewer" />)
     expect(screen.getByRole('columnheader', { name: 'extra' })).toBeInTheDocument()
     expect(screen.getByText('250.50')).toBeInTheDocument()
     expect(screen.getAllByText('same')).toHaveLength(2)
-    rerender(<ReportBuilderApp rows={[{ item: 'Updated' }]} role="viewer" />)
+    rerender(<ReportBuilderApp rows={[{ item: 'Updated' }]} reportDefinition={definition} role="viewer" />)
     expect(screen.getByText('Updated')).toBeInTheDocument()
     expect(screen.queryByText('Cable')).toBeNull()
-    rerender(<ReportBuilderApp rows={[]} role="viewer" />)
+    rerender(<ReportBuilderApp rows={[]} reportDefinition={definition} role="viewer" />)
     expect(screen.getByRole('status')).toHaveTextContent('No rows')
     expect(screen.queryByText('Updated')).toBeNull()
   })
 
   it('shows invalid incoming data as an actionable error and recovers on replacement', () => {
-    const { rerender } = render(<ReportBuilderApp rows={[null!]} role="viewer" />)
+    const definition = reportWithColumns([{ id: 'item', key: 'item', label: 'item', dataType: 'string' }])
+    const { rerender } = render(<ReportBuilderApp rows={[null!]} reportDefinition={definition} role="viewer" />)
     expect(screen.getByRole('alert')).toHaveTextContent('Row 1 must be a record object')
-    rerender(<ReportBuilderApp rows={[{ item: 'Recovered' }]} role="viewer" />)
+    rerender(<ReportBuilderApp rows={[{ item: 'Recovered' }]} reportDefinition={definition} role="viewer" />)
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.getByText('Recovered')).toBeInTheDocument()
   })

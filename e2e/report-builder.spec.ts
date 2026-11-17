@@ -1,5 +1,16 @@
 import { expect, test } from '@playwright/test'
 
+// A new report starts blank. Each test starts from a saved report showing every
+// sample field, set up the way a user would: tick them all in Getting started.
+test.beforeEach(async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Edit mode' }).click()
+  const gettingStarted = page.locator('section', { has: page.getByRole('heading', { name: 'Getting started' }) })
+  for (const checkbox of await gettingStarted.getByRole('checkbox').all()) await checkbox.check()
+  await page.getByRole('button', { name: 'Save report' }).click()
+  await page.reload()
+})
+
 async function enterEditMode(page: Parameters<typeof test>[0]['page']) {
   await page.getByRole('button', { name: 'Edit mode' }).click()
   await expect(page.getByRole('button', { name: 'View mode' })).toBeVisible()
@@ -97,7 +108,7 @@ test('groups nest by the leading text columns, the last one names each row, numb
   await setColumnSource(page, mappingSection, 2, 'client.name')
   await setColumnSource(page, mappingSection, 3, 'task')
   await setColumnSource(page, mappingSection, 4, 'rate')
-  await setColumnSource(page, mappingSection, 5, 'grossFees')
+  await setColumnSource(page, mappingSection, 5, '%grossFees')
 
   await page.getByRole('button', { name: 'Totals' }).click()
   await page.getByRole('button', { name: 'Grouping' }).click()

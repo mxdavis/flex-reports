@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { saveSandboxDefinition } from '../../../../services/reportDefinition/storage'
 import type { ReportDefinition } from '../../../../services/reportDefinition/types'
 
 type UseReportSaveArgs = {
   definition: ReportDefinition
-  // The definition as last loaded; when it changes (default columns rebuilt
-  // for a new schema), it becomes the new "nothing to save" state.
+  // The definition the report opened with: nothing to save until it changes.
   baseline: ReportDefinition
   canSave: boolean
   isSandbox: boolean
@@ -19,13 +18,8 @@ function getErrorMessage(error: unknown): string {
 // Explicit save: edits stay local until Save, so half-finished changes never
 // reach everyone viewing the report. The last saved definition is the baseline.
 export function useReportSave({ definition, baseline, canSave, isSandbox, onSave }: UseReportSaveArgs) {
-  const baselineJson = JSON.stringify(baseline)
-  const [savedJson, setSavedJson] = useState(baselineJson)
-  const [trackedBaselineJson, setTrackedBaselineJson] = useState(baselineJson)
-  if (baselineJson !== trackedBaselineJson) {
-    setTrackedBaselineJson(baselineJson)
-    setSavedJson(baselineJson)
-  }
+  const [savedDefinition, setSavedDefinition] = useState(baseline)
+  const savedJson = useMemo(() => JSON.stringify(savedDefinition), [savedDefinition])
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const currentJson = JSON.stringify(definition)
@@ -50,7 +44,7 @@ export function useReportSave({ definition, baseline, canSave, isSandbox, onSave
       } else {
         await onSave?.(definition)
       }
-      setSavedJson(currentJson)
+      setSavedDefinition(definition)
     } catch (error) {
       console.error('[flex-reports] Saving the report definition failed.', error)
       setSaveError(getErrorMessage(error))
@@ -59,5 +53,5 @@ export function useReportSave({ definition, baseline, canSave, isSandbox, onSave
     }
   }
 
-  return { isDirty, isSaving, saveError, save }
+  return { isDirty, isSaving, saveError, save, hasSavedColumns: savedDefinition.fields.length > 0 }
 }

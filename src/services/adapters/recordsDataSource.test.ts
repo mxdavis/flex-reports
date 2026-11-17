@@ -36,11 +36,11 @@ describe('record input', () => {
     expect(rows[0].id).toBe('same')
   })
 
-  it('limits displayed columns without losing available source fields', () => {
+  it('offers every field, as text, and starts the report with no columns', () => {
     const source = createRecordsDataSource([Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`key${i}`, i]))])
     expect(source.getSchema()).toHaveLength(20)
-    expect(generateDefaultReportDefinition(source.getSchema()).fields).toHaveLength(15)
-    expect(generateDefaultReportDefinition(source.getSchema()).fields.every((field) => field.displayType === 'string')).toBe(true)
+    expect(source.getSchema().every((field) => field.dataType === 'string')).toBe(true)
+    expect(generateDefaultReportDefinition().fields).toEqual([])
   })
 
   it('accepts empty input and gives duplicate object occurrences separate render keys', () => {
