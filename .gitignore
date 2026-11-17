@@ -23,6 +23,4 @@ npm-debug.log*
 coverage/
 playwright-report/
 test-results/
-
-# Private working docs (plans, TODO, decisions, spec, reference): never pushed
 .tmp/
