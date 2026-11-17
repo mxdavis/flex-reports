@@ -172,36 +172,34 @@ function MappingPanelSection({
               </small>
             </div>
           )}
-          {!newColumn && (
-            <div className="fr-mapping-grid">
-              {fields.map((field, index) => (
-                <MappingFieldCard
-                  key={field.id}
-                  field={field}
-                  warning={getFieldWarning(field)}
-                  index={index}
-                  draggedFieldId={draggedFieldId}
-                  dragOverFieldId={dragOverFieldId}
-                  editingFieldId={editingFieldId}
-                  editingFieldDraft={editingFieldDraft}
-                  sourceOptions={sourceOptions}
-                  displayTypeOptions={displayTypeOptions}
-                  aggregationOptions={aggregationOptions}
-                  onMoveField={onMoveField}
-                  onStartEditField={onStartEditField}
-                  onCancelEditField={onCancelEditField}
-                  onSaveEditField={onSaveEditField}
-                  onRemoveField={onRemoveField}
-                  onSetDraggedFieldId={onSetDraggedFieldId}
-                  onSetDragOverFieldId={onSetDragOverFieldId}
-                  onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
-                  onSetEditingFieldLabel={onSetEditingFieldLabel}
-                  onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
-                  onSetEditingFieldAggregation={onSetEditingFieldAggregation}
-                />
-              ))}
-            </div>
-          )}
+          <div className="fr-mapping-grid">
+            {fields.map((field, index) => (
+              <MappingFieldCard
+                key={field.id}
+                field={field}
+                warning={getFieldWarning(field)}
+                index={index}
+                draggedFieldId={draggedFieldId}
+                dragOverFieldId={dragOverFieldId}
+                editingFieldId={editingFieldId}
+                editingFieldDraft={editingFieldDraft}
+                sourceOptions={sourceOptions}
+                displayTypeOptions={displayTypeOptions}
+                aggregationOptions={aggregationOptions}
+                onMoveField={onMoveField}
+                onStartEditField={onStartEditField}
+                onCancelEditField={onCancelEditField}
+                onSaveEditField={onSaveEditField}
+                onRemoveField={onRemoveField}
+                onSetDraggedFieldId={onSetDraggedFieldId}
+                onSetDragOverFieldId={onSetDragOverFieldId}
+                onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
+                onSetEditingFieldLabel={onSetEditingFieldLabel}
+                onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
+                onSetEditingFieldAggregation={onSetEditingFieldAggregation}
+              />
+            ))}
+          </div>
         </div>
       )}
     </section>
