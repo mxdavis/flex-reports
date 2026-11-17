@@ -161,7 +161,7 @@ export function isFromNewerVersion(raw: unknown): boolean {
 }
 
 // Accepts anything (a host DB blob, parsed localStorage) and returns a valid
-// definition. Invalid parts fall back to schema-driven defaults, with a log.
+// definition. Invalid parts fall back to defaults, with a log.
 export function normalizeReportDefinition(
   raw: unknown,
   sourceColumns: SourceColumn[],

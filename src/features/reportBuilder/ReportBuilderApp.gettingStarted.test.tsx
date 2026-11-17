@@ -55,6 +55,12 @@ describe('Getting started on a blank report', () => {
     expect(screen.queryByRole('heading', { name: 'Getting started' })).toBeNull()
   })
 
+  it('shows only the no-columns message when there are no rows either', () => {
+    render(<ReportBuilderApp rows={[]} onSave={vi.fn()} initialEditMode />)
+    expect(screen.getByText('This report has no columns yet.')).toBeInTheDocument()
+    expect(screen.queryByText('No rows')).toBeNull()
+  })
+
   it('tells someone outside edit mode to open it', () => {
     render(<ReportBuilderApp rows={rows} role="viewer" />)
     expect(screen.getByRole('status')).toHaveTextContent('This report has no columns yet. Open Edit mode to choose its columns.')

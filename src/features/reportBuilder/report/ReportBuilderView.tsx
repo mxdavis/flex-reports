@@ -46,7 +46,8 @@ function ReportBuilderView() {
   }
 
   function renderEmptyReportMessage() {
-    return state.rows.length === 0 && !state.sourceError && <p role="status">No rows</p>
+    // A report with no columns shows its own message: picking columns comes first.
+    return state.rows.length === 0 && state.fields.length > 0 && !state.sourceError && <p role="status">No rows</p>
   }
 
   return (
