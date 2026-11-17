@@ -217,4 +217,3 @@ browser storage.
 
 - **[FUNCTIONALITY.md](FUNCTIONALITY.md)**: how every feature works, for the people
   building and reading reports.
-- **[CONTRIBUTING.md](CONTRIBUTING.md)**: how we work on the code. Read before writing code.

@@ -1,7 +1,6 @@
-# Contributing
+# Working on Flex Reports
 
-How we work on Flex Reports. Read it before writing code; if a request conflicts with it,
-ask first.
+Instructions changing this repo. Follow them before writing code; if a request conflicts with them, ask first.
 
 ## Code style
 
@@ -46,7 +45,7 @@ ask first.
 
 - Work on branches; open PRs; never push to `main` without review.
 - Docs by reader: `README.md` for setup and integrating the component,
-  `FUNCTIONALITY.md` for people using reports, this file for working on the code. Update
+  `FUNCTIONALITY.md` for people using reports, `AGENTS.md` for working on the code. Update
   the README only for setup, integration, or architecture changes.
 - **Stop and ask** whenever any question or clarification comes up, at any point in
   the work. Don't guess or pick a default on the user's behalf.
