@@ -1,9 +1,17 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AutocompleteInput from './AutocompleteInput'
 
 describe('AutocompleteInput', () => {
+  // jsdom has no scrollIntoView; a no-op lets a test spy on it.
+  beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: () => undefined, configurable: true })
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('shows options in alphabetical order and selects an option', () => {
     const onChange = vi.fn()
     render(
@@ -67,8 +75,7 @@ describe('AutocompleteInput', () => {
   })
 
   it('scrolls the highlighted option into view', () => {
-    const scrollIntoView = vi.fn()
-    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scrollIntoView, configurable: true })
+    const scrollIntoView = vi.spyOn(HTMLElement.prototype, 'scrollIntoView')
     render(<AutocompleteInput id="source" value="hours" options={['alpha', 'bravo', 'hours']} onChange={() => undefined} />)
 
     fireEvent.focus(screen.getByRole('textbox'))
@@ -77,6 +84,5 @@ describe('AutocompleteInput', () => {
 
     fireEvent.keyDown(screen.getByRole('textbox'), { key: 'ArrowUp' })
     expect(scrollIntoView.mock.contexts.at(-1)).toHaveTextContent('bravo')
-    Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
   })
 })

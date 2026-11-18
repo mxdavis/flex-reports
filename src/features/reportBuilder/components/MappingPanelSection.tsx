@@ -162,7 +162,7 @@ function MappingPanelSection({
                 <button
                   type="button"
                   onClick={onSaveNewColumn}
-                  disabled={fields.length >= maxColumns}
+                  disabled={fields.length >= maxColumns || !newColumn.draft.sourceKey.trim()}
                 >
                   Save column
                 </button>
