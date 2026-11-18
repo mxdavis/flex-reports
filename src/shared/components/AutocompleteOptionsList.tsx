@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import './AutocompleteOptionsList.css'
 
 type AutocompleteOptionsListProps = {
@@ -13,8 +14,18 @@ function AutocompleteOptionsList({
   ariaLabel,
   onSelect,
 }: AutocompleteOptionsListProps) {
+  const listRef = useRef<HTMLUListElement | null>(null)
+
+  // The list is short and scrolls, so keep the highlighted option in view
+  // (it can start partway down, on the current value).
+  useEffect(() => {
+    const highlighted = listRef.current?.children[highlightedIndex]
+    // jsdom has no scrollIntoView.
+    highlighted?.scrollIntoView?.({ block: 'nearest' })
+  }, [highlightedIndex, options])
+
   return (
-    <ul className="fr-autocomplete-list" role="listbox" aria-label={ariaLabel}>
+    <ul ref={listRef} className="fr-autocomplete-list" role="listbox" aria-label={ariaLabel}>
       {options.map((option, index) => (
         <li key={option} role="option" aria-selected={index === highlightedIndex}>
           <button

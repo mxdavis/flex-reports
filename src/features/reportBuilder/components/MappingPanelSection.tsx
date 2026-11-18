@@ -134,7 +134,8 @@ function MappingPanelSection({
                 <label htmlFor={addColumnPositionId}>Column number</label>
                 <select
                   id={addColumnPositionId}
-                  value={newColumn.position}
+                  // Columns can be removed while this is open; saving then adds it at the end.
+                  value={Math.min(newColumn.position, fields.length + 1)}
                   title="Insert this new column at the selected position. Existing columns will shift right."
                   onChange={(event) => {
                     onAddColumnPositionChange(Number(event.target.value))
@@ -161,7 +162,7 @@ function MappingPanelSection({
                 <button
                   type="button"
                   onClick={onSaveNewColumn}
-                  disabled={fields.length >= maxColumns}
+                  disabled={fields.length >= maxColumns || !newColumn.draft.sourceKey.trim()}
                 >
                   Save column
                 </button>
@@ -172,36 +173,34 @@ function MappingPanelSection({
               </small>
             </div>
           )}
-          {!newColumn && (
-            <div className="fr-mapping-grid">
-              {fields.map((field, index) => (
-                <MappingFieldCard
-                  key={field.id}
-                  field={field}
-                  warning={getFieldWarning(field)}
-                  index={index}
-                  draggedFieldId={draggedFieldId}
-                  dragOverFieldId={dragOverFieldId}
-                  editingFieldId={editingFieldId}
-                  editingFieldDraft={editingFieldDraft}
-                  sourceOptions={sourceOptions}
-                  displayTypeOptions={displayTypeOptions}
-                  aggregationOptions={aggregationOptions}
-                  onMoveField={onMoveField}
-                  onStartEditField={onStartEditField}
-                  onCancelEditField={onCancelEditField}
-                  onSaveEditField={onSaveEditField}
-                  onRemoveField={onRemoveField}
-                  onSetDraggedFieldId={onSetDraggedFieldId}
-                  onSetDragOverFieldId={onSetDragOverFieldId}
-                  onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
-                  onSetEditingFieldLabel={onSetEditingFieldLabel}
-                  onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
-                  onSetEditingFieldAggregation={onSetEditingFieldAggregation}
-                />
-              ))}
-            </div>
-          )}
+          <div className="fr-mapping-grid">
+            {fields.map((field, index) => (
+              <MappingFieldCard
+                key={field.id}
+                field={field}
+                warning={getFieldWarning(field)}
+                index={index}
+                draggedFieldId={draggedFieldId}
+                dragOverFieldId={dragOverFieldId}
+                editingFieldId={editingFieldId}
+                editingFieldDraft={editingFieldDraft}
+                sourceOptions={sourceOptions}
+                displayTypeOptions={displayTypeOptions}
+                aggregationOptions={aggregationOptions}
+                onMoveField={onMoveField}
+                onStartEditField={onStartEditField}
+                onCancelEditField={onCancelEditField}
+                onSaveEditField={onSaveEditField}
+                onRemoveField={onRemoveField}
+                onSetDraggedFieldId={onSetDraggedFieldId}
+                onSetDragOverFieldId={onSetDragOverFieldId}
+                onSetEditingFieldSourceKey={onSetEditingFieldSourceKey}
+                onSetEditingFieldLabel={onSetEditingFieldLabel}
+                onSetEditingFieldDisplayType={onSetEditingFieldDisplayType}
+                onSetEditingFieldAggregation={onSetEditingFieldAggregation}
+              />
+            ))}
+          </div>
         </div>
       )}
     </section>

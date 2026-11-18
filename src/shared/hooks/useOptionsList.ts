@@ -55,6 +55,7 @@ export function useOptionsList(options: string[], onSelect: (option: string) => 
     setIsOpen,
     highlightedIndex: activeIndex,
     resetHighlight: () => setHighlightedIndex(0),
+    highlight: setHighlightedIndex,
     handleKeyDown,
   }
 }

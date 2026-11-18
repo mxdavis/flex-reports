@@ -81,9 +81,10 @@ export function useMappingPanelProps(): MappingPanelProps {
   function saveNewColumn(): void {
     if (!ui.newColumn) return
     const { position, draft } = ui.newColumn
-    const sourceKey = draft.sourceKey.trim() || computed.sourceOptions[0]
+    const sourceKey = draft.sourceKey.trim()
+    if (!sourceKey) return
     setFields((previous) => {
-      if (previous.length >= MAX_REPORT_COLUMNS || !sourceKey) return previous
+      if (previous.length >= MAX_REPORT_COLUMNS) return previous
       const next = [...previous]
       next.splice(Math.min(Math.max(position - 1, 0), previous.length), 0, {
         ...draft,
@@ -111,7 +112,8 @@ export function useMappingPanelProps(): MappingPanelProps {
     displayTypeOptions: DISPLAY_TYPE_OPTIONS,
     aggregationOptions: AGGREGATION_OPTIONS,
     onStartAddColumn: () => {
-      const newColumn = { position: fields.length + 1, draft: draftForSource(computed.sourceOptions[0] ?? '') }
+      // Starts blank so the person picks the data point rather than accepting a guess.
+      const newColumn = { position: fields.length + 1, draft: draftForSource('') }
       dispatchUi({ type: 'set', changes: { newColumn } })
     },
     onCancelAddColumn: closeNewColumn,
