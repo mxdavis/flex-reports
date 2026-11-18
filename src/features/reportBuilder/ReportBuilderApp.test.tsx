@@ -164,6 +164,7 @@ describe('ReportBuilderApp', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add column' }))
     await user.selectOptions(screen.getByLabelText('Column number'), '2')
+    await user.type(screen.getByLabelText('Data point'), 'hours')
     await user.click(screen.getByRole('button', { name: 'Save column' }))
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 3' }))

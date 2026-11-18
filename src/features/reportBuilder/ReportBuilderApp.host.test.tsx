@@ -316,6 +316,46 @@ describe('ReportBuilderApp host mode', () => {
     expect(sheetNameInputs[0]).not.toBe(sheetNameInputs[1])
   })
 
+  it('keeps the existing columns in view while adding one, and lists every field to pick from', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+    const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
+
+    await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
+    await user.click(within(mapping).getByLabelText('Data point'))
+
+    expect(within(mapping).getByRole('button', { name: 'Edit COLUMN 1' })).toBeInTheDocument()
+    expect(within(mapping).getByRole('button', { name: 'Edit COLUMN 2' })).toBeInTheDocument()
+    const options = within(within(mapping).getByRole('listbox', { name: 'Suggestions' })).getAllByRole('option')
+    expect(options.map((option) => option.textContent)).toEqual(['units', 'warehouse'])
+  })
+
+  it('starts a new column with no data point, and saves it once one is picked', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+    const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
+
+    await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
+    expect(within(mapping).getByLabelText('Data point')).toHaveValue('')
+    expect(within(mapping).getByRole('button', { name: 'Save column' })).toBeDisabled()
+
+    await user.type(within(mapping).getByLabelText('Data point'), 'units')
+    await user.click(within(mapping).getByRole('button', { name: 'Save column' }))
+    expect(within(mapping).getByRole('button', { name: 'Edit COLUMN 3' })).toBeInTheDocument()
+  })
+
+  it('shows the column number the new column will get after a column is removed', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+    const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
+
+    await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
+    expect(within(mapping).getByLabelText('Column number')).toHaveValue('3')
+
+    await user.click(within(mapping).getAllByRole('button', { name: 'Remove' })[0])
+    expect(within(mapping).getByLabelText('Column number')).toHaveValue('2')
+  })
+
   it('rejects a new formula named like a data field', async () => {
     const user = userEvent.setup()
     render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
