@@ -19,7 +19,6 @@ type AggregationOption = {
 
 type ColumnDetailEditorProps = {
   field: ReportField
-  columnLabel: string
   sourceOptions: string[]
   displayTypeOptions: DisplayTypeOption[]
   aggregationOptions: AggregationOption[]
@@ -31,7 +30,6 @@ type ColumnDetailEditorProps = {
 
 function ColumnDetailEditor({
   field,
-  columnLabel,
   sourceOptions,
   displayTypeOptions,
   aggregationOptions,
@@ -46,12 +44,12 @@ function ColumnDetailEditor({
   const aggregationId = useElementId(`aggregation-${field.id}`)
   return (
     <div className="fr-column-detail-editor fr-drag-block">
-      <label htmlFor={sourceId}>{columnLabel}</label>
+      <label htmlFor={sourceId}>Field</label>
       <AutocompleteInput
         id={sourceId}
         value={field.sourceKey}
         options={sourceOptions}
-        title="Type or choose which data endpoint fills this report column."
+        title="Type or choose the field that fills this column. Formulas start with %."
         onChange={onSourceChange}
       />
 

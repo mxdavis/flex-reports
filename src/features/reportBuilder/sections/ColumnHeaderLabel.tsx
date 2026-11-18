@@ -20,7 +20,7 @@ function ColumnHeaderLabel({ field, warning }: ColumnHeaderLabelProps) {
     <th className={className} title={warning}>
       {field.label}{' '}
       <span className="fr-column-header-warning-icon" aria-hidden="true">⚠</span>
-      <span className="fr-column-header-warning-text">(missing source)</span>
+      <span className="fr-column-header-warning-text">(missing field)</span>
     </th>
   )
 }

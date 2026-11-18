@@ -23,7 +23,7 @@ async function setColumnSource(
   sourceKey: string,
 ) {
   await mappingSection.getByRole('button', { name: `Edit COLUMN ${column}` }).click()
-  await mappingSection.getByRole('textbox', { name: 'COLUMN' }).first().fill(sourceKey)
+  await mappingSection.getByRole('textbox', { name: 'Field', exact: true }).first().fill(sourceKey)
   await mappingSection.getByRole('button', { name: `Save COLUMN ${column}` }).click()
 }
 
@@ -131,7 +131,7 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
 
   await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
 
-  const column1SourceInput = mappingSection.getByRole('textbox', { name: 'COLUMN' }).first()
+  const column1SourceInput = mappingSection.getByRole('textbox', { name: 'Field', exact: true }).first()
   await column1SourceInput.fill('%grossFees')
   await expect(column1SourceInput).toHaveValue('%grossFees')
   await mappingSection.getByRole('button', { name: 'Save COLUMN 1' }).click()
@@ -159,12 +159,12 @@ test('add column uses shared field editor controls and persists total type', asy
   await mappingSection.getByRole('button', { name: 'Add column' }).click()
 
   await expect(mappingSection.getByLabel('Column number')).toBeVisible()
-  await expect(mappingSection.getByLabel('Data point')).toBeVisible()
+  await expect(mappingSection.getByLabel('Field', { exact: true })).toBeVisible()
   await expect(mappingSection.getByLabel('Display label')).toBeVisible()
   await expect(mappingSection.getByLabel('Display type')).toBeVisible()
   await expect(mappingSection.getByLabel('Total type')).toBeVisible()
 
-  await mappingSection.getByLabel('Data point').fill('hours')
+  await mappingSection.getByLabel('Field', { exact: true }).fill('hours')
   await mappingSection.getByLabel('Display label').fill('Hours Rounded')
   await mappingSection.getByLabel('Display type').selectOption('number')
   await mappingSection.getByLabel('Total type').selectOption('avg')
@@ -173,7 +173,7 @@ test('add column uses shared field editor controls and persists total type', asy
   await expect(mappingSection.getByText('Hours Rounded')).toBeVisible()
 
   await mappingSection.getByRole('button', { name: 'Edit COLUMN 8' }).click()
-  await expect(mappingSection.getByRole('textbox', { name: 'COLUMN' }).first()).toHaveValue('hours')
+  await expect(mappingSection.getByRole('textbox', { name: 'Field', exact: true }).first()).toHaveValue('hours')
   await expect(mappingSection.getByLabel('Display type')).toHaveValue('number')
   await expect(mappingSection.getByLabel('Total type')).toHaveValue('avg')
 })

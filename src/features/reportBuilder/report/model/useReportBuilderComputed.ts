@@ -140,14 +140,14 @@ export function useReportBuilderComputed({
   const missingSourceSummary = missingSourceFields.map((field) => `"${field.label}" → "${field.sourceKey}"`).join(', ')
   useEffect(() => {
     if (missingSourceSummary) {
-      console.warn(`[flex-reports] Columns point at sources that aren't in the schema or formulas: ${missingSourceSummary}.`)
+      console.warn(`[flex-reports] Columns point at fields that aren't in the data or formulas: ${missingSourceSummary}.`)
     }
   }, [missingSourceSummary])
 
   // Editors only: viewers can't fix the column, so they just see it blank.
   const getFieldWarning = useCallback((field: ReportField): string | null => {
     if (!showTips || !missingSourceFields.includes(field)) return null
-    return `Source "${field.sourceKey}" isn't in the data or formulas. Edit the column to pick another source.`
+    return `Field "${field.sourceKey}" isn't in the data or formulas. Edit the column to pick another field.`
   }, [missingSourceFields, showTips])
 
   const isHorizontalTable = tableOrientation === 'horizontal'

@@ -101,7 +101,6 @@ function MappingFieldCard({
       detail={isEditing && editingFieldDraft ? (
         <ColumnDetailEditor
           field={editingFieldDraft}
-          columnLabel={columnLabel}
           sourceOptions={sourceOptions}
           displayTypeOptions={displayTypeOptions}
           aggregationOptions={aggregationOptions}

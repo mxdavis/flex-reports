@@ -31,7 +31,7 @@ describe('nested fields in the existing report editor', () => {
 
     for (const label of ['Client', 'Customer']) {
       await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
-      expect(screen.getByLabelText('COLUMN 1')).toHaveValue('client.name')
+      expect(screen.getByLabelText('Field')).toHaveValue('client.name')
       await user.clear(screen.getByLabelText('Display label'))
       await user.type(screen.getByLabelText('Display label'), label)
       await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
@@ -62,7 +62,7 @@ describe('nested fields in the existing report editor', () => {
       expect(within(table).getByRole('columnheader', { name: label })).toBeInTheDocument()
     }
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
-    await user.clear(screen.getByLabelText('COLUMN 1'))
+    await user.clear(screen.getByLabelText('Field'))
     await user.click(screen.getByRole('button', { name: '["client.name"]' }))
     await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
     expect(within(table).queryByText('Nested')).toBeNull()
@@ -164,7 +164,7 @@ describe('nested fields in the existing report editor', () => {
     render(<ReportBuilderApp rows={rows} reportDefinition={withAllColumns(rows)} onSave={vi.fn()} initialEditMode />)
     const table = screen.getByRole('table')
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
-    expect(screen.getByLabelText('COLUMN 2')).toHaveValue('client')
+    expect(screen.getByLabelText('Field')).toHaveValue('client')
     await user.clear(screen.getByLabelText('Display label'))
     await user.type(screen.getByLabelText('Display label'), 'Client')
     await user.click(screen.getByRole('button', { name: 'Save COLUMN 2' }))

@@ -149,7 +149,6 @@ function MappingPanelSection({
               </div>
               <ColumnDetailEditor
                 field={newColumn.draft}
-                columnLabel="Data point"
                 sourceOptions={sourceOptions}
                 displayTypeOptions={displayTypeOptions}
                 aggregationOptions={aggregationOptions}

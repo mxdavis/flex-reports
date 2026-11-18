@@ -17,9 +17,9 @@ describe('ColumnHeaderLabel', () => {
   })
 
   it('flags the header and explains the warning on hover', () => {
-    renderHeader('Source "units" is missing.')
+    renderHeader('Field "units" is missing.')
 
-    const header = screen.getByRole('columnheader', { name: 'Units (missing source)' })
-    expect(header).toHaveAttribute('title', 'Source "units" is missing.')
+    const header = screen.getByRole('columnheader', { name: 'Units (missing field)' })
+    expect(header).toHaveAttribute('title', 'Field "units" is missing.')
   })
 })
