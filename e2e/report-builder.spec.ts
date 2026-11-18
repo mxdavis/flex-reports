@@ -234,3 +234,20 @@ test('typing {{ in formula expression opens token suggestions', async ({ page })
 
   await expect(page.getByRole('listbox', { name: 'Formula token suggestions' })).toBeVisible()
 })
+
+test('Reset to sample asks first: Escape keeps the report, confirming deletes it', async ({ page }) => {
+  const dialog = page.getByRole('dialog', { name: 'Start over with the sample data?' })
+  await page.getByRole('button', { name: 'Reset to sample' }).click()
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
+
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await expect(page.getByRole('columnheader', { name: 'Hours' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Reset to sample' }).click()
+  await dialog.getByRole('button', { name: 'Delete and start over' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(page.getByText('This report has no columns yet.')).toBeVisible()
+  expect(await page.evaluate(() => window.localStorage.getItem('flex-reports.app.reportDefinition.v1'))).toBeNull()
+})

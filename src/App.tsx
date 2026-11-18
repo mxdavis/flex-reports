@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import DataSourceBar from './app/DataSourceBar'
 import LoadError from './app/LoadError'
+import ConfirmDialog from './shared/components/ConfirmDialog'
 import { clearSavedReport, loadSavedReport, saveReport } from './app/savedReport'
 import { useRecordsFromUrl } from './app/useRecordsFromUrl'
 import ReportBuilderApp from './features/reportBuilder/ReportBuilderApp'
@@ -19,8 +20,10 @@ function App(props: AppProps) {
   const [savedReport, setSavedReport] = useState(loadSavedReport)
   // Bumped on reset so the builder starts over from the (now empty) saved report.
   const [reportKey, setReportKey] = useState(0)
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false)
 
   function resetToSample(): void {
+    setIsConfirmingReset(false)
     clearSavedReport()
     setSavedReport(undefined)
     setReportKey((key) => key + 1)
@@ -29,7 +32,16 @@ function App(props: AppProps) {
 
   return (
     <>
-      <DataSourceBar sampleUrl={SAMPLE_DATA_URL} onReset={resetToSample} />
+      <DataSourceBar sampleUrl={SAMPLE_DATA_URL} onReset={() => setIsConfirmingReset(true)} />
+      <ConfirmDialog
+        isOpen={isConfirmingReset}
+        title="Start over with the sample data?"
+        message="This deletes your saved report and any changes you haven't saved. You can't undo this."
+        confirmLabel="Delete and start over"
+        isDestructive
+        onConfirm={resetToSample}
+        onCancel={() => setIsConfirmingReset(false)}
+      />
       {error ? <LoadError message={error} onRetry={reload} /> : (
         <ReportBuilderApp
           key={reportKey}

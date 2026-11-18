@@ -198,7 +198,7 @@ browser storage.
 - The sample records are `public/sample-data.json`, published next to the app, so the
   demo reads them from `https://mxdavis.github.io/flex-reports/sample-data.json`. Any site
   can read that address too.
-- **Reset to sample** deletes the saved report and starts again.
+- **Reset to sample** asks first, then deletes the saved report and starts again.
 - Try the viewer role by changing `<App />` in `src/main.tsx` to `<App role="viewer" />`.
 
 ---

@@ -87,9 +87,28 @@ describe('the app', () => {
     await user.click(screen.getByRole('button', { name: 'Save report' }))
 
     await user.click(screen.getByRole('button', { name: 'Reset to sample' }))
+    await user.click(screen.getByRole('button', { name: 'Delete and start over' }))
 
+    expect(screen.queryByRole('dialog')).toBeNull()
     await waitFor(() => expect(screen.getByLabelText('Sheet name')).not.toHaveValue('Hours report'))
     expect(window.localStorage.getItem(SAVED_REPORT_STORAGE_KEY)).toBeNull()
     expect(screen.getByRole('checkbox', { name: 'hours' })).not.toBeChecked()
+  })
+
+  it('keeps the saved report when Reset to sample is cancelled', async () => {
+    serveSample()
+    const user = userEvent.setup()
+    render(<App initialEditMode />)
+    await user.click(await screen.findByRole('checkbox', { name: 'hours' }))
+    await renameSheet(user, 'Hours report')
+    await user.click(screen.getByRole('button', { name: 'Save report' }))
+
+    await user.click(screen.getByRole('button', { name: 'Reset to sample' }))
+    expect(screen.getByRole('dialog', { name: 'Start over with the sample data?' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByLabelText('Sheet name')).toHaveValue('Hours report')
+    expect(window.localStorage.getItem(SAVED_REPORT_STORAGE_KEY)).not.toBeNull()
   })
 })
