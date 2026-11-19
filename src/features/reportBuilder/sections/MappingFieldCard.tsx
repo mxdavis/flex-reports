@@ -8,7 +8,7 @@ import type {
 } from '../../../services/reportDefinition/types'
 import './MappingFieldCard.css'
 
-type MappingFieldCardProps = {
+export type MappingFieldCardProps = {
   field: ReportField
   warning?: string | null
   index: number

@@ -100,6 +100,7 @@ The unit tests run with coverage (`npm run test:coverage`) and fail if it drops 
   `src/features/reportBuilder/sections/`, and `src/shared/components/` each have a sibling
   `<Component>.css` and `<Component>.test.tsx`, and stay at or under 220 lines.
 - `src/features/reportBuilder/ReportBuilderApp.tsx` stays at or under 1,000 lines.
-- No source file (tests excluded) repeats a block of 20 consecutive non-empty lines.
+- No copied code: `jscpd` (settings in `.jscpd.json`) fails on any block of 50+ tokens repeated in
+  `src/`, tests excluded, and names the files and lines.
 - Every CSS class is prefixed `fr-`, so it can't clash with a host page. (Element IDs
   are prefixed per builder by `useElementId`; that isn't checked.)
