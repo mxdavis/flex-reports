@@ -44,6 +44,13 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
     if (type === InputKeyDownEscape) {
       return { ...changes, selectedItem: state.selectedItem, inputValue: state.selectedItem ?? '' }
     }
+    // Highlight an exactly typed name, so Enter picks it rather than the first
+    // option that merely contains it ("id" over "client.id").
+    if (type === InputChange) {
+      const typedText = changes.inputValue ?? ''
+      const typed = findTypedOption(typedText, allOptions)
+      if (typed) return { ...changes, highlightedIndex: filterOptions(allOptions, typedText).indexOf(typed) }
+    }
     return changes
   }
 
@@ -65,6 +72,7 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
     },
   })
   const { isOpen, highlightedIndex } = combobox
+  const hasNoMatches = isOpen && items.length === 0
 
   // Picks a typed name as the box loses focus. That happens on mouse-down, so
   // a click on Save right after typing saves the new field: Downshift's own
@@ -79,7 +87,15 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
     <div className="fr-combobox">
       <div className="fr-combobox-row">
         {/* The page's <label htmlFor> names the input, not Downshift's label id. */}
-        <input {...combobox.getInputProps({ title, autoComplete: 'off', 'aria-labelledby': undefined, onBlur: handleBlur })} />
+        <input
+          {...combobox.getInputProps({
+            title,
+            autoComplete: 'off',
+            'aria-labelledby': undefined,
+            'aria-expanded': isOpen && !hasNoMatches,
+            onBlur: handleBlur,
+          })}
+        />
         <button
           type="button"
           className="fr-combobox-toggle"
@@ -90,7 +106,7 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
       </div>
       <ul
         className="fr-combobox-list"
-        hidden={!isOpen || items.length === 0}
+        hidden={!isOpen || hasNoMatches}
         {...combobox.getMenuProps({ 'aria-label': 'Suggestions', 'aria-labelledby': undefined })}
       >
         {isOpen && items.map((item, index) => (
@@ -103,6 +119,7 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
           </li>
         ))}
       </ul>
+      <p className="fr-combobox-empty" role="status">{hasNoMatches ? 'No matches' : ''}</p>
     </div>
   )
 }

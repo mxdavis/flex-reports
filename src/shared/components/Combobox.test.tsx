@@ -61,6 +61,32 @@ describe('Combobox', () => {
     expect(input()).toHaveValue('client.name')
   })
 
+  it('picks the exact typed name on Enter, even when other options contain it', async () => {
+    const user = userEvent.setup()
+    const onPick = vi.fn()
+    render(<Picker initial="hours" choices={['client.id', 'id', 'person.id', 'hours']} onPick={onPick} />)
+
+    await user.clear(input())
+    await user.type(input(), 'ID{Enter}')
+
+    expect(onPick).toHaveBeenCalledWith('id')
+    expect(input()).toHaveValue('id')
+  })
+
+  it('says when nothing matches, without claiming the list is open', async () => {
+    const user = userEvent.setup()
+    render(<Picker />)
+
+    await user.clear(input())
+    await user.type(input(), 'zzz')
+
+    expect(screen.getByRole('status')).toHaveTextContent('No matches')
+    expect(input()).toHaveAttribute('aria-expanded', 'false')
+
+    await user.clear(input())
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+  })
+
   it('picks a typed name on leaving, ignoring case, and shows its real spelling', async () => {
     const user = userEvent.setup()
     const onPick = vi.fn()

@@ -55,6 +55,23 @@
   display: none;
 }
 
+.fr-combobox-empty {
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475467;
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 30;
+}
+
+.fr-combobox-empty:empty {
+  display: none;
+}
+
 .fr-combobox-list li {
   padding: 6px 8px;
   border-radius: 6px;

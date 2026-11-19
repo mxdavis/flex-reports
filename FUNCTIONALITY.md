@@ -184,6 +184,8 @@ Reports have up to 15 columns. You can:
 - **Drag** cards to reorder columns. Order controls [grouping](#grouping).
 - **Edit** a column to set:
   - **Field:** a field from the data, or `%` and a formula's label (for example `%lineTotal`).
+    Type part of a name to narrow the list, then pick one. Typing alone doesn't change the
+    column: a partly typed name goes back to the current field when you leave the box.
   - **Label:** the header users see.
   - **Display type:** currency, number, decimal number, percent, date, or string.
   - **Total type:** sum, average, count, distinct count, or none (see [Totals](#totals)).
