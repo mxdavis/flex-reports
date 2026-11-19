@@ -252,3 +252,15 @@ test('Reset to sample asks first: Escape keeps the report, confirming deletes it
   await expect(page.getByText('This report has no columns yet.')).toBeVisible()
   expect(await page.evaluate(() => window.localStorage.getItem('flex-reports.app.reportDefinition.v1'))).toBeNull()
 })
+
+test('pasting your own JSON replaces the report after confirming', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Paste JSON' }).click()
+  await page.getByLabel(/Paste a list of records/).fill('[{"product":"Cable","qty":3},{"product":"Plug","qty":5}]')
+  await page.getByRole('button', { name: 'Load' }).click()
+  await page.getByRole('dialog', { name: 'Replace your report?' }).getByRole('button', { name: 'Replace report' }).click()
+
+  await expect(page.getByRole('region', { name: 'Report data' })).toContainText('pasted data · 2 records')
+  await page.getByRole('button', { name: 'Edit mode' }).click()
+  await expect(page.getByRole('checkbox', { name: 'product' })).toBeVisible()
+})
