@@ -18,6 +18,7 @@ describe('ColumnDetailEditor', () => {
           displayType: 'date',
           aggregation: 'count',
         }}
+        columnName="COLUMN 1"
         sourceOptions={['workDate', 'hours']}
         displayTypeOptions={[
           { value: 'date', label: 'Date' },
@@ -36,6 +37,7 @@ describe('ColumnDetailEditor', () => {
       />,
     )
 
+    expect(screen.getByRole('group', { name: 'COLUMN 1' })).toContainElement(screen.getByLabelText('Field'))
     fireEvent.change(screen.getByLabelText('Field'), { target: { value: 'hours' } })
     expect(onSourceChange).toHaveBeenCalledWith('hours')
 

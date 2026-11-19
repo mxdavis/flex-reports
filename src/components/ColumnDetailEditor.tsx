@@ -19,6 +19,8 @@ type AggregationOption = {
 
 type ColumnDetailEditorProps = {
   field: ReportField
+  // Names the form, e.g. "COLUMN 2", so two open editors aren't both just "Field".
+  columnName: string
   sourceOptions: string[]
   displayTypeOptions: DisplayTypeOption[]
   aggregationOptions: AggregationOption[]
@@ -30,6 +32,7 @@ type ColumnDetailEditorProps = {
 
 function ColumnDetailEditor({
   field,
+  columnName,
   sourceOptions,
   displayTypeOptions,
   aggregationOptions,
@@ -43,7 +46,7 @@ function ColumnDetailEditor({
   const displayTypeId = useElementId(`display-type-${field.id}`)
   const aggregationId = useElementId(`aggregation-${field.id}`)
   return (
-    <div className="fr-column-detail-editor fr-drag-block">
+    <div className="fr-column-detail-editor fr-drag-block" role="group" aria-label={columnName}>
       <label htmlFor={sourceId}>Field</label>
       <AutocompleteInput
         id={sourceId}

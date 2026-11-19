@@ -329,6 +329,18 @@ describe('ReportBuilderApp host mode', () => {
     expect(options.map((option) => option.textContent)).toEqual(['units', 'warehouse'])
   })
 
+  it('names each open column form, so its Field input is told apart from another', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+    const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
+
+    await user.click(within(mapping).getByRole('button', { name: 'Edit COLUMN 1' }))
+    await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
+
+    expect(within(within(mapping).getByRole('group', { name: 'COLUMN 1' })).getByLabelText('Field')).toHaveValue('warehouse')
+    expect(within(within(mapping).getByRole('group', { name: 'New column' })).getByLabelText('Field')).toHaveValue('')
+  })
+
   it('starts a new column with no field, and saves it once one is picked', async () => {
     const user = userEvent.setup()
     render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
