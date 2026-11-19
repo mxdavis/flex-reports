@@ -242,6 +242,7 @@ describe('ReportBuilderApp', () => {
     await user.click(screen.getByRole('button', { name: 'Keep editing' }))
 
     expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Edit COLUMN 2' })).toHaveFocus()
     expect(screen.getByLabelText('Display label')).toHaveValue('Changed Label')
     expect(screen.queryByRole('button', { name: 'Save COLUMN 2' })).not.toBeInTheDocument()
   })
