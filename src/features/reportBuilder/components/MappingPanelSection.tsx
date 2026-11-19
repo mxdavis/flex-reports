@@ -1,6 +1,6 @@
 import ColumnDetailEditor from '../../../components/ColumnDetailEditor'
 import { useElementId } from '../../../shared/hooks/useElementId'
-import MappingFieldCard from '../sections/MappingFieldCard'
+import MappingFieldCard, { type MappingFieldCardProps } from '../sections/MappingFieldCard'
 import type {
   AggregationMode,
   DisplayType,
@@ -11,7 +11,10 @@ import SectionTitleRow from '../../../shared/components/SectionTitleRow'
 import type { NewColumnDraft } from '../state/uiState'
 import './MappingPanelSection.css'
 
-export type MappingPanelSectionProps = {
+// What every column card gets, passed through from the panel's props.
+type ColumnCardProps = Omit<MappingFieldCardProps, 'field' | 'warning' | 'index'>
+
+export type MappingPanelSectionProps = ColumnCardProps & {
   // Asks whether to save the open column before editing another; null when not asking.
   columnSwitchDialog: Omit<ConfirmDialogProps, 'isOpen'> | null
   fields: ReportField[]
@@ -22,13 +25,6 @@ export type MappingPanelSectionProps = {
   // Fields that hold several entries per row, so can't be a column.
   skippedFields?: string[]
   getFieldWarning: (field: ReportField) => string | null
-  draggedFieldId: string | null
-  dragOverFieldId: string | null
-  editingFieldId: string | null
-  editingFieldDraft: ReportField | null
-  sourceOptions: string[]
-  displayTypeOptions: Array<{ value: DisplayType, label: string }>
-  aggregationOptions: Array<{ value: AggregationMode, label: string }>
   onStartAddColumn: () => void
   onCancelAddColumn: () => void
   onAddColumnPositionChange: (value: number) => void
@@ -37,17 +33,6 @@ export type MappingPanelSectionProps = {
   onAddColumnDisplayTypeChange: (value: DisplayType) => void
   onAddColumnAggregationChange: (value: AggregationMode) => void
   onSaveNewColumn: () => void
-  onMoveField: (sourceId: string, targetId: string) => void
-  onStartEditField: (field: ReportField) => void
-  onCancelEditField: () => void
-  onSaveEditField: (fieldId: string) => void
-  onRemoveField: (fieldId: string) => void
-  onSetDraggedFieldId: (value: string | null) => void
-  onSetDragOverFieldId: (value: string | null) => void
-  onSetEditingFieldSourceKey: (value: string) => void
-  onSetEditingFieldLabel: (value: string) => void
-  onSetEditingFieldDisplayType: (value: DisplayType) => void
-  onSetEditingFieldAggregation: (value: AggregationMode) => void
   isCollapsed?: boolean
   onToggleCollapsed?: () => void
 }

@@ -27,6 +27,7 @@ function VirtualTableBody({ rowCount, columnCount, scrollContainerRef, renderRow
 
   const spacer = (height: number) => height > 0 && (
     <tr className="fr-spacer-row" aria-hidden="true" style={{ height }}>
+      {/* oxlint-disable-next-line jsx-a11y/control-has-associated-label -- an empty spacer in a hidden row */}
       <td colSpan={columnCount} />
     </tr>
   )

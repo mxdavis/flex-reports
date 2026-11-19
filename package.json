@@ -15,8 +15,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "lint": "oxlint . --ignore-pattern src/seeds/**",
-    "check:practices": "node scripts/check-practices.mjs",
+    "lint": "oxlint . --deny-warnings",
+    "check:practices": "node scripts/check-practices.mjs && jscpd",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -36,6 +36,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.10",
+    "jscpd": "5.4.3",
     "jsdom": "^30.0.1",
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",

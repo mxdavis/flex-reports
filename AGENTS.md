@@ -88,12 +88,20 @@ Instructions changing this repo. Follow them before writing code; if a request c
 
 ## Checked in CI
 
+`npm run lint` (oxlint, with React, TypeScript and accessibility rules in `.oxlintrc.json`) fails on any
+warning, not just errors.
+
+The unit tests run with coverage (`npm run test:coverage`) and fail if it drops below the floor in
+`vite.config.ts`. Raise the floor when coverage goes up; don't lower it to get a PR through.
+
 `npm run check:practices` runs on every PR and push:
 
 - UI components in `src/components/`, `src/features/reportBuilder/components/`,
   `src/features/reportBuilder/sections/`, and `src/shared/components/` each have a sibling
   `<Component>.css` and `<Component>.test.tsx`, and stay at or under 220 lines.
-- `src/features/reportBuilder/ReportBuilderApp.tsx` stays at or under 1,000 lines.
-- No source file (tests excluded) repeats a block of 20 consecutive non-empty lines.
+- Every other source file under `src/` (tests excluded) stays at or under 250 lines. Split it into
+  focused helpers before it grows past that; there are no exceptions.
+- No copied code: `jscpd` (settings in `.jscpd.json`) fails on any block of 50+ tokens repeated in
+  `src/`, tests excluded, and names the files and lines.
 - Every CSS class is prefixed `fr-`, so it can't clash with a host page. (Element IDs
   are prefixed per builder by `useElementId`; that isn't checked.)
