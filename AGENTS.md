@@ -91,6 +91,9 @@ Instructions changing this repo. Follow them before writing code; if a request c
 `npm run lint` (oxlint, with React, TypeScript and accessibility rules in `.oxlintrc.json`) fails on any
 warning, not just errors.
 
+The unit tests run with coverage (`npm run test:coverage`) and fail if it drops below the floor in
+`vite.config.ts`. Raise the floor when coverage goes up; don't lower it to get a PR through.
+
 `npm run check:practices` runs on every PR and push:
 
 - UI components in `src/components/`, `src/features/reportBuilder/components/`,
