@@ -1,12 +1,15 @@
 import { useRef, useState } from 'react'
 import type { ReportRow } from '../services/adapters'
+import ConfirmDialog from '../shared/components/ConfirmDialog'
 import { useElementId } from '../shared/hooks/useElementId'
 import { MAX_RECORDS_BYTES, parseRecordsJson, RecordsLoadError } from './recordsJson'
+import './OwnDataPanel.css'
 
 export type OwnData = { name: string, rows: ReportRow[] }
 
 type OwnDataPanelProps = {
-  onLoad: (data: OwnData) => void
+  // Called once the visitor confirms replacing their report.
+  onReplace: (data: OwnData) => void
 }
 
 function readError(error: unknown): string {
@@ -16,23 +19,38 @@ function readError(error: unknown): string {
 }
 
 // Open a JSON file or paste JSON. Both are read here in the browser (nothing
-// is uploaded) and pass the same check before the app is offered the records.
-function OwnDataPanel({ onLoad }: OwnDataPanelProps) {
+// is uploaded), pass the same check, and replace the report only once the
+// visitor confirms. Until then the paste box keeps its text, so Cancel
+// changes nothing and focus goes back to Load.
+function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const pasteId = useElementId('own-data-paste')
   const [isPasting, setIsPasting] = useState(false)
   const [pastedText, setPastedText] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState<OwnData | null>(null)
+
+  // Opening or closing the paste box, either way, clears an earlier error.
+  function showPasteBox(open: boolean): void {
+    setIsPasting(open)
+    setError(null)
+  }
 
   function load(name: string, text: string): void {
     try {
-      onLoad({ name, rows: parseRecordsJson(text) })
+      setPending({ name, rows: parseRecordsJson(text) })
       setError(null)
-      setIsPasting(false)
-      setPastedText('')
     } catch (loadError) {
       setError(readError(loadError))
     }
+  }
+
+  function replace(): void {
+    if (!pending) return
+    onReplace(pending)
+    setPending(null)
+    setPastedText('')
+    showPasteBox(false)
   }
 
   async function openFile(file: File): Promise<void> {
@@ -64,7 +82,7 @@ function OwnDataPanel({ onLoad }: OwnDataPanelProps) {
           if (file) void openFile(file)
         }}
       />
-      <button type="button" aria-expanded={isPasting} onClick={() => setIsPasting((open) => !open)}>
+      <button type="button" aria-expanded={isPasting} onClick={() => showPasteBox(!isPasting)}>
         Paste JSON
       </button>
       {isPasting && (
@@ -79,19 +97,20 @@ function OwnDataPanel({ onLoad }: OwnDataPanelProps) {
           />
           <div className="fr-app-paste-actions">
             <button type="button" onClick={() => load('pasted data', pastedText)}>Load</button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsPasting(false)
-                setError(null)
-              }}
-            >
-              Cancel
-            </button>
+            <button type="button" onClick={() => showPasteBox(false)}>Cancel</button>
           </div>
         </div>
       )}
       {error && <p className="fr-app-own-data-error" role="alert">{error}</p>}
+      <ConfirmDialog
+        isOpen={pending !== null}
+        title="Replace your report?"
+        message={`This starts a new report on ${pending?.name ?? 'your data'} and deletes your saved report. Your data isn't uploaded anywhere.`}
+        confirmLabel="Replace report"
+        isDestructive
+        onConfirm={replace}
+        onCancel={() => setPending(null)}
+      />
     </div>
   )
 }

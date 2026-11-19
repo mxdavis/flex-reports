@@ -7,7 +7,7 @@ type DataSourceBarProps = {
   ownDataName?: string
   recordCount?: number
   onReset: () => void
-  onLoadOwnData: (data: OwnData) => void
+  onReplaceWithOwnData: (data: OwnData) => void
 }
 
 function describeCount(count: number): string {
@@ -16,7 +16,7 @@ function describeCount(count: number): string {
 
 // The app's controls for where the report's data comes from. Never part of
 // the package: hosts pass their own rows in.
-function DataSourceBar({ sampleUrl, ownDataName, recordCount, onReset, onLoadOwnData }: DataSourceBarProps) {
+function DataSourceBar({ sampleUrl, ownDataName, recordCount, onReset, onReplaceWithOwnData }: DataSourceBarProps) {
   const count = recordCount === undefined ? '' : ` · ${describeCount(recordCount)}`
   return (
     <section className="fr-app-data-bar" aria-label="Report data">
@@ -33,7 +33,7 @@ function DataSourceBar({ sampleUrl, ownDataName, recordCount, onReset, onLoadOwn
         Reset to sample
       </button>
       <p className="fr-app-data-bar-note">Reports are saved in this browser only.</p>
-      <OwnDataPanel onLoad={onLoadOwnData} />
+      <OwnDataPanel onReplace={onReplaceWithOwnData} />
     </section>
   )
 }

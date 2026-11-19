@@ -199,6 +199,9 @@ browser storage.
   demo reads them from `https://mxdavis.github.io/flex-reports/sample-data.json`. Any site
   can read that address too.
 - **Reset to sample** asks first, then deletes the saved report and starts again.
+- **Use your own data** opens a JSON file or takes pasted JSON. It's read in the browser,
+  never uploaded, and kept in memory only (a reload goes back to the sample). It replaces
+  the saved report only after you confirm.
 - Try the viewer role by changing `<App />` in `src/main.tsx` to `<App role="viewer" />`.
 
 ---

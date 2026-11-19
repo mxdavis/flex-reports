@@ -20,7 +20,6 @@ type AppProps = Pick<ReportBuilderAppProps, 'role' | 'initialEditMode'>
 function App(props: AppProps) {
   const sample = useRecordsFromUrl(SAMPLE_DATA_URL)
   const [ownData, setOwnData] = useState<OwnData | null>(null)
-  const [pendingOwnData, setPendingOwnData] = useState<OwnData | null>(null)
   const [savedReport, setSavedReport] = useState(loadSavedReport)
   // Bumped to start the builder over from the (now empty) saved report.
   const [reportKey, setReportKey] = useState(0)
@@ -41,9 +40,8 @@ function App(props: AppProps) {
     sample.reload()
   }
 
-  function replaceWithOwnData(): void {
-    setOwnData(pendingOwnData)
-    setPendingOwnData(null)
+  function replaceWithOwnData(data: OwnData): void {
+    setOwnData(data)
     startNewReport()
   }
 
@@ -54,7 +52,7 @@ function App(props: AppProps) {
         ownDataName={ownData?.name}
         recordCount={rows?.length}
         onReset={() => setIsConfirmingReset(true)}
-        onLoadOwnData={setPendingOwnData}
+        onReplaceWithOwnData={replaceWithOwnData}
       />
       <ConfirmDialog
         isOpen={isConfirmingReset}
@@ -64,15 +62,6 @@ function App(props: AppProps) {
         isDestructive
         onConfirm={resetToSample}
         onCancel={() => setIsConfirmingReset(false)}
-      />
-      <ConfirmDialog
-        isOpen={pendingOwnData !== null}
-        title="Replace your report?"
-        message={`This starts a new report on ${pendingOwnData?.name ?? 'your data'} and deletes your saved report. Your data isn't uploaded anywhere.`}
-        confirmLabel="Replace report"
-        isDestructive
-        onConfirm={replaceWithOwnData}
-        onCancel={() => setPendingOwnData(null)}
       />
       {error ? <LoadError message={error} onRetry={sample.reload} /> : (
         <ReportBuilderApp

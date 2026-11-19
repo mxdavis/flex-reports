@@ -148,6 +148,9 @@ describe('the app', () => {
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       expect(screen.getByRole('checkbox', { name: 'hours' })).toBeInTheDocument()
+      // The pasted text is still there, and focus is back on Load.
+      expect(screen.getByLabelText(/Paste a list of records/)).toHaveValue(JSON.stringify(OWN_RECORDS))
+      expect(screen.getByRole('button', { name: 'Load' })).toHaveFocus()
     })
 
     it('explains bad JSON where it was pasted, and changes nothing', async () => {
@@ -161,6 +164,19 @@ describe('the app', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       expect(screen.getByLabelText(/Paste a list of records/)).toHaveValue('[{"product": "Cable"},')
       expect(screen.getByRole('checkbox', { name: 'hours' })).toBeInTheDocument()
+    })
+
+    it('clears an old error when the paste box closes, whichever way', async () => {
+      serveSample()
+      const user = userEvent.setup()
+      render(<App initialEditMode />)
+
+      await pasteJson(user, 'not json')
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Paste JSON' }))
+
+      expect(screen.queryByLabelText(/Paste a list of records/)).not.toBeInTheDocument()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
 
     it('opens a JSON file in the browser, and goes back to the sample on Reset', async () => {
