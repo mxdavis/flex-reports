@@ -48,7 +48,6 @@ async function renameSheet(user: ReturnType<typeof userEvent.setup>, name: strin
 describe('ReportBuilderApp host mode', () => {
   beforeEach(() => {
     installMemoryStorage()
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
   afterEach(() => {
@@ -534,10 +533,6 @@ describe('ReportBuilderApp host mode', () => {
 })
 
 describe('ReportBuilderApp with a saved report', () => {
-  beforeEach(() => {
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
-  })
-
   it('opens clean: no unsaved changes before any edit', () => {
     render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
@@ -553,12 +548,13 @@ describe('ReportBuilderApp with a saved report', () => {
 })
 
 describe('generic host records after merging the host API', () => {
-  it('discovers all keys as text, accepts duplicate ids, and refreshes on new rows', () => {
+  it('discovers every key, accepts duplicate ids, and refreshes on new rows', () => {
     const records = [{ id: 'same', item: 'Cable' }, { id: 'same', extra: '250.50' }]
     const definition = reportWithColumns(createRecordsDataSource(records).getSchema())
     const { rerender } = render(<ReportBuilderApp rows={records} reportDefinition={definition} role="viewer" />)
     expect(screen.getByRole('columnheader', { name: 'extra' })).toBeInTheDocument()
-    expect(screen.getByText('250.50')).toBeInTheDocument()
+    // "250.50" is numeric text, so extra is a number: the cell and its total.
+    expect(screen.getAllByText('250.50')).toHaveLength(2)
     expect(screen.getAllByText('same')).toHaveLength(2)
     rerender(<ReportBuilderApp rows={[{ item: 'Updated' }]} reportDefinition={definition} role="viewer" />)
     expect(screen.getByText('Updated')).toBeInTheDocument()

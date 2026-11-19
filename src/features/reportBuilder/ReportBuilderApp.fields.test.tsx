@@ -17,7 +17,6 @@ function withAllColumns(rows: Record<string, unknown>[]): ReportDefinition {
 describe('nested fields in the existing report editor', () => {
   beforeEach(() => {
     installMemoryStorage()
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
   it('adds a nested field from Getting started, renames it twice, saves it, and reads fresh host data', async () => {

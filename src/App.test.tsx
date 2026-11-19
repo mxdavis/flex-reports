@@ -19,7 +19,6 @@ async function renameSheet(user: ReturnType<typeof userEvent.setup>, name: strin
 describe('the app', () => {
   beforeEach(() => {
     installMemoryStorage()
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
   afterEach(() => {

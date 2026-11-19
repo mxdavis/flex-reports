@@ -1,5 +1,6 @@
 import type { ReportRow, SchemaField } from './types'
-import { formatFieldPath } from './fieldPath'
+import { formatFieldPath, readFieldPath } from './fieldPath'
+import { guessDataType } from './guessDataType'
 
 const rowKeys = new WeakMap<ReportRow, string>()
 let nextRowKey = 0
@@ -53,7 +54,8 @@ export function createRecordsDataSource(records: readonly ReportRow[]) {
     discoverFields(record)
   }
   const schema: SchemaField[] = Array.from(paths).filter(([key]) => !arrayPaths.has(key)).map(([key, path], index) => ({
-    id: `field-${index + 1}`, key, path, label: key, dataType: 'string',
+    id: `field-${index + 1}`, key, path, label: key,
+    dataType: guessDataType(records.map((record) => readFieldPath(record, path))),
   }))
   // Host objects are kept as-is so their render keys and cached values survive a
   // re-render; only an object repeated in the list is copied to get its own key.

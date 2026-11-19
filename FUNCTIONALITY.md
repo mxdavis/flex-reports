@@ -262,9 +262,14 @@ Refreshing the page puts them back on the saved default view.
 - Rows can be any shape. They don't need an `id`.
 - Without a schema, every field found across all rows becomes a column you can pick,
   including fields inside other fields (`client.name`). Fields that hold a list are left out.
-- Fields found in the data start as **string**; pick another display type when you edit
-  the column. When the host app describes its fields, their types set the defaults:
-  currency → currency, number → decimal number, date → date, text → string.
+- Fields found in the data get a starting type from their values: **decimal number**
+  when every filled-in value is a number (or text like `1,250.50`), **date** when every one
+  is a date like `2026-07-01` or `2026-07-01T09:30:00Z`, otherwise **string**. Codes with a
+  leading zero (`02134`) stay text, and so do `$40` and dates like `07/01/2026`. Numbers
+  that are really labels, like IDs, years or ZIP codes stored as numbers, also start as
+  numbers: change them to string. Pick another display type when you edit the column. When the host app describes its fields,
+  their types set the defaults instead: currency → currency, number → decimal number,
+  date → date, text → string.
 - Default total types: sum for number columns, distinct count for text and date columns.
 - Number columns read plain numbers like `1250.50` or `1,250.50`. Anything else, such
   as `$40`, `120USD` or `N/A`, is shown as typed, flagged with a warning, left out of

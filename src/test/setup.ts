@@ -10,6 +10,9 @@ HTMLDialogElement.prototype.close ??= function close(this: HTMLDialogElement) {
   this.open = false
 }
 
+// jsdom doesn't scroll: the report scrolls its table when columns change.
+HTMLElement.prototype.scrollTo ??= function scrollTo() {}
+
 afterEach(() => {
 	cleanup()
 })

@@ -27,7 +27,6 @@ function cellTexts(): string[] {
 describe('numbers in the data', () => {
   beforeEach(() => {
     installMemoryStorage()
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
   it('reads plain numbers and numbers with comma thousands', () => {
