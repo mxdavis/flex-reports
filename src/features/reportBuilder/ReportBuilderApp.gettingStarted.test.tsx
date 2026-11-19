@@ -16,7 +16,6 @@ function headers(): string[] {
 describe('Getting started on a blank report', () => {
   beforeEach(() => {
     installMemoryStorage()
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
   it('starts blank, adds ticked fields as columns in order, and removes unticked ones', async () => {

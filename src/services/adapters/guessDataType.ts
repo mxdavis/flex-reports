@@ -1,4 +1,4 @@
-import { isValidReportDate, parseReportNumber } from '../../utils/reportBuilder'
+import { isBlankReportValue, isValidReportDate, parseReportNumber } from '../../utils/reportBuilder'
 import type { SchemaDataType } from './types'
 
 // ISO dates ("2026-07-01") and date-times ("2026-07-01T09:30:00Z"). Other
@@ -17,10 +17,6 @@ function isDateValue(value: unknown): boolean {
   return typeof value === 'string' && ISO_DATE.test(value.trim()) && isValidReportDate(value)
 }
 
-function isBlank(value: unknown): boolean {
-  return value === null || value === undefined || (typeof value === 'string' && value.trim() === '')
-}
-
 // A field's starting type, from its values: Number when every non-blank value
 // is a number (or numeric text), Date when every one is an ISO date, else
 // text. Editors can change it; this only picks a sensible start.
@@ -29,7 +25,7 @@ export function guessDataType(values: Iterable<unknown>): SchemaDataType {
   let couldBeDate = true
   let hasValue = false
   for (const value of values) {
-    if (isBlank(value)) continue
+    if (isBlankReportValue(value)) continue
     hasValue = true
     couldBeNumber &&= isNumberValue(value)
     couldBeDate &&= isDateValue(value)

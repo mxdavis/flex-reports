@@ -48,7 +48,6 @@ async function renameSheet(user: ReturnType<typeof userEvent.setup>, name: strin
 describe('ReportBuilderApp host mode', () => {
   beforeEach(() => {
     installMemoryStorage()
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
   })
 
   afterEach(() => {
@@ -534,10 +533,6 @@ describe('ReportBuilderApp host mode', () => {
 })
 
 describe('ReportBuilderApp with a saved report', () => {
-  beforeEach(() => {
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
-  })
-
   it('opens clean: no unsaved changes before any edit', () => {
     render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
@@ -553,10 +548,6 @@ describe('ReportBuilderApp with a saved report', () => {
 })
 
 describe('generic host records after merging the host API', () => {
-  beforeEach(() => {
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: () => undefined, configurable: true })
-  })
-
   it('discovers every key, accepts duplicate ids, and refreshes on new rows', () => {
     const records = [{ id: 'same', item: 'Cable' }, { id: 'same', extra: '250.50' }]
     const definition = reportWithColumns(createRecordsDataSource(records).getSchema())
