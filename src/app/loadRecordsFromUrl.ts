@@ -1,10 +1,7 @@
 import type { ReportRow } from '../services/adapters'
+import { MAX_RECORDS_BYTES, parseRecordsJson, RecordsLoadError } from './recordsJson'
 
-export const MAX_RECORDS_BYTES = 5 * 1024 * 1024
 export const RECORDS_TIMEOUT_MS = 15_000
-
-// A failure to show the user as-is: every message is written for them.
-export class RecordsLoadError extends Error {}
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
 
@@ -52,20 +49,9 @@ async function readText(response: Response): Promise<string> {
   return new TextDecoder().decode(all)
 }
 
-function parseRecords(text: string): ReportRow[] {
-  let data: unknown
-  try {
-    data = JSON.parse(text)
-  } catch {
-    throw new RecordsLoadError('This isn\'t valid JSON.')
-  }
-  if (!Array.isArray(data)) throw new RecordsLoadError('Provide a list of records.')
-  return data as ReportRow[]
-}
-
 // Loads a JSON list of records with a plain GET: no cookies, no cache, no
-// referrer, no redirects, a time limit and a size limit. The report builder
-// checks each record. Aborting `signal` rejects with the browser's AbortError.
+// referrer, no redirects, a time limit and a size limit, then the same JSON
+// check as pasted data. Aborting `signal` rejects with the browser's AbortError.
 export async function loadRecordsFromUrl(address: string, signal?: AbortSignal): Promise<ReportRow[]> {
   const url = resolveUrl(address)
   const controller = new AbortController()
@@ -94,7 +80,7 @@ export async function loadRecordsFromUrl(address: string, signal?: AbortSignal):
       throw new RecordsLoadError('Couldn\'t load this address. Check it, and ask its owner to allow browser access (CORS).')
     }
     if (!response.ok) throw new RecordsLoadError(`The address answered with an error (${response.status}).`)
-    return parseRecords(await readText(response))
+    return parseRecordsJson(await readText(response))
   } finally {
     clearTimeout(timer)
     signal?.removeEventListener('abort', stopOnAbort)

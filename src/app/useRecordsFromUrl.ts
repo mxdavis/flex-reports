@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ReportRow } from '../services/adapters'
-import { loadRecordsFromUrl, RecordsLoadError } from './loadRecordsFromUrl'
+import { loadRecordsFromUrl } from './loadRecordsFromUrl'
+import { RecordsLoadError } from './recordsJson'
 
 type RecordsState = { rows?: ReportRow[], error?: string }
 
