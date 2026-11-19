@@ -129,7 +129,7 @@ Viewers can try anything without risk, and they don't see authoring tips.
 | Prop | Type | Default | Notes |
 |---|---|---|---|
 | `rows` | `Array<Record<string, unknown>>` | — | Your data. While it's `undefined` (still loading), the builder shows "Loading report…". Once rows have arrived, a refetch that briefly clears them keeps the current report and edits. |
-| `schema` | `Array<{ id, key, label, dataType }>` | Discovered | The fields available on `rows`. Without it, every field in the rows is offered as text. |
+| `schema` | `Array<{ id, key, label, dataType }>` | Discovered | The fields available on `rows`. Without it, every field in the rows is offered, typed from its values (numbers, ISO dates, otherwise text). |
 | `reportDefinition` | `ReportDefinition` | Generated | The saved report to open. |
 | `role` | `'editor' \| 'viewer'` | `'editor'` | Controls the Save button and tips. |
 | `onSave` | `(definition) => void \| Promise<void>` | — | Required for editors. Without it the Save button is hidden and an error is logged. |

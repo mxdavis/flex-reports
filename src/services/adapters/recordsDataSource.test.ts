@@ -12,8 +12,8 @@ describe('record input', () => {
       [
         ['client.id', ['client', 'id']], ['client.name', ['client', 'name']],
         ['["client.name"]', ['client.name']], ['Name', ['Name']], ['name', ['name']],
-        ['client.address.city', ['client', 'address', 'city']], ['[""]', ['']],
-      ].map(([key, path]) => ({ key, path, label: key, dataType: 'string' })),
+        ['client.address.city', ['client', 'address', 'city']], ['[""]', [''], 'number'],
+      ].map(([key, path, dataType = 'string']) => ({ key, path, label: key, dataType })),
     )
   })
 
@@ -23,11 +23,11 @@ describe('record input', () => {
     expect(source.getSkippedFields()).toEqual(['entries'])
   })
 
-  it('discovers every key in first-seen order without assuming field types', () => {
+  it('discovers every key in first-seen order, guessing each type from its values', () => {
     const records = Object.freeze([Object.freeze({ hours: '4', id: 'same' }), Object.freeze({ id: 'same', later: 3 })])
     const source = createRecordsDataSource(records)
     expect(source.getSchema().map((field) => [field.key, field.dataType])).toEqual([
-      ['hours', 'string'], ['id', 'string'], ['later', 'string'],
+      ['hours', 'number'], ['id', 'string'], ['later', 'number'],
     ])
     const rows = source.getReportRows()
     expect(rows[0]).toBe(records[0])
@@ -36,10 +36,10 @@ describe('record input', () => {
     expect(rows[0].id).toBe('same')
   })
 
-  it('offers every field, as text, and starts the report with no columns', () => {
+  it('offers every field and starts the report with no columns', () => {
     const source = createRecordsDataSource([Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`key${i}`, i]))])
     expect(source.getSchema()).toHaveLength(20)
-    expect(source.getSchema().every((field) => field.dataType === 'string')).toBe(true)
+    expect(source.getSchema().every((field) => field.dataType === 'number')).toBe(true)
     expect(generateDefaultReportDefinition().fields).toEqual([])
   })
 
