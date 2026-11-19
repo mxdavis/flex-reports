@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { SAVED_REPORT_STORAGE_KEY } from '../src/app/savedReport'
 
 // A new report starts blank. Each test starts from a report saved in the app's
 // browser storage, as a returning visitor would have: the sample's main fields
@@ -27,9 +28,9 @@ const savedReport = {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await page.evaluate((report) => {
-    window.localStorage.setItem('flex-reports.app.reportDefinition.v1', JSON.stringify(report))
-  }, savedReport)
+  await page.evaluate(({ key, report }) => {
+    window.localStorage.setItem(key, JSON.stringify(report))
+  }, { key: SAVED_REPORT_STORAGE_KEY, report: savedReport })
   await page.reload()
 })
 
