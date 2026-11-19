@@ -1,7 +1,6 @@
 import { useCombobox, type UseComboboxState, type UseComboboxStateChangeOptions } from 'downshift'
 import { useMemo, useState } from 'react'
-import { filterOptions } from '../hooks/useOptionsList'
-import { findTypedOption } from './comboboxUtils'
+import { filterOptions, findTypedOption } from '../utils/optionMatching'
 import './Combobox.css'
 
 type ComboboxProps = {

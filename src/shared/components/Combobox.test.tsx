@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import Combobox from './Combobox'
-import { findTypedOption } from './comboboxUtils'
 
 const options = ['hours', 'client.id', 'client.name']
 
@@ -95,17 +94,5 @@ describe('Combobox', () => {
     const { rerender } = render(<Combobox id="field" value="hours" options={options} onPick={vi.fn()} />)
     rerender(<Combobox id="field" value="client.name" options={options} onPick={vi.fn()} />)
     expect(screen.getByRole('combobox')).toHaveValue('client.name')
-  })
-})
-
-describe('findTypedOption', () => {
-  it('matches ignoring case, preferring the exact spelling when options differ only by case', () => {
-    expect(findTypedOption(' Hours ', options)).toBe('hours')
-    expect(findTypedOption('hou', options)).toBeNull()
-    expect(findTypedOption('', options)).toBeNull()
-
-    const clashing = ['client.name', 'Client.name']
-    expect(findTypedOption('Client.name', clashing)).toBe('Client.name')
-    expect(findTypedOption('CLIENT.NAME', clashing)).toBeNull()
   })
 })

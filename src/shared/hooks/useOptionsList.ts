@@ -1,17 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase()
-}
-
-// Unique options containing the query, case-insensitively, in their given order.
-export function filterOptions(options: string[], query: string): string[] {
-  const normalizedQuery = normalize(query)
-  const uniqueOptions = Array.from(new Set(options))
-  if (!normalizedQuery) return uniqueOptions
-  return uniqueOptions.filter((option) => normalize(option).includes(normalizedQuery))
-}
-
 // The formula input's {{ token suggestions: open/closed, closing on an outside
 // click, the highlighted option, and arrow/Enter/Escape. (Pickers use Combobox.)
 export function useOptionsList(options: string[], onSelect: (option: string) => void) {
