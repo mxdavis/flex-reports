@@ -47,7 +47,7 @@ async function setColumnSource(
   displayType?: string,
 ) {
   await mappingSection.getByRole('button', { name: `Edit COLUMN ${column}` }).click()
-  await mappingSection.getByRole('textbox', { name: 'Field', exact: true }).first().fill(sourceKey)
+  await mappingSection.getByRole('combobox', { name: 'Field', exact: true }).first().fill(sourceKey)
   if (displayType) await mappingSection.getByLabel('Display type').selectOption(displayType)
   await mappingSection.getByRole('button', { name: `Save COLUMN ${column}` }).click()
 }
@@ -157,7 +157,7 @@ test('formula label rename syncs mapped column source', async ({ page }) => {
 
   await mappingSection.getByRole('button', { name: 'Edit COLUMN 1' }).click()
 
-  const column1SourceInput = mappingSection.getByRole('textbox', { name: 'Field', exact: true }).first()
+  const column1SourceInput = mappingSection.getByRole('combobox', { name: 'Field', exact: true }).first()
   await column1SourceInput.fill('%grossFees')
   await expect(column1SourceInput).toHaveValue('%grossFees')
   await mappingSection.getByRole('button', { name: 'Save COLUMN 1' }).click()
@@ -199,7 +199,7 @@ test('add column uses shared field editor controls and persists total type', asy
   await expect(mappingSection.getByText('Hours Rounded')).toBeVisible()
 
   await mappingSection.getByRole('button', { name: 'Edit COLUMN 8' }).click()
-  await expect(mappingSection.getByRole('textbox', { name: 'Field', exact: true }).first()).toHaveValue('hours')
+  await expect(mappingSection.getByRole('combobox', { name: 'Field', exact: true }).first()).toHaveValue('hours')
   await expect(mappingSection.getByLabel('Display type')).toHaveValue('number')
   await expect(mappingSection.getByLabel('Total type')).toHaveValue('avg')
 })

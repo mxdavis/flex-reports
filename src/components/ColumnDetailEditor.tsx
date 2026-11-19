@@ -1,5 +1,5 @@
 import { useElementId } from '../shared/hooks/useElementId'
-import AutocompleteInput from '../shared/components/AutocompleteInput'
+import Combobox from '../shared/components/Combobox'
 import type {
   AggregationMode,
   DisplayType,
@@ -24,6 +24,7 @@ type ColumnDetailEditorProps = {
   sourceOptions: string[]
   displayTypeOptions: DisplayTypeOption[]
   aggregationOptions: AggregationOption[]
+  // Called when a field is picked; typing alone doesn't change the column.
   onSourceChange: (nextValue: string) => void
   onLabelChange: (nextValue: string) => void
   onDisplayTypeChange: (nextValue: DisplayType) => void
@@ -48,12 +49,12 @@ function ColumnDetailEditor({
   return (
     <div className="fr-column-detail-editor fr-drag-block" role="group" aria-label={columnName}>
       <label htmlFor={sourceId}>Field</label>
-      <AutocompleteInput
+      <Combobox
         id={sourceId}
         value={field.sourceKey}
         options={sourceOptions}
-        title="Type or choose the field that fills this column. Formulas start with %."
-        onChange={onSourceChange}
+        title="Type to search, then pick the field that fills this column. Formulas start with %."
+        onPick={onSourceChange}
       />
 
       <label htmlFor={labelId}>Display label</label>

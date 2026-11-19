@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { filterOptions, useOptionsList } from '../hooks/useOptionsList'
+import { useOptionsList } from '../hooks/useOptionsList'
+import { filterOptions } from '../utils/optionMatching'
 import './TokenizedExpressionInput.css'
 import { getTriggerState } from './tokenizedExpressionUtils'
 import { getFormulaReferences } from '../../services/formula/formulaReferences'

@@ -1,18 +1,11 @@
 import { act, renderHook } from '@testing-library/react'
 import type { KeyboardEvent } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { filterOptions, useOptionsList } from './useOptionsList'
+import { useOptionsList } from './useOptionsList'
 
 function key(name: string) {
   return { key: name, preventDefault: vi.fn() } as unknown as KeyboardEvent<HTMLInputElement>
 }
-
-describe('filterOptions', () => {
-  it('keeps unique options containing the query, ignoring case and order', () => {
-    expect(filterOptions(['Units', 'price', 'units', 'Unit cost'], ' UNIT ')).toEqual(['Units', 'units', 'Unit cost'])
-    expect(filterOptions(['b', 'a', 'b'], '')).toEqual(['b', 'a'])
-  })
-})
 
 describe('useOptionsList', () => {
   it('moves the highlight with arrow keys, within bounds, and selects with Enter', () => {
