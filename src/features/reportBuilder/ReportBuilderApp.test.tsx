@@ -1,16 +1,11 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { installMemoryStorage } from '../../test/memoryStorage'
-import { saveSandboxReportWithColumns } from '../../test/saveSandboxReport'
+import { sampleReportProps } from '../../test/sampleReport'
 import ReportBuilderApp from './ReportBuilderApp'
-import { renderSandboxApp } from '../../test/renderSandboxApp'
 
 describe('ReportBuilderApp', () => {
   beforeEach(() => {
-    installMemoryStorage()
-    saveSandboxReportWithColumns()
-
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       value: () => undefined,
       configurable: true,
@@ -23,16 +18,16 @@ describe('ReportBuilderApp', () => {
   })
 
   it('renders the report table section', async () => {
-    await renderSandboxApp(<ReportBuilderApp sandbox />)
+    render(<ReportBuilderApp {...sampleReportProps()} />)
 
     expect(screen.getByRole('heading', { name: 'Report' })).toBeInTheDocument()
   })
 
   it('shows summary chips above table in view mode', async () => {
-    const { container } = await renderSandboxApp(<ReportBuilderApp sandbox />)
+    const { container } = render(<ReportBuilderApp {...sampleReportProps()} />)
 
-    expect(screen.getByRole('heading', { name: 'Rate (sum)' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Hours (sum)' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'rate (sum)' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'hours (sum)' })).toBeInTheDocument()
 
     const stats = container.querySelector('.fr-summary-chips')
     const table = container.querySelector('.fr-report-table')
@@ -48,7 +43,7 @@ describe('ReportBuilderApp', () => {
 
   it('updates table heading when sheet name changes in header', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     const sheetNameInput = screen.getByLabelText('Sheet name') as HTMLInputElement
     await user.clear(sheetNameInput)
@@ -59,7 +54,7 @@ describe('ReportBuilderApp', () => {
 
   it('turns table totals on and off with the Totals toggle', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox />)
+    render(<ReportBuilderApp {...sampleReportProps()} />)
 
     expect(screen.queryByRole('rowheader', { name: 'Total' })).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Totals' }))
@@ -68,7 +63,7 @@ describe('ReportBuilderApp', () => {
 
   it('syncs mapped column source when a formula label is renamed', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     let columnOneSource = screen.getByLabelText('COLUMN 1') as HTMLInputElement
@@ -90,7 +85,7 @@ describe('ReportBuilderApp', () => {
 
   it('reverts blank column edits on save', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     const sourceInput = screen.getByLabelText('COLUMN 1') as HTMLInputElement
@@ -102,13 +97,13 @@ describe('ReportBuilderApp', () => {
     await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
 
-    expect((screen.getByLabelText('COLUMN 1') as HTMLInputElement).value).toBe('workDate')
-    expect((screen.getByLabelText('Display label') as HTMLInputElement).value).toBe('Work Date')
+    expect((screen.getByLabelText('COLUMN 1') as HTMLInputElement).value).toBe('id')
+    expect((screen.getByLabelText('Display label') as HTMLInputElement).value).toBe('id')
   })
 
   it('sorts autocomplete suggestions alphabetically', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     await user.click(screen.getByTitle('Show options'))
@@ -124,7 +119,7 @@ describe('ReportBuilderApp', () => {
 
   it('re-sorts formulas alphabetically after saving an edited label', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     const formulasSection = screen.getByRole('heading', { name: 'Formulas' }).closest('section')
     expect(formulasSection).toBeTruthy()
@@ -155,7 +150,7 @@ describe('ReportBuilderApp', () => {
 
   it('inserts a new column at selected position and shifts following columns', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
     const columnTwoSource = screen.getByLabelText('COLUMN 2') as HTMLInputElement
@@ -174,7 +169,7 @@ describe('ReportBuilderApp', () => {
 
   it('shows sticky jump links in edit mode and scrolls to sections without touching the URL', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
     const urlBefore = window.location.href
 
     const formulasSection = screen.getByRole('heading', { name: 'Formulas' }).closest('section')
@@ -195,7 +190,7 @@ describe('ReportBuilderApp', () => {
 
   it('collapses and expands settings, columns, and formulas in edit mode', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Collapse settings' }))
     expect(screen.queryByLabelText('Sheet name')).not.toBeInTheDocument()
@@ -215,7 +210,7 @@ describe('ReportBuilderApp', () => {
 
   it('disables grouping in vertical view and restores it in horizontal, without marking the report unsaved', async () => {
     const user = userEvent.setup()
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     const groupingButton = screen.getByRole('button', { name: 'Grouping' })
     await user.click(groupingButton)
@@ -237,7 +232,7 @@ describe('ReportBuilderApp', () => {
   it('prevents switching column edit when unsaved changes are not confirmed', async () => {
     const user = userEvent.setup()
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Changed Label' } })
@@ -254,7 +249,7 @@ describe('ReportBuilderApp', () => {
   it('saves current column before switching when confirm is accepted', async () => {
     const user = userEvent.setup()
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    await renderSandboxApp(<ReportBuilderApp sandbox initialEditMode />)
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Saved Label' } })

@@ -16,7 +16,7 @@ const DRY_SCAN_EXTENSIONS = new Set(['.ts', '.tsx'])
 const DRY_IGNORE_SUFFIXES = ['.test.ts', '.test.tsx']
 const DRY_BLOCK_SIZE_LINES = 20
 // The builder is embedded in host pages, so its classes are namespaced to
-// avoid clashing with the host's CSS. index.css styles only the sandbox page.
+// avoid clashing with the host's CSS. index.css styles only the app's page.
 const CSS_CLASS_PREFIX = 'fr-'
 const CSS_PREFIX_EXEMPT = new Set(['src/index.css'])
 

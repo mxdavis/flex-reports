@@ -8,13 +8,14 @@ Flex Reports never stores your data. Your app passes rows in, and Flex Reports h
 a small JSON **report definition** for your app to save.
 
 **[See a demo →](https://mxdavis.github.io/flex-reports/)**: the latest release, published
-with GitHub Pages and running on built-in sample data.
+with GitHub Pages and running on the [sample data](#the-app).
 
-**[How it works →](docs/FUNCTIONALITY.md)**: a full guide to grouping, totals,
+**[How it works →](FUNCTIONALITY.md)**: a full guide to grouping, totals,
 collapsing, formulas, saving, and roles.
 
-Large reports stay fast: only the rows in view are drawn, and grouped reports open at a
-summary level when fully expanding them would show more than 1,000 rows.
+Large reports stay fast: only the rows in view are drawn, and a report shows at most
+1,000 rows (grouped reports open at a summary level that fits), while totals and formulas
+use every row.
 
 ---
 
@@ -27,8 +28,9 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:6060**. The local app runs the builder in
-[sandbox mode](#sandbox-mode) on built-in sample data, so you can try every feature right away.
+Open **http://localhost:6060**. The local app loads the sample data from
+`public/sample-data.json`, the same way it would load any endpoint (see [The app](#the-app)),
+so you can try every feature right away.
 
 ---
 
@@ -90,8 +92,8 @@ const rows = [
 | `label` | The default column header. |
 | `dataType` | `'string'`, `'number'`, `'date'`, or `'currency'`. Sets the default format and total type. |
 
-If you leave `schema` out, keys from every row become text fields, and a warning is
-logged to the console. Passing a schema gives you explicit labels and formats.
+If you leave `schema` out, every field found across all rows (including nested ones like
+`client.name`) becomes a text field. Passing a schema gives you explicit labels and formats.
 
 `rows` and `schema` can change at any time, for example after a refetch, and the table
 updates. Passing `schema` inline is fine: it's compared by content. If you don't pass a
@@ -126,13 +128,12 @@ Viewers can try anything without risk, and they don't see authoring tips.
 
 | Prop | Type | Default | Notes |
 |---|---|---|---|
-| `rows` | `Array<{ id: string, [key: string]: unknown }>` | — | Your data. While it's `undefined` (still loading), the builder shows "Loading report…". Once rows have arrived, a refetch that briefly clears them keeps the current report and edits. |
-| `schema` | `Array<{ id, key, label, dataType }>` | Inferred | The fields available on `rows`. |
+| `rows` | `Array<Record<string, unknown>>` | — | Your data. While it's `undefined` (still loading), the builder shows "Loading report…". Once rows have arrived, a refetch that briefly clears them keeps the current report and edits. |
+| `schema` | `Array<{ id, key, label, dataType }>` | Discovered | The fields available on `rows`. Without it, every field in the rows is offered as text. |
 | `reportDefinition` | `ReportDefinition` | Generated | The saved report to open. |
 | `role` | `'editor' \| 'viewer'` | `'editor'` | Controls the Save button and tips. |
 | `onSave` | `(definition) => void \| Promise<void>` | — | Required for editors. Without it the Save button is hidden and an error is logged. |
 | `initialEditMode` | `boolean` | `false` | Open straight into edit mode. |
-| `sandbox` | `boolean` | `false` | Run on built-in sample data for local development and demos (see [Sandbox mode](#sandbox-mode)). Host apps don't set this. |
 | `exports` | `boolean \| ('print' \| 'pdf' \| 'xlsx' \| 'csv')[]` | all | Which export formats appear in the **Export** menu, for viewers and editors alike. `false` hides the menu. |
 | `maxVisibleRows` | `number` | `1000` | Maximum displayed/printed report rows (1–1,000). Grouped reports open at the deepest **Show rows** level that fits. All incoming rows still contribute to formulas and totals. |
 
@@ -148,7 +149,7 @@ This is the only thing you store. Save it as-is:
   "fields": [
     { "id": "region", "label": "Region", "sourceKey": "region", "displayType": "string", "aggregation": "none" },
     { "id": "units", "label": "Units", "sourceKey": "units", "displayType": "number", "aggregation": "sum" },
-    { "id": "field-1", "label": "Revenue", "sourceKey": "revenue", "displayType": "currency", "aggregation": "sum" }
+    { "id": "field-1", "label": "Revenue", "sourceKey": "%revenue", "displayType": "currency", "aggregation": "sum" }
   ],
   "formulas": [
     { "label": "revenue", "expression": "{{units}} * {{price}}" }
@@ -162,7 +163,7 @@ This is the only thing you store. Save it as-is:
 | `fields` | The report's columns, in order. `sourceKey` is a schema `key`, or `%` plus a formula `label` (for example `%lineTotal`). |
 | `fields[].displayType` | `'currency' \| 'number' \| 'decimal' \| 'percent' \| 'date' \| 'string'` |
 | `fields[].aggregation` | How the column totals: `'none' \| 'sum' \| 'avg' \| 'count' \| 'distinct'` |
-| `formulas` | Per-row calculations. See [Formulas](docs/FUNCTIONALITY.md#formulas). |
+| `formulas` | Per-row calculations. See [Formulas](FUNCTIONALITY.md#formulas). |
 | `view` | The default view everyone opens. |
 | `version` | The format version (currently `1`). A definition from a newer version of Flex Reports opens read-only, with Save turned off, so an older copy of the component can't overwrite it. An unreadable version falls back to defaults. |
 | `view.expandedLevels` | How many grouping levels start open: `0` shows only the first column's groups, `null` opens everything. |
@@ -180,24 +181,25 @@ that matches a data field): editors see a note in the Formulas panel and fix the
 Two formulas with the same name (ignoring case) can't be saved from the editor; if a
 definition you pass in has them, the first is used and a warning shows on the page.
 
-More examples: [docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENCE.md).
+To use an outside constant such as a quota or target, put it on the rows as a field,
+where it can also vary per row.
 
 ---
 
-## Sandbox mode
+## The app
 
-With the `sandbox` prop, Flex Reports loads sample data from `src/seeds/`, and **Save
-report** stores the definition in your browser's `localStorage`. Use it for local
-development and demos; the local app (`src/App.tsx`) runs this way. Without `sandbox`,
-nothing is written to the browser, and missing `rows` mean "still loading", never sample
-data.
+This repo also runs as a small browser app around the component (`src/App.tsx` and
+`src/app/`), which is what the [demo](https://mxdavis.github.io/flex-reports/) shows. It's
+a host like any other: it loads records from an endpoint, passes them in as `rows` with no
+`schema` (so every column name and key comes from the data), and saves the report in this
+browser's `localStorage`. None of this is part of the component, which never touches
+browser storage.
 
-The sample data is a separate file that's only downloaded in sandbox mode, so host apps
-don't carry it.
-
-- Try the viewer role by changing `src/App.tsx` to `<ReportBuilderApp sandbox role="viewer" />`.
-- Start fresh by clearing the `flex-reports.sandbox.reportDefinition.v1` key in
-  localStorage.
+- The sample records are `public/sample-data.json`, published next to the app, so the
+  demo reads them from `https://mxdavis.github.io/flex-reports/sample-data.json`. Any site
+  can read that address too.
+- **Reset to sample** asks first, then deletes the saved report and starts again.
+- Try the viewer role by changing `<App />` in `src/main.tsx` to `<App role="viewer" />`.
 
 ---
 
@@ -233,13 +235,5 @@ tag, such as `v1.0.0`.
 
 ## Documentation
 
-- **[docs/FUNCTIONALITY.md](docs/FUNCTIONALITY.md)**: how every feature works.
-- **[docs/REPORT_TEMPLATE_REFERENCE.md](docs/REPORT_TEMPLATE_REFERENCE.md)**: column types
-  and report definition examples.
-
-Contributing:
-
-- **[docs/PRACTICES.md](docs/PRACTICES.md)**: coding practices. Read before writing code.
-- **[docs/SPEC.md](docs/SPEC.md)**: product spec and architecture.
-- **[docs/DECISIONS.md](docs/DECISIONS.md)**: decisions log.
-- **[docs/TODO.md](docs/TODO.md)**: task tracker and parking lot.
+- **[FUNCTIONALITY.md](FUNCTIONALITY.md)**: how every feature works, for the people
+  building and reading reports.
