@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReportRow } from '../services/adapters'
 import ConfirmDialog from '../shared/components/ConfirmDialog'
 import { useElementId } from '../shared/hooks/useElementId'
@@ -24,6 +24,10 @@ function readError(error: unknown): string {
 // changes nothing and focus goes back to Load.
 function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const pasteButtonRef = useRef<HTMLButtonElement | null>(null)
+  // Set when a paste replaces the report: the box (and its Load button, where
+  // the dialog would return focus) closes, so focus goes to Paste JSON instead.
+  const shouldFocusPasteButton = useRef(false)
   const pasteId = useElementId('own-data-paste')
   const [isPasting, setIsPasting] = useState(false)
   const [pastedText, setPastedText] = useState('')
@@ -50,8 +54,16 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
     onReplace(pending)
     setPending(null)
     setPastedText('')
+    shouldFocusPasteButton.current = isPasting
     showPasteBox(false)
   }
+
+  // Runs after the dialog has unmounted, so this focus isn't overridden.
+  useEffect(() => {
+    if (isPasting || !shouldFocusPasteButton.current) return
+    shouldFocusPasteButton.current = false
+    pasteButtonRef.current?.focus()
+  }, [isPasting])
 
   async function openFile(file: File): Promise<void> {
     if (file.size > MAX_RECORDS_BYTES) {
@@ -82,7 +94,7 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
           if (file) void openFile(file)
         }}
       />
-      <button type="button" aria-expanded={isPasting} onClick={() => showPasteBox(!isPasting)}>
+      <button ref={pasteButtonRef} type="button" aria-expanded={isPasting} onClick={() => showPasteBox(!isPasting)}>
         Paste JSON
       </button>
       {isPasting && (

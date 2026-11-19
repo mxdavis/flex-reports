@@ -133,6 +133,8 @@ describe('the app', () => {
 
       expect(await screen.findByRole('checkbox', { name: 'product' })).toBeInTheDocument()
       expect(screen.queryByRole('checkbox', { name: 'hours' })).not.toBeInTheDocument()
+      // The paste box has closed, so focus goes to Paste JSON, not the page.
+      expect(screen.getByRole('button', { name: 'Paste JSON' })).toHaveFocus()
       expect(screen.getByRole('region', { name: 'Report data' })).toHaveTextContent('pasted data · 2 records')
       expect(screen.queryByRole('link', { name: 'Download sample JSON' })).not.toBeInTheDocument()
       expect(window.localStorage.getItem(SAVED_REPORT_STORAGE_KEY)).toBeNull()
