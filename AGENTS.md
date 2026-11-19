@@ -12,6 +12,11 @@ Instructions changing this repo. Follow them before writing code; if a request c
 - **Helpers and services** for reusable logic; keep components/controllers thin.
 - **MVC mindset** models = domain/data, controllers = orchestration,
   views = presentation.
+- **Use a package for standard tasks** — when logic is outside what this product does
+  (parsing or validating JSON, accessible comboboxes, drag and drop, virtual scrolling)
+  and a secure, reliable, simple package exists, use it instead of writing our own. Pick
+  one that's well maintained, widely used, and from a known publisher (for example
+  `jsonc-parser` from Microsoft). Pin its exact version.
 
 ## Comments
 

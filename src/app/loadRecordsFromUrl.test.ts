@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { loadRecordsFromUrl, MAX_RECORDS_BYTES, RECORDS_TIMEOUT_MS } from './loadRecordsFromUrl'
+import { loadRecordsFromUrl, RECORDS_TIMEOUT_MS } from './loadRecordsFromUrl'
+import { MAX_RECORDS_BYTES } from './recordsJson'
 
 function mockFetch(response: Response | Error) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
@@ -36,7 +37,8 @@ describe('loadRecordsFromUrl', () => {
   it.each([
     [new Response('nope', { status: 404 }), 'The address answered with an error (404).'],
     [new Response('{not json'), 'This isn\'t valid JSON.'],
-    [new Response('{"rows":[]}'), 'Provide a list of records.'],
+    [new Response('[{"item":"Cable"},{"item":"Pl'), 'may be cut off'],
+    [new Response('{"rows":[]}'), 'Provide just the list of records'],
     [new Response('[]', { headers: { 'content-length': String(MAX_RECORDS_BYTES + 1) } }), 'larger than 5 MB'],
     [new Response(`["${'x'.repeat(MAX_RECORDS_BYTES)}"]`), 'larger than 5 MB'],
     [new TypeError('Failed to fetch'), 'allow browser access (CORS)'],
