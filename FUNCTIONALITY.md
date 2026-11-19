@@ -1,7 +1,7 @@
 # How Flex Reports works
 
 A guide to everything a report can do, for the people building and reading reports.
-For running and integrating the package, see the [README](../README.md).
+For running and integrating the package, see the [README](README.md).
 
 - [The report table](#the-report-table)
 - [Totals](#totals)
@@ -118,8 +118,9 @@ groups you opened or closed by hand.
 marked *(over 1,000 rows)* and can't be picked, and the report opens at the deepest level
 that fits, with a note saying so. You can still open any single group to see its rows.
 This only changes what's shown: the saved **Show rows** level is kept, so the report
-opens fully again if the data gets smaller. The host app can change the limit with the
-`maxVisibleRows` prop. Ungrouped tables show every row.
+opens fully again if the data gets smaller. Any table longer than the limit shows and
+prints its first 1,000 rows, with a note; totals and formulas still use every row. The
+host app can lower the limit with the `maxVisibleRows` prop.
 
 ## Vertical view and full screen
 
@@ -143,7 +144,7 @@ viewers and editors, and the host app can limit the formats or turn it off.
 
 | Format | What you get |
 |---|---|
-| **Print…** | The report as it looks on screen (grouping, collapsed groups, totals, vertical view), with every row, the title, and the print date. Toolbars and edit panels are left out, column headers repeat on each page, and only the report prints, not the rest of the page. |
+| **Print…** | The report as it looks on screen (grouping, collapsed groups, totals, vertical view), with every row up to the row limit, the title, and the print date. Toolbars and edit panels are left out, column headers repeat on each page, and only the report prints, not the rest of the page. |
 | **Save as PDF…** | The same layout, through the browser's print dialog: choose **Save as PDF** as the destination. The file is named after the report. |
 | **Excel (.xlsx)** | A real workbook: numbers and dates stay numbers and dates, with currency, percent, and date formats; the header row is frozen. A grouped report uses Excel's own row outline: group rows (with their totals) sit above their rows, and groups collapsed on screen arrive collapsed, ready to expand in Excel. Includes the total row when Totals is on. |
 | **CSV** | Every data row, with the report's columns and headers, values formatted as on screen. No group or total rows. Opens correctly in Excel, including symbols like €. |
@@ -255,11 +256,9 @@ Refreshing the page puts them back on the saved default view.
 - Rows can be any shape. They don't need an `id`.
 - Without a schema, every field found across all rows becomes a column you can pick,
   including fields inside other fields (`client.name`). Fields that hold a list are left out.
-- Default display types come from each field's data type:
-  - currency → currency
-  - number → decimal number
-  - date → date
-  - text → string
+- Fields found in the data start as **string**; pick another display type when you edit
+  the column. When the host app describes its fields, their types set the defaults:
+  currency → currency, number → decimal number, date → date, text → string.
 - Default total types: sum for number columns, distinct count for text and date columns.
 - Number columns read plain numbers like `1250.50` or `1,250.50`. Anything else, such
   as `$40`, `120USD` or `N/A`, is shown as typed, flagged with a warning, left out of
