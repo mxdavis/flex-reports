@@ -66,7 +66,7 @@ describe('ReportBuilderApp', () => {
     render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
-    let columnOneSource = screen.getByLabelText('COLUMN 1') as HTMLInputElement
+    let columnOneSource = screen.getByLabelText('Field') as HTMLInputElement
     fireEvent.change(columnOneSource, { target: { value: '%grossFees' } })
     expect(columnOneSource.value).toBe('%grossFees')
     await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
@@ -79,7 +79,7 @@ describe('ReportBuilderApp', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save' }))
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
-    columnOneSource = screen.getByLabelText('COLUMN 1') as HTMLInputElement
+    columnOneSource = screen.getByLabelText('Field') as HTMLInputElement
     expect(columnOneSource.value).toBe('%Gross Renamed')
   })
 
@@ -88,7 +88,7 @@ describe('ReportBuilderApp', () => {
     render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
-    const sourceInput = screen.getByLabelText('COLUMN 1') as HTMLInputElement
+    const sourceInput = screen.getByLabelText('Field') as HTMLInputElement
     const labelInput = screen.getByLabelText('Display label') as HTMLInputElement
 
     fireEvent.change(sourceInput, { target: { value: '' } })
@@ -97,7 +97,7 @@ describe('ReportBuilderApp', () => {
     await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
 
-    expect((screen.getByLabelText('COLUMN 1') as HTMLInputElement).value).toBe('id')
+    expect((screen.getByLabelText('Field') as HTMLInputElement).value).toBe('id')
     expect((screen.getByLabelText('Display label') as HTMLInputElement).value).toBe('id')
   })
 
@@ -153,17 +153,17 @@ describe('ReportBuilderApp', () => {
     render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
-    const columnTwoSource = screen.getByLabelText('COLUMN 2') as HTMLInputElement
+    const columnTwoSource = screen.getByLabelText('Field') as HTMLInputElement
     const originalColumnTwoSource = columnTwoSource.value
     await user.click(screen.getByRole('button', { name: 'Cancel COLUMN 2' }))
 
     await user.click(screen.getByRole('button', { name: 'Add column' }))
     await user.selectOptions(screen.getByLabelText('Column number'), '2')
-    await user.type(screen.getByLabelText('Data point'), 'hours')
+    await user.type(screen.getByLabelText('Field'), 'hours')
     await user.click(screen.getByRole('button', { name: 'Save column' }))
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 3' }))
-    const columnThreeSource = screen.getByLabelText('COLUMN 3') as HTMLInputElement
+    const columnThreeSource = screen.getByLabelText('Field') as HTMLInputElement
     expect(columnThreeSource.value).toBe(originalColumnTwoSource)
   })
 

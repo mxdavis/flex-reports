@@ -112,7 +112,7 @@ export function useMappingPanelProps(): MappingPanelProps {
     displayTypeOptions: DISPLAY_TYPE_OPTIONS,
     aggregationOptions: AGGREGATION_OPTIONS,
     onStartAddColumn: () => {
-      // Starts blank so the person picks the data point rather than accepting a guess.
+      // Starts blank so the person picks the field rather than accepting a guess.
       const newColumn = { position: fields.length + 1, draft: draftForSource('') }
       dispatchUi({ type: 'set', changes: { newColumn } })
     },

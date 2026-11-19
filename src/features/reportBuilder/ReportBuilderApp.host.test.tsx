@@ -222,7 +222,7 @@ describe('ReportBuilderApp host mode', () => {
     expect(dirtyEvent.defaultPrevented).toBe(true)
   })
 
-  it('keeps a column with a missing source in place and warns editors only', () => {
+  it('keeps a column with a missing field in place and warns editors only', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const staleDefinition: ReportDefinition = {
       ...savedDefinition,
@@ -230,8 +230,8 @@ describe('ReportBuilderApp host mode', () => {
     }
     const { unmount } = render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={staleDefinition} onSave={vi.fn()} initialEditMode />)
 
-    expect(screen.getByRole('columnheader', { name: 'Old metric (missing source)' })).toBeInTheDocument()
-    expect(screen.getByText(/Source "removedField" isn't in the data or formulas/)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Old metric (missing field)' })).toBeInTheDocument()
+    expect(screen.getByText(/Field "removedField" isn't in the data or formulas/)).toBeInTheDocument()
     // Not repointed, so nothing changed and there is nothing to save.
     expect(getSaveButton()).toBeDisabled()
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"Old metric" → "removedField"'))
@@ -259,11 +259,11 @@ describe('ReportBuilderApp host mode', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     // Same type (text → text): the customized Total type stays.
-    fireEvent.change(screen.getByLabelText('COLUMN 1'), { target: { value: 'city' } })
+    fireEvent.change(screen.getByLabelText('Field'), { target: { value: 'city' } })
     expect(screen.getByLabelText('Total type')).toHaveValue('none')
 
     // Different type (text → number): the form switches to number defaults.
-    fireEvent.change(screen.getByLabelText('COLUMN 1'), { target: { value: 'units' } })
+    fireEvent.change(screen.getByLabelText('Field'), { target: { value: 'units' } })
     expect(screen.getByLabelText('Display type')).toHaveValue('decimal')
     expect(screen.getByLabelText('Total type')).toHaveValue('sum')
 
@@ -321,7 +321,7 @@ describe('ReportBuilderApp host mode', () => {
     const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
 
     await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
-    await user.click(within(mapping).getByLabelText('Data point'))
+    await user.click(within(mapping).getByLabelText('Field'))
 
     expect(within(mapping).getByRole('button', { name: 'Edit COLUMN 1' })).toBeInTheDocument()
     expect(within(mapping).getByRole('button', { name: 'Edit COLUMN 2' })).toBeInTheDocument()
@@ -329,16 +329,28 @@ describe('ReportBuilderApp host mode', () => {
     expect(options.map((option) => option.textContent)).toEqual(['units', 'warehouse'])
   })
 
-  it('starts a new column with no data point, and saves it once one is picked', async () => {
+  it('names each open column form, so its Field input is told apart from another', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+    const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
+
+    await user.click(within(mapping).getByRole('button', { name: 'Edit COLUMN 1' }))
+    await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
+
+    expect(within(within(mapping).getByRole('group', { name: 'COLUMN 1' })).getByLabelText('Field')).toHaveValue('warehouse')
+    expect(within(within(mapping).getByRole('group', { name: 'New column' })).getByLabelText('Field')).toHaveValue('')
+  })
+
+  it('starts a new column with no field, and saves it once one is picked', async () => {
     const user = userEvent.setup()
     render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
     const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
 
     await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
-    expect(within(mapping).getByLabelText('Data point')).toHaveValue('')
+    expect(within(mapping).getByLabelText('Field')).toHaveValue('')
     expect(within(mapping).getByRole('button', { name: 'Save column' })).toBeDisabled()
 
-    await user.type(within(mapping).getByLabelText('Data point'), 'units')
+    await user.type(within(mapping).getByLabelText('Field'), 'units')
     await user.click(within(mapping).getByRole('button', { name: 'Save column' }))
     expect(within(mapping).getByRole('button', { name: 'Edit COLUMN 3' })).toBeInTheDocument()
   })

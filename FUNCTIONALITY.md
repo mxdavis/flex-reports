@@ -183,14 +183,14 @@ Reports have up to 15 columns. You can:
 - **Remove** a column.
 - **Drag** cards to reorder columns. Order controls [grouping](#grouping).
 - **Edit** a column to set:
-  - **Data point:** a data field, or `%` and a formula's label (for example `%lineTotal`).
+  - **Field:** a field from the data, or `%` and a formula's label (for example `%lineTotal`).
   - **Label:** the header users see.
   - **Display type:** currency, number, decimal number, percent, date, or string.
   - **Total type:** sum, average, count, distinct count, or none (see [Totals](#totals)).
 
-When you change a column's source to one of a **different type** (for example text to
+When you change a column's field to one of a **different type** (for example text to
 currency), Display type and Total type switch to that type's defaults right away in the
-form. A source of the **same type** keeps the column's current settings. Nothing changes
+form. A field of the **same type** keeps the column's current settings. Nothing changes
 until you click **Save** on the column.
 
 Editors also see a **Tip** here explaining how column order drives grouping.
@@ -215,7 +215,7 @@ A formula label must start with a letter and use only letters, numbers, spaces, 
 It can't match a data field's name or another formula's (ignoring case), and an
 expression can be up to 500 characters.
 
-To show a formula, add a column and set its **Data point** to `%` and the formula's label,
+To show a formula, add a column and set its **Field** to `%` and the formula's label,
 for example `%lineTotal`.
 Example: a formula labelled `lineTotal` with `{{units}} * {{price}}`, shown in a column
 labelled *Line total* with display type *Currency*.
@@ -266,9 +266,9 @@ Refreshing the page puts them back on the saved default view.
 - Date-only values like `2026-07-01` show as that calendar day for every viewer,
   whatever their timezone. Values with a time (`2026-07-01T23:30:00Z`) are shown in
   the viewer's local time.
-- If a column's source isn't in the data or formulas (for example a removed field or a
+- If a column's field isn't in the data or formulas (for example a removed field or a
   deleted formula), the column stays where it is and shows blank values. Editors see
-  ⚠ on its header and a warning on its column card, so they can pick another source.
+  ⚠ on its header and a warning on its column card, so they can pick another field.
   A warning is also logged to the browser console.
 - An invalid saved report doesn't crash the page. The bad parts fall back to defaults and
   an error is logged to the browser console.
