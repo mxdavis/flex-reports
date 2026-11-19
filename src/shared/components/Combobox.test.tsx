@@ -2,7 +2,8 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import Combobox, { findTypedOption } from './Combobox'
+import Combobox from './Combobox'
+import { findTypedOption } from './comboboxUtils'
 
 const options = ['hours', 'client.id', 'client.name']
 

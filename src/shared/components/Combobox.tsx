@@ -1,6 +1,7 @@
 import { useCombobox, type UseComboboxState, type UseComboboxStateChangeOptions } from 'downshift'
 import { useMemo, useState } from 'react'
 import { filterOptions } from '../hooks/useOptionsList'
+import { findTypedOption } from './comboboxUtils'
 import './Combobox.css'
 
 type ComboboxProps = {
@@ -14,16 +15,6 @@ type ComboboxProps = {
 }
 
 const { InputBlur, InputChange, InputKeyDownEscape } = useCombobox.stateChangeTypes
-
-// The option typed into the box, ignoring case. When options differ only by
-// case, the exact spelling wins; if it's still unclear, nothing matches.
-export function findTypedOption(typed: string, options: string[]): string | null {
-  const text = typed.trim()
-  if (!text) return null
-  if (options.includes(text)) return text
-  const matches = options.filter((option) => option.toLowerCase() === text.toLowerCase())
-  return matches.length === 1 ? matches[0] : null
-}
 
 // Pick one option from a list. Typing only narrows the list: the value
 // changes when an option is picked (click or Enter), or when the box is left
@@ -45,11 +36,11 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
     state: UseComboboxState<string>,
     { type, changes }: UseComboboxStateChangeOptions<string>,
   ): Partial<UseComboboxState<string>> {
+    // Leaving never picks the highlighted option (handleBlur picks a typed
+    // name), and Escape never clears the value.
     if (type === InputBlur) {
       const typed = findTypedOption(state.inputValue, allOptions)
-      return typed
-        ? { ...changes, selectedItem: typed, inputValue: typed }
-        : { ...changes, selectedItem: state.selectedItem, inputValue: state.selectedItem ?? '' }
+      return { ...changes, selectedItem: state.selectedItem, inputValue: typed ?? state.selectedItem ?? '' }
     }
     if (type === InputKeyDownEscape) {
       return { ...changes, selectedItem: state.selectedItem, inputValue: state.selectedItem ?? '' }
@@ -76,11 +67,20 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
   })
   const { isOpen, highlightedIndex } = combobox
 
+  // Picks a typed name as the box loses focus. That happens on mouse-down, so
+  // a click on Save right after typing saves the new field: Downshift's own
+  // change callbacks run in a later effect, after that click.
+  function handleBlur(): void {
+    const typed = findTypedOption(inputValue, allOptions)
+    if (typed && typed !== value) onPick(typed)
+    setInputValue(typed ?? value)
+  }
+
   return (
     <div className="fr-combobox">
       <div className="fr-combobox-row">
         {/* The page's <label htmlFor> names the input, not Downshift's label id. */}
-        <input {...combobox.getInputProps({ title, autoComplete: 'off', 'aria-labelledby': undefined })} />
+        <input {...combobox.getInputProps({ title, autoComplete: 'off', 'aria-labelledby': undefined, onBlur: handleBlur })} />
         <button
           type="button"
           className="fr-combobox-toggle"
