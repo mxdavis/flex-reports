@@ -9,8 +9,8 @@ const COMPONENT_DIRS = [
 ]
 
 const MAX_COMPONENT_LINES = 220
-const MAX_REPORT_APP_LINES = 1000
-const REPORT_APP_PATH = 'src/features/reportBuilder/ReportBuilderApp.tsx'
+// Every other source file (hooks, models, services): split it before it grows past this.
+const MAX_SOURCE_LINES = 250
 // The builder is embedded in host pages, so its classes are namespaced to
 // avoid clashing with the host's CSS. index.css styles only the app's page.
 const CSS_CLASS_PREFIX = 'fr-'
@@ -109,7 +109,11 @@ function run() {
     }
   }
 
-  validateLineLimit(REPORT_APP_PATH, MAX_REPORT_APP_LINES, failures)
+  const componentFiles = new Set(COMPONENT_DIRS.flatMap((dirPath) => listFilesRecursive(dirPath)))
+  for (const filePath of listFilesRecursive('src')) {
+    const isSource = /\.tsx?$/.test(filePath) && !/\.test\.tsx?$/.test(filePath)
+    if (isSource && !componentFiles.has(filePath)) validateLineLimit(filePath, MAX_SOURCE_LINES, failures)
+  }
 
   if (failures.length > 0) {
     console.error('Practice checks failed:')
