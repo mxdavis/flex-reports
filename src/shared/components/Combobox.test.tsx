@@ -82,6 +82,7 @@ describe('Combobox', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('No matches')
     expect(input()).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Hide options' })).toHaveAttribute('aria-expanded', 'false')
 
     await user.clear(input())
     expect(screen.getByRole('status')).toBeEmptyDOMElement()

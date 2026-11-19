@@ -73,6 +73,7 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
   })
   const { isOpen, highlightedIndex } = combobox
   const hasNoMatches = isOpen && items.length === 0
+  const isListShown = isOpen && !hasNoMatches
 
   // Picks a typed name as the box loses focus. That happens on mouse-down, so
   // a click on Save right after typing saves the new field: Downshift's own
@@ -92,21 +93,25 @@ export default function Combobox({ id, value, options, onPick, title }: Combobox
             title,
             autoComplete: 'off',
             'aria-labelledby': undefined,
-            'aria-expanded': isOpen && !hasNoMatches,
+            'aria-expanded': isListShown,
             onBlur: handleBlur,
           })}
         />
         <button
           type="button"
           className="fr-combobox-toggle"
-          {...combobox.getToggleButtonProps({ title: 'Show options', 'aria-label': isOpen ? 'Hide options' : 'Show options' })}
+          {...combobox.getToggleButtonProps({
+            title: 'Show options',
+            'aria-label': isOpen ? 'Hide options' : 'Show options',
+            'aria-expanded': isListShown,
+          })}
         >
           v
         </button>
       </div>
       <ul
         className="fr-combobox-list"
-        hidden={!isOpen || hasNoMatches}
+        hidden={!isListShown}
         {...combobox.getMenuProps({ 'aria-label': 'Suggestions', 'aria-labelledby': undefined })}
       >
         {isOpen && items.map((item, index) => (
