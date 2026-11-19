@@ -6,6 +6,7 @@ import { normalizeReportDefinition } from '../../services/reportDefinition/norma
 import type { ReportDefinition } from '../../services/reportDefinition/types'
 import { installMemoryStorage } from '../../test/memoryStorage'
 import { reportWithColumns } from '../../test/reportWithColumns'
+import { pickField } from '../../test/pickField'
 import ReportBuilderApp from './ReportBuilderApp'
 
 // A saved report showing every field found in the rows.
@@ -62,8 +63,7 @@ describe('nested fields in the existing report editor', () => {
       expect(within(table).getByRole('columnheader', { name: label })).toBeInTheDocument()
     }
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
-    await user.clear(screen.getByLabelText('Field'))
-    await user.click(screen.getByRole('button', { name: '["client.name"]' }))
+    await pickField(user, screen.getByLabelText('Field'), '["client.name"]')
     await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
     expect(within(table).queryByText('Nested')).toBeNull()
     expect(within(table).getAllByText('Literal')).toHaveLength(2)
