@@ -181,6 +181,76 @@ describe('the app', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
 
+    function serveSampleAnd(address: string, response: () => Response) {
+      return vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => (
+        String(url) === address ? response() : new Response(JSON.stringify(SAMPLE_RECORDS))
+      ))
+    }
+
+    async function loadFromAddress(user: ReturnType<typeof userEvent.setup>, address: string) {
+      await user.click(await screen.findByRole('button', { name: 'Load from address' }))
+      await user.type(screen.getByLabelText('Web address of a JSON list of records'), address)
+      await user.click(screen.getByRole('button', { name: 'Load' }))
+    }
+
+    it('loads records from a web address after confirming', async () => {
+      serveSampleAnd('https://example.com/orders.json', () => new Response(JSON.stringify(OWN_RECORDS)))
+      const user = userEvent.setup()
+      render(<App initialEditMode />)
+
+      await loadFromAddress(user, 'https://example.com/orders.json')
+      await user.click(await screen.findByRole('button', { name: 'Replace report' }))
+
+      expect(await screen.findByRole('checkbox', { name: 'product' })).toBeInTheDocument()
+      expect(screen.getByRole('region', { name: 'Report data' })).toHaveTextContent('example.com/orders.json · 2 records')
+      expect(screen.getByRole('button', { name: 'Load from address' })).toHaveFocus()
+    })
+
+    it('explains an address that can\'t be read, keeping what was typed', async () => {
+      serveSampleAnd('https://example.com/private.json', () => {
+        throw new TypeError('Failed to fetch')
+      })
+      const user = userEvent.setup()
+      render(<App initialEditMode />)
+
+      await loadFromAddress(user, 'https://example.com/private.json')
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('allow browser access (CORS)')
+      expect(screen.getByLabelText('Web address of a JSON list of records')).toHaveValue('https://example.com/private.json')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByRole('checkbox', { name: 'hours' })).toBeInTheDocument()
+    })
+
+    it('asks for an address, and refuses one that isn\'t https, before requesting anything', async () => {
+      const fetchSpy = serveSample()
+      const user = userEvent.setup()
+      render(<App initialEditMode />)
+      await screen.findByRole('checkbox', { name: 'hours' })
+      fetchSpy.mockClear()
+
+      await user.click(screen.getByRole('button', { name: 'Load from address' }))
+      await user.click(screen.getByRole('button', { name: 'Load' }))
+      expect(screen.getByRole('alert')).toHaveTextContent('Enter a web address.')
+
+      await user.type(screen.getByLabelText('Web address of a JSON list of records'), 'http://example.com/data.json')
+      await user.click(screen.getByRole('button', { name: 'Load' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('Use an address that starts with https://.')
+      expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it('keeps the address and returns focus to Load when the replace is cancelled', async () => {
+      serveSampleAnd('https://example.com/orders.json', () => new Response(JSON.stringify(OWN_RECORDS)))
+      const user = userEvent.setup()
+      render(<App initialEditMode />)
+
+      await loadFromAddress(user, 'https://example.com/orders.json')
+      await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+
+      expect(screen.getByLabelText('Web address of a JSON list of records')).toHaveValue('https://example.com/orders.json')
+      expect(screen.getByRole('button', { name: 'Load' })).toHaveFocus()
+      expect(screen.getByRole('checkbox', { name: 'hours' })).toBeInTheDocument()
+    })
+
     it('opens a JSON file in the browser, and goes back to the sample on Reset', async () => {
       serveSample()
       const user = userEvent.setup()
