@@ -37,15 +37,23 @@ export function useMappingPanelProps(): MappingPanelProps {
     stopEditingField()
   }
 
-  // Switching columns with unsaved edits asks whether to keep them first.
+  // Switching columns with unsaved edits asks whether to save them first.
   function startEditingField(field: ReportField): void {
     const current = editingField && fields.find((candidate) => candidate.id === editingField.id)
     if (current && editingField && current.id !== field.id && hasUnsavedChanges(current, editingField)) {
-      const columnLabel = `COLUMN ${fields.indexOf(current) + 1}`
-      if (!window.confirm(`Save changes to ${columnLabel} before editing another column?`)) return
-      saveEditingField(current.id)
+      dispatchUi({ type: 'set', changes: { switchToFieldId: field.id } })
+      return
     }
     dispatchUi({ type: 'startEditField', field })
+  }
+
+  const columnName = (fieldId: string | undefined) => `COLUMN ${fields.findIndex((field) => field.id === fieldId) + 1}`
+  const switchToField = fields.find((field) => field.id === ui.switchToFieldId)
+
+  function saveAndSwitch(): void {
+    if (!editingField || !switchToField) return
+    saveEditingField(editingField.id)
+    dispatchUi({ type: 'startEditField', field: switchToField })
   }
 
   function moveField(sourceId: string, targetId: string): void {
@@ -99,6 +107,15 @@ export function useMappingPanelProps(): MappingPanelProps {
 
   return {
     fields,
+    columnSwitchDialog: {
+      isOpen: Boolean(editingField && switchToField),
+      title: `Save your changes to ${columnName(editingField?.id)}?`,
+      message: `You changed ${columnName(editingField?.id)} but haven't saved it. Save it before editing ${columnName(switchToField?.id)}?`,
+      confirmLabel: 'Save and switch',
+      cancelLabel: 'Keep editing',
+      onConfirm: saveAndSwitch,
+      onCancel: () => dispatchUi({ type: 'set', changes: { switchToFieldId: null } }),
+    },
     newColumn: ui.newColumn,
     maxColumns: MAX_REPORT_COLUMNS,
     showTips: state.showTips,

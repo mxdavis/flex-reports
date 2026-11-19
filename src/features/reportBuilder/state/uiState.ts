@@ -21,6 +21,9 @@ export type UiState = {
   newColumn: NewColumnDraft | null
   // The column being edited, as an unsaved draft (its id is the column's id).
   editingField: ReportField | null
+  // The column the user asked to edit while editingField had unsaved changes;
+  // set while they're asked whether to save first.
+  switchToFieldId: string | null
   editingFormula: FormulaDraft | null
   draggedFieldId: string | null
   dragOverFieldId: string | null
@@ -59,6 +62,7 @@ export function createInitialUiState(args: { initialEditMode: boolean, initialVi
     isAddingFormula: false,
     newColumn: null,
     editingField: null,
+    switchToFieldId: null,
     editingFormula: null,
     draggedFieldId: null,
     dragOverFieldId: null,
@@ -99,7 +103,7 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
         }
         : state
     case 'startEditField':
-      return { ...state, editingField: { ...action.field } }
+      return { ...state, editingField: { ...action.field }, switchToFieldId: null }
     case 'patchEditField':
       return state.editingField ? { ...state, editingField: { ...state.editingField, ...action.changes } } : state
     case 'stopEditField':

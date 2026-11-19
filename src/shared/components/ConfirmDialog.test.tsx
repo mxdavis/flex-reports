@@ -40,6 +40,12 @@ describe('ConfirmDialog', () => {
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 
+  it('can name its cancel button', () => {
+    render(<ConfirmDialog isOpen title="Switch?" message="Unsaved." confirmLabel="Save" cancelLabel="Keep editing" onConfirm={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Keep editing' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+  })
+
   it('cancels on Escape, leaving the parent to close it', () => {
     const { onCancel } = renderDialog()
     const dialog = screen.getByRole('dialog')
