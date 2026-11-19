@@ -6,11 +6,14 @@ import type {
   DisplayType,
   ReportField,
 } from '../../../services/reportDefinition/types'
+import ConfirmDialog, { type ConfirmDialogProps } from '../../../shared/components/ConfirmDialog'
 import SectionTitleRow from '../../../shared/components/SectionTitleRow'
 import type { NewColumnDraft } from '../state/uiState'
 import './MappingPanelSection.css'
 
 export type MappingPanelSectionProps = {
+  // Asks whether to save the open column before editing another; null when not asking.
+  columnSwitchDialog: Omit<ConfirmDialogProps, 'isOpen'> | null
   fields: ReportField[]
   // The Add column form's draft, or null when the form is closed.
   newColumn: NewColumnDraft | null
@@ -49,6 +52,7 @@ export type MappingPanelSectionProps = {
   onToggleCollapsed?: () => void
 }
 function MappingPanelSection({
+  columnSwitchDialog,
   fields,
   newColumn,
   maxColumns,
@@ -203,6 +207,7 @@ function MappingPanelSection({
           </div>
         </div>
       )}
+      {columnSwitchDialog && <ConfirmDialog isOpen {...columnSwitchDialog} />}
     </section>
   )
 }

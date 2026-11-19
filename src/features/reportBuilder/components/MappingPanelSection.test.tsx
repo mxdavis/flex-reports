@@ -17,6 +17,7 @@ describe('MappingPanelSection', () => {
   it('renders section with fr-report-columns id', () => {
     render(
       <MappingPanelSection
+        columnSwitchDialog={null}
         fields={fields}
         newColumn={null}
         maxColumns={15}
@@ -62,6 +63,7 @@ describe('MappingPanelSection', () => {
     const onStartAddColumn = vi.fn()
     const { container } = render(
       <MappingPanelSection
+        columnSwitchDialog={null}
         fields={fields}
         newColumn={null}
         maxColumns={15}

@@ -229,40 +229,49 @@ describe('ReportBuilderApp', () => {
     expect(screen.getByRole('button', { name: 'Save report' })).toBeDisabled()
   })
 
-  it('prevents switching column edit when unsaved changes are not confirmed', async () => {
+  it('asks before switching columns with unsaved changes, and Keep editing stays put', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
     render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Changed Label' } })
-
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
 
-    expect(confirmSpy).toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog', { name: 'Save your changes to COLUMN 1?' })
+    expect(dialog).toHaveAccessibleDescription("You changed COLUMN 1 but haven't saved it. Save it before editing COLUMN 2?")
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Edit COLUMN 2' })).toHaveFocus()
     expect(screen.getByLabelText('Display label')).toHaveValue('Changed Label')
     expect(screen.queryByRole('button', { name: 'Save COLUMN 2' })).not.toBeInTheDocument()
-
-    confirmSpy.mockRestore()
   })
 
-  it('saves current column before switching when confirm is accepted', async () => {
+  it('saves the current column, then edits the next, on Save and switch', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Saved Label' } })
-
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
+    await user.click(screen.getByRole('button', { name: 'Save and switch' }))
 
-    expect(confirmSpy).toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByRole('button', { name: 'Save COLUMN 2' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Cancel COLUMN 2' }))
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     expect(screen.getByLabelText('Display label')).toHaveValue('Saved Label')
+  })
 
-    confirmSpy.mockRestore()
+  it('switches columns without asking when nothing changed', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp {...sampleReportProps()} initialEditMode />)
+
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 2' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Save COLUMN 2' })).toBeInTheDocument()
   })
 })

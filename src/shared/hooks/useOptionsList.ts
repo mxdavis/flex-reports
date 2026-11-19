@@ -1,19 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase()
-}
-
-// Unique options containing the query, case-insensitively, in their given order.
-export function filterOptions(options: string[], query: string): string[] {
-  const normalizedQuery = normalize(query)
-  const uniqueOptions = Array.from(new Set(options))
-  if (!normalizedQuery) return uniqueOptions
-  return uniqueOptions.filter((option) => normalize(option).includes(normalizedQuery))
-}
-
-// The suggestion-list behavior shared by the autocomplete inputs: open/closed,
-// closing on an outside click, the highlighted option, and arrow/Enter/Escape.
+// The formula input's {{ token suggestions: open/closed, closing on an outside
+// click, the highlighted option, and arrow/Enter/Escape. (Pickers use Combobox.)
 export function useOptionsList(options: string[], onSelect: (option: string) => void) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
@@ -54,8 +42,6 @@ export function useOptionsList(options: string[], onSelect: (option: string) => 
     isOpen,
     setIsOpen,
     highlightedIndex: activeIndex,
-    resetHighlight: () => setHighlightedIndex(0),
-    highlight: setHighlightedIndex,
     handleKeyDown,
   }
 }

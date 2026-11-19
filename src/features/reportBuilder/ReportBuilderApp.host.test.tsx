@@ -8,6 +8,7 @@ import { installMemoryStorage } from '../../test/memoryStorage'
 import { sampleReportProps } from '../../test/sampleReport'
 import { createRecordsDataSource } from '../../services/adapters/recordsDataSource'
 import { reportWithColumns } from '../../test/reportWithColumns'
+import { pickField } from '../../test/pickField'
 import ReportBuilderApp from './ReportBuilderApp'
 
 // A non-billing dataset: the builder must work with whatever the host sends.
@@ -259,11 +260,11 @@ describe('ReportBuilderApp host mode', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
     // Same type (text → text): the customized Total type stays.
-    fireEvent.change(screen.getByLabelText('Field'), { target: { value: 'city' } })
+    await pickField(user, screen.getByLabelText('Field'), 'city')
     expect(screen.getByLabelText('Total type')).toHaveValue('none')
 
     // Different type (text → number): the form switches to number defaults.
-    fireEvent.change(screen.getByLabelText('Field'), { target: { value: 'units' } })
+    await pickField(user, screen.getByLabelText('Field'), 'units')
     expect(screen.getByLabelText('Display type')).toHaveValue('decimal')
     expect(screen.getByLabelText('Total type')).toHaveValue('sum')
 

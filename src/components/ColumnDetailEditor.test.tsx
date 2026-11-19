@@ -1,9 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { pickField } from '../test/pickField'
 import ColumnDetailEditor from './ColumnDetailEditor'
 
 describe('ColumnDetailEditor', () => {
-  it('calls callbacks when editing source, label, and display type', () => {
+  it('calls callbacks when picking a field and editing label, display type and total', async () => {
+    const user = userEvent.setup()
     const onSourceChange = vi.fn()
     const onLabelChange = vi.fn()
     const onDisplayTypeChange = vi.fn()
@@ -38,7 +41,7 @@ describe('ColumnDetailEditor', () => {
     )
 
     expect(screen.getByRole('group', { name: 'COLUMN 1' })).toContainElement(screen.getByLabelText('Field'))
-    fireEvent.change(screen.getByLabelText('Field'), { target: { value: 'hours' } })
+    await pickField(user, screen.getByLabelText('Field'), 'hours')
     expect(onSourceChange).toHaveBeenCalledWith('hours')
 
     fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Hours' } })

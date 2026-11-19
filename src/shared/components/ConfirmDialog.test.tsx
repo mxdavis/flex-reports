@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import ConfirmDialog from './ConfirmDialog'
 
@@ -38,6 +40,32 @@ describe('ConfirmDialog', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1)
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it('can name its cancel button', () => {
+    render(<ConfirmDialog isOpen title="Switch?" message="Unsaved." confirmLabel="Save" cancelLabel="Keep editing" onConfirm={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Keep editing' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+  })
+
+  it('puts focus back on the button that opened it once it closes', async () => {
+    function Opener() {
+      const [isOpen, setIsOpen] = useState(false)
+      return (
+        <>
+          <button type="button" onClick={() => setIsOpen(true)}>Delete…</button>
+          <ConfirmDialog isOpen={isOpen} title="Delete this?" message="Sure?" confirmLabel="Delete" onConfirm={() => setIsOpen(false)} onCancel={() => setIsOpen(false)} />
+        </>
+      )
+    }
+    const user = userEvent.setup()
+    render(<Opener />)
+
+    await user.click(screen.getByRole('button', { name: 'Delete…' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Delete…' })).toHaveFocus()
   })
 
   it('cancels on Escape, leaving the parent to close it', () => {

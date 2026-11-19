@@ -8,7 +8,7 @@ export class RecordsLoadError extends Error {}
 
 const EXAMPLE = 'like [{"name": "Ann", "hours": 2}, …]'
 
-// Where JSON first breaks, as an offset into the text, or -1 if it doesn't.
+// Where JSON first breaks, as an offset into the text, or undefined if it is valid.
 // Browsers word their own errors differently and some give no position, so
 // the text is read again with a parser that reports one.
 export function findJsonError(text: string): { offset: number, cutOff: boolean } | undefined {

@@ -184,6 +184,8 @@ Reports have up to 15 columns. You can:
 - **Drag** cards to reorder columns. Order controls [grouping](#grouping).
 - **Edit** a column to set:
   - **Field:** a field from the data, or `%` and a formula's label (for example `%lineTotal`).
+    Type part of a name to narrow the list, then pick one. Typing alone doesn't change the
+    column: a partly typed name goes back to the current field when you leave the box.
   - **Label:** the header users see.
   - **Display type:** currency, number, decimal number, percent, date, or string.
   - **Total type:** sum, average, count, distinct count, or none (see [Totals](#totals)).
@@ -192,6 +194,10 @@ When you change a column's field to one of a **different type** (for example tex
 currency), Display type and Total type switch to that type's defaults right away in the
 form. A field of the **same type** keeps the column's current settings. Nothing changes
 until you click **Save** on the column.
+
+If you click **Edit** on another column before saving, you're asked first: **Save and
+switch** saves this column and opens the other one, and **Keep editing** stays where you
+are. To throw your changes away instead, click **Cancel** on the column.
 
 Editors also see a **Tip** here explaining how column order drives grouping.
 
