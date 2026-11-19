@@ -1,5 +1,6 @@
 # Flex Reports
 
+<<<<<<< Updated upstream
 An embeddable reporting component for React apps. Pass in your rows, and your users get
 a spreadsheet-style report builder: pick and rename columns, add per-row formulas, group
 and total the data, then save a default view that everyone else opens.
@@ -230,10 +231,46 @@ since the last one, and deploys that version as the [demo](https://mxdavis.githu
 
 To roll the demo back, open **Actions → Deploy demo → Run workflow** and enter an earlier
 tag, such as `v1.0.0`.
+=======
+Flex Reports is a self-hostable, embeddable reporting layer. It lets users build reports
+in a spreadsheet-style edit view, then save a cleaner web report view with filters,
+aggregation, and charts.
 
----
+The product stores report definitions, not raw business data.
+>>>>>>> Stashed changes
 
-## Documentation
+## Docs
 
+- [docs/SPEC.md](docs/SPEC.md): product spec and architecture
+- [docs/DECISIONS.md](docs/DECISIONS.md): decisions log
+- [docs/PRACTICES.md](docs/PRACTICES.md): coding practices to follow
+- [docs/TODO.md](docs/TODO.md): live checklist and status tracking
+
+<<<<<<< Updated upstream
 - **[FUNCTIONALITY.md](FUNCTIONALITY.md)**: how every feature works, for the people
   building and reading reports.
+=======
+## Run
+
+Install dependencies:
+
+`npm install`
+
+Start dev server:
+
+`npm run dev`
+
+## Test
+
+Run tests once:
+
+`npm run test`
+
+Run tests in watch mode:
+
+`npm run test:watch`
+
+Run tests with coverage:
+
+`npm run test:coverage`
+>>>>>>> Stashed changes
