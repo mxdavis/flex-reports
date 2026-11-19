@@ -88,6 +88,9 @@ Instructions changing this repo. Follow them before writing code; if a request c
 
 ## Checked in CI
 
+`npm run lint` (oxlint, with React, TypeScript and accessibility rules in `.oxlintrc.json`) fails on any
+warning, not just errors.
+
 `npm run check:practices` runs on every PR and push:
 
 - UI components in `src/components/`, `src/features/reportBuilder/components/`,

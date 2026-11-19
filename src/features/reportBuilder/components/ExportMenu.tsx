@@ -51,6 +51,7 @@ function ExportMenu({ options }: ExportMenuProps) {
           className="fr-export-menu-list"
           role="menu"
           aria-label="Export"
+          tabIndex={-1}
           onKeyDown={(event) => {
             if (event.key === 'Escape') close()
           }}
