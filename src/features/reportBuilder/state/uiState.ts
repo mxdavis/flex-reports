@@ -107,7 +107,7 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
     case 'patchEditField':
       return state.editingField ? { ...state, editingField: { ...state.editingField, ...action.changes } } : state
     case 'stopEditField':
-      return { ...state, editingField: null }
+      return { ...state, editingField: null, switchToFieldId: null }
     case 'startEditFormula':
       return { ...state, editingFormula: { originalLabel: action.formula.label, draft: { ...action.formula } } }
     case 'patchEditFormula':

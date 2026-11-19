@@ -26,7 +26,15 @@ function OpenConfirmDialog({ title, message, confirmLabel, cancelLabel = 'Cancel
   const messageId = useElementId('confirm-dialog-message')
 
   useEffect(() => {
-    dialogRef.current?.showModal()
+    const dialog = dialogRef.current
+    // The dialog closes by unmounting, so put focus back ourselves: the
+    // browser only restores it on close().
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    dialog?.showModal()
+    return () => {
+      dialog?.close()
+      if (opener?.isConnected) opener.focus()
+    }
   }, [])
 
   return (

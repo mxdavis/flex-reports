@@ -12,8 +12,8 @@ import type { NewColumnDraft } from '../state/uiState'
 import './MappingPanelSection.css'
 
 export type MappingPanelSectionProps = {
-  // Asks whether to save the open column before editing another.
-  columnSwitchDialog: ConfirmDialogProps
+  // Asks whether to save the open column before editing another; null when not asking.
+  columnSwitchDialog: Omit<ConfirmDialogProps, 'isOpen'> | null
   fields: ReportField[]
   // The Add column form's draft, or null when the form is closed.
   newColumn: NewColumnDraft | null
@@ -207,7 +207,7 @@ function MappingPanelSection({
           </div>
         </div>
       )}
-      <ConfirmDialog {...columnSwitchDialog} />
+      {columnSwitchDialog && <ConfirmDialog isOpen {...columnSwitchDialog} />}
     </section>
   )
 }

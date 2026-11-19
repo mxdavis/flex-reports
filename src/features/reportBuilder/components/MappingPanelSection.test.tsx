@@ -13,13 +13,11 @@ const fields: ReportField[] = [
   },
 ]
 
-const closedDialog = { isOpen: false, title: '', message: '', confirmLabel: '', onConfirm: () => undefined, onCancel: () => undefined }
-
 describe('MappingPanelSection', () => {
   it('renders section with fr-report-columns id', () => {
     render(
       <MappingPanelSection
-        columnSwitchDialog={closedDialog}
+        columnSwitchDialog={null}
         fields={fields}
         newColumn={null}
         maxColumns={15}
@@ -65,7 +63,7 @@ describe('MappingPanelSection', () => {
     const onStartAddColumn = vi.fn()
     const { container } = render(
       <MappingPanelSection
-        columnSwitchDialog={closedDialog}
+        columnSwitchDialog={null}
         fields={fields}
         newColumn={null}
         maxColumns={15}

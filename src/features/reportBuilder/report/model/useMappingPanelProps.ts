@@ -47,13 +47,27 @@ export function useMappingPanelProps(): MappingPanelProps {
     dispatchUi({ type: 'startEditField', field })
   }
 
-  const columnName = (fieldId: string | undefined) => `COLUMN ${fields.findIndex((field) => field.id === fieldId) + 1}`
   const switchToField = fields.find((field) => field.id === ui.switchToFieldId)
 
   function saveAndSwitch(): void {
     if (!editingField || !switchToField) return
     saveEditingField(editingField.id)
     dispatchUi({ type: 'startEditField', field: switchToField })
+  }
+
+  function getColumnSwitchDialog(): MappingPanelProps['columnSwitchDialog'] {
+    const fromIndex = fields.findIndex((field) => field.id === editingField?.id)
+    const toIndex = switchToField ? fields.indexOf(switchToField) : -1
+    if (fromIndex < 0 || toIndex < 0) return null
+    const from = `COLUMN ${fromIndex + 1}`
+    return {
+      title: `Save your changes to ${from}?`,
+      message: `You changed ${from} but haven't saved it. Save it before editing COLUMN ${toIndex + 1}?`,
+      confirmLabel: 'Save and switch',
+      cancelLabel: 'Keep editing',
+      onConfirm: saveAndSwitch,
+      onCancel: () => dispatchUi({ type: 'set', changes: { switchToFieldId: null } }),
+    }
   }
 
   function moveField(sourceId: string, targetId: string): void {
@@ -107,15 +121,7 @@ export function useMappingPanelProps(): MappingPanelProps {
 
   return {
     fields,
-    columnSwitchDialog: {
-      isOpen: Boolean(editingField && switchToField),
-      title: `Save your changes to ${columnName(editingField?.id)}?`,
-      message: `You changed ${columnName(editingField?.id)} but haven't saved it. Save it before editing ${columnName(switchToField?.id)}?`,
-      confirmLabel: 'Save and switch',
-      cancelLabel: 'Keep editing',
-      onConfirm: saveAndSwitch,
-      onCancel: () => dispatchUi({ type: 'set', changes: { switchToFieldId: null } }),
-    },
+    columnSwitchDialog: getColumnSwitchDialog(),
     newColumn: ui.newColumn,
     maxColumns: MAX_REPORT_COLUMNS,
     showTips: state.showTips,
