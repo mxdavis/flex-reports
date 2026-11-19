@@ -109,7 +109,10 @@ function run() {
     }
   }
 
-  const componentFiles = new Set(COMPONENT_DIRS.flatMap((dirPath) => listFilesRecursive(dirPath)))
+  // Components get their own 220-line limit; every other source file, including
+  // .ts helpers in the component folders, gets this one.
+  const componentFiles = new Set(COMPONENT_DIRS.flatMap((dirPath) => listFilesRecursive(dirPath))
+    .filter((filePath) => filePath.endsWith('.tsx') && !filePath.endsWith('.test.tsx')))
   for (const filePath of listFilesRecursive('src')) {
     const isSource = /\.tsx?$/.test(filePath) && !/\.test\.tsx?$/.test(filePath)
     if (isSource && !componentFiles.has(filePath)) validateLineLimit(filePath, MAX_SOURCE_LINES, failures)
