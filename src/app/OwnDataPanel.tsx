@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReportRow } from '../services/adapters'
 import ConfirmDialog from '../shared/components/ConfirmDialog'
 import { useElementId } from '../shared/hooks/useElementId'
+import { loadRecordsFromUrl } from './loadRecordsFromUrl'
 import { MAX_RECORDS_BYTES, parseRecordsJson, RecordsLoadError } from './recordsJson'
 import './OwnDataPanel.css'
 
@@ -12,31 +13,56 @@ type OwnDataPanelProps = {
   onReplace: (data: OwnData) => void
 }
 
+type Box = 'paste' | 'address'
+
 function readError(error: unknown): string {
   if (error instanceof RecordsLoadError) return error.message
   console.error('[flex-reports app] Could not read the data.', error)
   return 'Couldn\'t read this data. Try again.'
 }
 
-// Open a JSON file or paste JSON. Both are read here in the browser (nothing
-// is uploaded), pass the same check, and replace the report only once the
-// visitor confirms. Until then the paste box keeps its text, so Cancel
-// changes nothing and focus goes back to Load.
+// "example.com/orders.json": short enough for the data bar.
+function describeAddress(address: string): string {
+  try {
+    const url = new URL(address, document.baseURI)
+    return `${url.host}${url.pathname === '/' ? '' : url.pathname}`
+  } catch {
+    return address
+  }
+}
+
+// Open a JSON file, paste JSON, or load it from a web address. Everything is
+// read here in the browser (nothing is uploaded), passes the same check, and
+// replaces the report only once the visitor confirms. Until then the open box
+// keeps what was typed, so Cancel changes nothing and focus goes back to Load.
 function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const pasteButtonRef = useRef<HTMLButtonElement | null>(null)
-  // Set when a paste replaces the report: the box (and its Load button, where
-  // the dialog would return focus) closes, so focus goes to Paste JSON instead.
-  const shouldFocusPasteButton = useRef(false)
+  const boxButtonRefs = useRef<Record<Box, HTMLButtonElement | null>>({ paste: null, address: null })
+  // Set when data from a box replaces the report: the box (and its Load
+  // button, where the dialog would return focus) closes, so focus goes to the
+  // button that opened the box instead.
+  const focusAfterReplace = useRef<Box | null>(null)
+  const addressLoad = useRef<AbortController | null>(null)
   const pasteId = useElementId('own-data-paste')
-  const [isPasting, setIsPasting] = useState(false)
+  const addressId = useElementId('own-data-address')
+  const [openBox, setOpenBox] = useState<Box | null>(null)
   const [pastedText, setPastedText] = useState('')
+  const [address, setAddress] = useState('')
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<OwnData | null>(null)
 
-  // Opening or closing the paste box, either way, clears an earlier error.
-  function showPasteBox(open: boolean): void {
-    setIsPasting(open)
+  function stopAddressLoad(): void {
+    addressLoad.current?.abort()
+    addressLoad.current = null
+    setIsLoadingAddress(false)
+  }
+
+  // Opening or closing a box, either way, clears an earlier error and stops
+  // a load that hasn't finished.
+  function showBox(box: Box | null): void {
+    stopAddressLoad()
+    setOpenBox(box)
     setError(null)
   }
 
@@ -49,21 +75,41 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
     }
   }
 
+  async function loadAddress(): Promise<void> {
+    stopAddressLoad()
+    const controller = new AbortController()
+    addressLoad.current = controller
+    setIsLoadingAddress(true)
+    setError(null)
+    try {
+      const rows = await loadRecordsFromUrl(address.trim(), controller.signal)
+      setPending({ name: describeAddress(address.trim()), rows })
+    } catch (loadError) {
+      if (!controller.signal.aborted) setError(readError(loadError))
+    } finally {
+      if (addressLoad.current === controller) stopAddressLoad()
+    }
+  }
+
   function replace(): void {
     if (!pending) return
     onReplace(pending)
     setPending(null)
     setPastedText('')
-    shouldFocusPasteButton.current = isPasting
-    showPasteBox(false)
+    setAddress('')
+    focusAfterReplace.current = openBox
+    showBox(null)
   }
 
   // Runs after the dialog has unmounted, so this focus isn't overridden.
   useEffect(() => {
-    if (isPasting || !shouldFocusPasteButton.current) return
-    shouldFocusPasteButton.current = false
-    pasteButtonRef.current?.focus()
-  }, [isPasting])
+    const box = focusAfterReplace.current
+    if (openBox || !box) return
+    focusAfterReplace.current = null
+    boxButtonRefs.current[box]?.focus()
+  }, [openBox])
+
+  useEffect(() => () => addressLoad.current?.abort(), [])
 
   async function openFile(file: File): Promise<void> {
     if (file.size > MAX_RECORDS_BYTES) {
@@ -76,6 +122,23 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
       setError(readError(fileError))
     }
   }
+
+  function boxButton(box: Box, label: string) {
+    return (
+      <button
+        ref={(element) => {
+          boxButtonRefs.current[box] = element
+        }}
+        type="button"
+        aria-expanded={openBox === box}
+        onClick={() => showBox(openBox === box ? null : box)}
+      >
+        {label}
+      </button>
+    )
+  }
+
+  const cancelButton = <button type="button" onClick={() => showBox(null)}>Cancel</button>
 
   return (
     <div className="fr-app-own-data">
@@ -94,11 +157,10 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
           if (file) void openFile(file)
         }}
       />
-      <button ref={pasteButtonRef} type="button" aria-expanded={isPasting} onClick={() => showPasteBox(!isPasting)}>
-        Paste JSON
-      </button>
-      {isPasting && (
-        <div className="fr-app-paste">
+      {boxButton('paste', 'Paste JSON')}
+      {boxButton('address', 'Load from address')}
+      {openBox === 'paste' && (
+        <div className="fr-app-own-data-box">
           <label htmlFor={pasteId}>Paste a list of records, like {'[{"name": "Ann", "hours": 2}, …]'}</label>
           <textarea
             id={pasteId}
@@ -107,11 +169,43 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
             value={pastedText}
             onChange={(event) => setPastedText(event.target.value)}
           />
-          <div className="fr-app-paste-actions">
+          <div className="fr-app-own-data-actions">
             <button type="button" onClick={() => load('pasted data', pastedText)}>Load</button>
-            <button type="button" onClick={() => showPasteBox(false)}>Cancel</button>
+            {cancelButton}
           </div>
         </div>
+      )}
+      {openBox === 'address' && (
+        <form
+          className="fr-app-own-data-box"
+          // Our own messages explain a bad address; the browser's would come first.
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (isLoadingAddress) return
+            if (!address.trim()) setError('Enter a web address.')
+            else void loadAddress()
+          }}
+        >
+          <label htmlFor={addressId}>Web address of a JSON list of records</label>
+          <input
+            id={addressId}
+            type="url"
+            inputMode="url"
+            placeholder="https://example.com/orders.json"
+            spellCheck={false}
+            value={address}
+            onChange={(event) => setAddress(event.target.value)}
+          />
+          <small>The site must allow browsers to read it (CORS).</small>
+          <div className="fr-app-own-data-actions">
+            {/* Not disabled while loading: that would drop focus to the page. */}
+            <button type="submit" aria-disabled={isLoadingAddress}>
+              {isLoadingAddress ? 'Loading…' : 'Load'}
+            </button>
+            {cancelButton}
+          </div>
+        </form>
       )}
       {error && <p className="fr-app-own-data-error" role="alert">{error}</p>}
       <ConfirmDialog
