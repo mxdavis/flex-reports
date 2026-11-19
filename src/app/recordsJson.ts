@@ -1,3 +1,4 @@
+import { parse, printParseErrorCode, type ParseError } from 'jsonc-parser'
 import type { ReportRow } from '../services/adapters'
 
 export const MAX_RECORDS_BYTES = 5 * 1024 * 1024
@@ -7,30 +8,26 @@ export class RecordsLoadError extends Error {}
 
 const EXAMPLE = 'like [{"name": "Ann", "hours": 2}, …]'
 
-// Where the browser says the JSON broke, as an offset into the text.
-// Browsers word this differently ("at position 42", "at line 3 column 5");
-// one that says neither gives no location.
-function errorOffset(text: string, message: string): number | undefined {
-  const position = /position (\d+)/i.exec(message)
-  if (position) return Number(position[1])
-  const lineColumn = /line (\d+) column (\d+)/i.exec(message)
-  if (!lineColumn) return undefined
-  const lines = text.split('\n').slice(0, Number(lineColumn[1]) - 1)
-  return lines.reduce((total, line) => total + line.length + 1, 0) + Number(lineColumn[2]) - 1
+// Where JSON first breaks, as an offset into the text, or -1 if it doesn't.
+// Browsers word their own errors differently and some give no position, so
+// the text is read again with a parser that reports one.
+export function findJsonError(text: string): { offset: number, cutOff: boolean } | undefined {
+  const errors: ParseError[] = []
+  parse(text, errors, { disallowComments: true, allowTrailingComma: false })
+  const [first] = errors
+  if (!first) return undefined
+  // Breaking at the very end, or in text that never closes, means it stopped
+  // early (an interrupted download, or a partial copy).
+  const cutOff = first.offset >= text.trimEnd().length
+    || (printParseErrorCode(first.error) === 'UnexpectedEndOfString' && !text.slice(first.offset + 1).includes('"'))
+  return { offset: first.offset, cutOff }
 }
 
 function describeLocation(text: string, offset: number): string {
   const before = text.slice(0, offset)
   const line = before.split('\n').length
   const character = before.length - before.lastIndexOf('\n')
-  return ` Check line ${line}, character ${character}.`
-}
-
-// JSON that breaks at its very end, or inside text that never closes, was
-// most likely cut off (an interrupted download, or a partial copy).
-function looksCutOff(text: string, message: string, offset: number | undefined): boolean {
-  if (/end of (json )?(input|data)|EOF|unterminated/i.test(message)) return true
-  return offset !== undefined && offset >= text.trimEnd().length - 1
+  return `Check line ${line}, character ${character}.`
 }
 
 function isRecord(value: unknown): value is ReportRow {
@@ -55,13 +52,12 @@ export function parseRecordsJson(text: string): ReportRow[] {
   let data: unknown
   try {
     data = JSON.parse(text)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : ''
-    const offset = errorOffset(text, message)
-    if (looksCutOff(text, message, offset)) {
+  } catch {
+    const error = findJsonError(text)
+    if (error?.cutOff) {
       throw new RecordsLoadError('This JSON stops before it\'s finished, so it may be cut off. Check it\'s complete, or load it again.')
     }
-    throw new RecordsLoadError(`This isn't valid JSON.${offset === undefined ? '' : describeLocation(text, offset)}`)
+    throw new RecordsLoadError(`This isn't valid JSON. ${error ? describeLocation(text, error.offset) : ''}`.trim())
   }
 
   if (!Array.isArray(data)) {
