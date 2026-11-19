@@ -20,6 +20,7 @@ export function useMappingPanelProps(): MappingPanelProps {
   const { ui, dispatchUi, fields, setFields } = state
   const { editingField } = ui
 
+  const isKnownSource = (sourceKey: string) => computed.sourceOptions.includes(sourceKey)
   const patchEditingField = (changes: Partial<ReportField>) => dispatchUi({ type: 'patchEditField', changes })
   const stopEditingField = () => dispatchUi({ type: 'stopEditField' })
 
@@ -118,7 +119,18 @@ export function useMappingPanelProps(): MappingPanelProps {
     },
     onCancelAddColumn: closeNewColumn,
     onAddColumnPositionChange: (value: number) => patchNewColumn({}, value),
-    onAddColumnSourceKeyChange: (value: string) => patchNewColumn(draftForSource(value)),
+    onAddColumnSourceKeyChange: (value: string) => {
+      if (!ui.newColumn) return
+      const { draft } = ui.newColumn
+      patchNewColumn(getSourceChangePatch({
+        draft,
+        original: draft,
+        nextSourceKey: value,
+        isKnownSource,
+        getPreferredDisplayType: computed.getPreferredDisplayType,
+        getSourceLabel: computed.getSourceLabel,
+      }))
+    },
     onAddColumnLabelChange: (value: string) => patchNewColumn({ label: value }),
     onAddColumnDisplayTypeChange: (value: DisplayType) => patchNewColumn({ displayType: value, aggregation: getDefaultAggregation(value) }),
     onAddColumnAggregationChange: (value: AggregationMode) => patchNewColumn({ aggregation: value }),
@@ -140,8 +152,9 @@ export function useMappingPanelProps(): MappingPanelProps {
         draft: editingField,
         original,
         nextSourceKey: value,
-        isKnownSource: (sourceKey) => computed.sourceOptions.includes(sourceKey),
+        isKnownSource,
         getPreferredDisplayType: computed.getPreferredDisplayType,
+        getSourceLabel: computed.getSourceLabel,
       }))
     },
     onSetEditingFieldLabel: (value: string) => patchEditingField({ label: value }),
