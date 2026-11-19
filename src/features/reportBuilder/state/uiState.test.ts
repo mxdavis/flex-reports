@@ -57,6 +57,13 @@ describe('uiReducer', () => {
     expect(uiReducer(initial, { type: 'patchEditField', changes: { label: 'x' } })).toBe(initial)
   })
 
+  it('forgets the column it was switching to once editing stops or another column opens', () => {
+    const asking = { ...uiReducer(initial, { type: 'startEditField', field }), switchToFieldId: 'f2' }
+
+    expect(uiReducer(asking, { type: 'stopEditField' }).switchToFieldId).toBeNull()
+    expect(uiReducer(asking, { type: 'startEditField', field: { ...field, id: 'f2' } }).switchToFieldId).toBeNull()
+  })
+
   it('keeps a formula draft\'s original label so a rename can repoint columns', () => {
     const editing = uiReducer(initial, { type: 'startEditFormula', formula: { label: 'gross', expression: '{{a}}' } })
     const renamed = uiReducer(editing, { type: 'patchEditFormula', changes: { label: 'net' } })

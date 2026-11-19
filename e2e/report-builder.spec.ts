@@ -244,6 +244,7 @@ test('Reset to sample asks first: Escape keeps the report, confirming deletes it
 
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Reset to sample' })).toBeFocused()
   await expect(page.getByRole('columnheader', { name: 'Hours' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Reset to sample' }).click()

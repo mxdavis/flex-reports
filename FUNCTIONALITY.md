@@ -193,6 +193,10 @@ currency), Display type and Total type switch to that type's defaults right away
 form. A field of the **same type** keeps the column's current settings. Nothing changes
 until you click **Save** on the column.
 
+If you click **Edit** on another column before saving, you're asked first: **Save and
+switch** saves this column and opens the other one, and **Keep editing** stays where you
+are. To throw your changes away instead, click **Cancel** on the column.
+
 Editors also see a **Tip** here explaining how column order drives grouping.
 
 ## Formulas
