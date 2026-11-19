@@ -157,13 +157,10 @@ export function useMappingPanelProps(): MappingPanelProps {
     onSetDraggedFieldId: (value: string | null) => dispatchUi({ type: 'set', changes: { draggedFieldId: value } }),
     onSetDragOverFieldId: (value: string | null) => dispatchUi({ type: 'set', changes: { dragOverFieldId: value } }),
     onSetEditingFieldSourceKey: (value: string) => {
-      const original = fields.find((field) => field.id === editingField?.id)
-      if (!editingField || !original) return
+      if (!editingField) return
       patchEditingField(getSourceChangePatch({
         draft: editingField,
-        original,
         nextSourceKey: value,
-        isKnownSource: (sourceKey) => computed.sourceOptions.includes(sourceKey),
         getPreferredDisplayType: computed.getPreferredDisplayType,
       }))
     },
