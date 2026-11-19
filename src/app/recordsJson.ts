@@ -7,18 +7,30 @@ export class RecordsLoadError extends Error {}
 
 const EXAMPLE = 'like [{"name": "Ann", "hours": 2}, …]'
 
-// Where the browser says the JSON broke, as line and column. Browsers word
-// this differently ("at position 42", "at line 3 column 5"); a browser that
-// says neither gets no location.
-function describeLocation(text: string, message: string): string {
-  const lineColumn = /line (\d+) column (\d+)/i.exec(message)
-  if (lineColumn) return ` Check line ${lineColumn[1]}, character ${lineColumn[2]}.`
+// Where the browser says the JSON broke, as an offset into the text.
+// Browsers word this differently ("at position 42", "at line 3 column 5");
+// one that says neither gives no location.
+function errorOffset(text: string, message: string): number | undefined {
   const position = /position (\d+)/i.exec(message)
-  if (!position) return ''
-  const before = text.slice(0, Number(position[1]))
+  if (position) return Number(position[1])
+  const lineColumn = /line (\d+) column (\d+)/i.exec(message)
+  if (!lineColumn) return undefined
+  const lines = text.split('\n').slice(0, Number(lineColumn[1]) - 1)
+  return lines.reduce((total, line) => total + line.length + 1, 0) + Number(lineColumn[2]) - 1
+}
+
+function describeLocation(text: string, offset: number): string {
+  const before = text.slice(0, offset)
   const line = before.split('\n').length
-  const column = before.length - before.lastIndexOf('\n')
-  return ` Check line ${line}, character ${column}.`
+  const character = before.length - before.lastIndexOf('\n')
+  return ` Check line ${line}, character ${character}.`
+}
+
+// JSON that breaks at its very end, or inside text that never closes, was
+// most likely cut off (an interrupted download, or a partial copy).
+function looksCutOff(text: string, message: string, offset: number | undefined): boolean {
+  if (/end of (json )?(input|data)|EOF|unterminated/i.test(message)) return true
+  return offset !== undefined && offset >= text.trimEnd().length - 1
 }
 
 function isRecord(value: unknown): value is ReportRow {
@@ -45,10 +57,11 @@ export function parseRecordsJson(text: string): ReportRow[] {
     data = JSON.parse(text)
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
-    if (/end of (json )?(input|data)|EOF/i.test(message)) {
+    const offset = errorOffset(text, message)
+    if (looksCutOff(text, message, offset)) {
       throw new RecordsLoadError('This JSON stops before it\'s finished, so it may be cut off. Check it\'s complete, or load it again.')
     }
-    throw new RecordsLoadError(`This isn't valid JSON.${describeLocation(text, message)}`)
+    throw new RecordsLoadError(`This isn't valid JSON.${offset === undefined ? '' : describeLocation(text, offset)}`)
   }
 
   if (!Array.isArray(data)) {
