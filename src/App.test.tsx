@@ -251,6 +251,30 @@ describe('the app', () => {
       expect(screen.getByRole('checkbox', { name: 'hours' })).toBeInTheDocument()
     })
 
+    it('keeps an opened file in the dialog when an earlier address load finishes late', async () => {
+      let finishSlowLoad: () => void = () => undefined
+      serveSampleAnd('https://example.com/slow.json', () => new Response(new ReadableStream({
+        start(controller) {
+          finishSlowLoad = () => {
+            controller.enqueue(new TextEncoder().encode(JSON.stringify([{ late: 1 }])))
+            controller.close()
+          }
+        },
+      })))
+      const user = userEvent.setup()
+      render(<App initialEditMode />)
+
+      await loadFromAddress(user, 'https://example.com/slow.json')
+      const file = new File([JSON.stringify(OWN_RECORDS)], 'orders.json', { type: 'application/json' })
+      fireEvent.change(screen.getByLabelText('JSON file'), { target: { files: [file] } })
+      expect(await screen.findByRole('dialog')).toHaveTextContent('orders.json')
+      finishSlowLoad()
+
+      await user.click(screen.getByRole('button', { name: 'Replace report' }))
+      expect(await screen.findByRole('checkbox', { name: 'qty' })).toBeInTheDocument()
+      expect(screen.getByRole('region', { name: 'Report data' })).toHaveTextContent('orders.json · 2 records')
+    })
+
     it('opens a JSON file in the browser, and goes back to the sample on Reset', async () => {
       serveSample()
       const user = userEvent.setup()

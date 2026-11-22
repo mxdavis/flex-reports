@@ -202,8 +202,9 @@ browser storage.
 - **Use your own data** opens a JSON file, takes pasted JSON, or loads it from a web
   address. It's read in the browser, never uploaded, and kept in memory only (a reload
   goes back to the sample). It replaces the saved report only after you confirm.
-- **Load from address** uses the same plain GET as the sample (https only, no cookies,
-  15-second and 5 MB limits). The site must allow browser access (CORS); there's no proxy.
+- **Load from address** uses the same plain GET as the sample (https only, except for this
+  site and localhost; no cookies; 15-second and 5 MB limits). The site must allow browser
+  access (CORS); there's no proxy.
 - Try the viewer role by changing `<App />` in `src/main.tsx` to `<App role="viewer" />`.
 
 ---

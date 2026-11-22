@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReportRow } from '../services/adapters'
 import ConfirmDialog from '../shared/components/ConfirmDialog'
 import { useElementId } from '../shared/hooks/useElementId'
-import { loadRecordsFromUrl } from './loadRecordsFromUrl'
 import { MAX_RECORDS_BYTES, parseRecordsJson, RecordsLoadError } from './recordsJson'
+import { useAddressLoad } from './useAddressLoad'
 import './OwnDataPanel.css'
 
 export type OwnData = { name: string, rows: ReportRow[] }
@@ -21,16 +21,6 @@ function readError(error: unknown): string {
   return 'Couldn\'t read this data. Try again.'
 }
 
-// "example.com/orders.json": short enough for the data bar.
-function describeAddress(address: string): string {
-  try {
-    const url = new URL(address, document.baseURI)
-    return `${url.host}${url.pathname === '/' ? '' : url.pathname}`
-  } catch {
-    return address
-  }
-}
-
 // Open a JSON file, paste JSON, or load it from a web address. Everything is
 // read here in the browser (nothing is uploaded), passes the same check, and
 // replaces the report only once the visitor confirms. Until then the open box
@@ -42,26 +32,22 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
   // button, where the dialog would return focus) closes, so focus goes to the
   // button that opened the box instead.
   const focusAfterReplace = useRef<Box | null>(null)
-  const addressLoad = useRef<AbortController | null>(null)
   const pasteId = useElementId('own-data-paste')
   const addressId = useElementId('own-data-address')
   const [openBox, setOpenBox] = useState<Box | null>(null)
   const [pastedText, setPastedText] = useState('')
   const [address, setAddress] = useState('')
-  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<OwnData | null>(null)
-
-  function stopAddressLoad(): void {
-    addressLoad.current?.abort()
-    addressLoad.current = null
-    setIsLoadingAddress(false)
-  }
+  const addressLoad = useAddressLoad({
+    onLoaded: setPending,
+    onFailed: (loadError) => setError(readError(loadError)),
+  })
 
   // Opening or closing a box, either way, clears an earlier error and stops
   // a load that hasn't finished.
   function showBox(box: Box | null): void {
-    stopAddressLoad()
+    addressLoad.stop()
     setOpenBox(box)
     setError(null)
   }
@@ -72,22 +58,6 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
       setError(null)
     } catch (loadError) {
       setError(readError(loadError))
-    }
-  }
-
-  async function loadAddress(): Promise<void> {
-    stopAddressLoad()
-    const controller = new AbortController()
-    addressLoad.current = controller
-    setIsLoadingAddress(true)
-    setError(null)
-    try {
-      const rows = await loadRecordsFromUrl(address.trim(), controller.signal)
-      setPending({ name: describeAddress(address.trim()), rows })
-    } catch (loadError) {
-      if (!controller.signal.aborted) setError(readError(loadError))
-    } finally {
-      if (addressLoad.current === controller) stopAddressLoad()
     }
   }
 
@@ -109,9 +79,10 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
     boxButtonRefs.current[box]?.focus()
   }, [openBox])
 
-  useEffect(() => () => addressLoad.current?.abort(), [])
-
   async function openFile(file: File): Promise<void> {
+    // The file is the visitor's latest choice, so an unfinished address load
+    // mustn't replace it in the dialog.
+    addressLoad.stop()
     if (file.size > MAX_RECORDS_BYTES) {
       setError('This data is larger than 5 MB.')
       return
@@ -182,9 +153,10 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
           noValidate
           onSubmit={(event) => {
             event.preventDefault()
-            if (isLoadingAddress) return
-            if (!address.trim()) setError('Enter a web address.')
-            else void loadAddress()
+            if (addressLoad.isLoading) return
+            const trimmed = address.trim()
+            setError(trimmed ? null : 'Enter a web address.')
+            if (trimmed) void addressLoad.load(trimmed)
           }}
         >
           <label htmlFor={addressId}>Web address of a JSON list of records</label>
@@ -200,8 +172,8 @@ function OwnDataPanel({ onReplace }: OwnDataPanelProps) {
           <small>The site must allow browsers to read it (CORS).</small>
           <div className="fr-app-own-data-actions">
             {/* Not disabled while loading: that would drop focus to the page. */}
-            <button type="submit" aria-disabled={isLoadingAddress}>
-              {isLoadingAddress ? 'Loading…' : 'Load'}
+            <button type="submit" aria-disabled={addressLoad.isLoading}>
+              {addressLoad.isLoading ? 'Loading…' : 'Load'}
             </button>
             {cancelButton}
           </div>
