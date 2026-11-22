@@ -84,6 +84,13 @@ export function useMappingPanelProps(): MappingPanelProps {
   }
 
   // A fresh Add column draft for a source, with that source's type defaults.
+  const sourceChangePatch = (draft: ReportField, nextSourceKey: string) => getSourceChangePatch({
+    draft,
+    nextSourceKey,
+    getPreferredDisplayType: computed.getPreferredDisplayType,
+    getSourceLabel: computed.getSourceLabel,
+  })
+
   function draftForSource(sourceKey: string): ReportField {
     const displayType = computed.getPreferredDisplayType(sourceKey)
     return {
@@ -141,7 +148,9 @@ export function useMappingPanelProps(): MappingPanelProps {
     },
     onCancelAddColumn: closeNewColumn,
     onAddColumnPositionChange: (value: number) => patchNewColumn({}, value),
-    onAddColumnSourceKeyChange: (value: string) => patchNewColumn(draftForSource(value)),
+    onAddColumnSourceKeyChange: (value: string) => {
+      if (ui.newColumn) patchNewColumn(sourceChangePatch(ui.newColumn.draft, value))
+    },
     onAddColumnLabelChange: (value: string) => patchNewColumn({ label: value }),
     onAddColumnDisplayTypeChange: (value: DisplayType) => patchNewColumn({ displayType: value, aggregation: getDefaultAggregation(value) }),
     onAddColumnAggregationChange: (value: AggregationMode) => patchNewColumn({ aggregation: value }),
@@ -158,11 +167,7 @@ export function useMappingPanelProps(): MappingPanelProps {
     onSetDragOverFieldId: (value: string | null) => dispatchUi({ type: 'set', changes: { dragOverFieldId: value } }),
     onSetEditingFieldSourceKey: (value: string) => {
       if (!editingField) return
-      patchEditingField(getSourceChangePatch({
-        draft: editingField,
-        nextSourceKey: value,
-        getPreferredDisplayType: computed.getPreferredDisplayType,
-      }))
+      patchEditingField(sourceChangePatch(editingField, value))
     },
     onSetEditingFieldLabel: (value: string) => patchEditingField({ label: value }),
     onSetEditingFieldDisplayType: (value: DisplayType) => patchEditingField({ displayType: value }),

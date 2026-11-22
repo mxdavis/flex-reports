@@ -272,6 +272,41 @@ describe('ReportBuilderApp host mode', () => {
     expect(onSave.mock.calls[0][0].fields[0]).toMatchObject({ sourceKey: 'units', displayType: 'decimal', aggregation: 'sum' })
   })
 
+  it('updates a column title to the new field, but keeps a title the editor typed', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={onSave} initialEditMode />)
+
+    await user.click(screen.getByRole('button', { name: 'Edit COLUMN 1' }))
+    await pickField(user, screen.getByLabelText('Field'), 'units')
+    expect(screen.getByLabelText('Display label')).toHaveValue('Units')
+
+    fireEvent.change(screen.getByLabelText('Display label'), { target: { value: 'Stock' } })
+    await pickField(user, screen.getByLabelText('Field'), 'warehouse')
+    expect(screen.getByLabelText('Display label')).toHaveValue('Stock')
+
+    await user.click(screen.getByRole('button', { name: 'Save COLUMN 1' }))
+    await user.click(getSaveButton())
+    expect(onSave.mock.calls[0][0].fields[0]).toMatchObject({ sourceKey: 'warehouse', label: 'Stock' })
+  })
+
+  it('fills a new column title from its field, and keeps a title typed first', async () => {
+    const user = userEvent.setup()
+    render(<ReportBuilderApp schema={schema} rows={rows} reportDefinition={savedDefinition} onSave={vi.fn()} initialEditMode />)
+    const mapping = screen.getByRole('heading', { name: 'Column Mapping' }).closest('section') as HTMLElement
+
+    await user.click(within(mapping).getByRole('button', { name: 'Add column' }))
+    // The new column's Field starts empty: clicking it opens the list.
+    await user.click(within(mapping).getByLabelText('Field'))
+    await user.click(within(within(mapping).getByRole('listbox', { name: 'Suggestions' })).getByRole('option', { name: 'units' }))
+    expect(within(mapping).getByLabelText('Display label')).toHaveValue('Units')
+    expect(within(mapping).getByLabelText('Display type')).toHaveValue('decimal')
+
+    fireEvent.change(within(mapping).getByLabelText('Display label'), { target: { value: 'Stock' } })
+    await pickField(user, within(mapping).getByLabelText('Field'), 'warehouse')
+    expect(within(mapping).getByLabelText('Display label')).toHaveValue('Stock')
+  })
+
   it('shows a loading state while rows are undefined, never the sample data, then the real fields', () => {
     const { rerender } = render(<ReportBuilderApp schema={schema} onSave={vi.fn()} initialEditMode />)
 

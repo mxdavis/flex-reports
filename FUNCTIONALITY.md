@@ -192,8 +192,9 @@ Reports have up to 15 columns. You can:
 
 When you change a column's field to one of a **different type** (for example text to
 currency), Display type and Total type switch to that type's defaults right away in the
-form. A field of the **same type** keeps the column's current settings. Nothing changes
-until you click **Save** on the column.
+form. A field of the **same type** keeps the column's current settings. The title follows
+the new field unless you typed your own. Adding a column works the same way. Nothing
+changes until you click **Save** on the column.
 
 If you click **Edit** on another column before saving, you're asked first: **Save and
 switch** saves this column and opens the other one, and **Keep editing** stays where you
