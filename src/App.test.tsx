@@ -215,7 +215,7 @@ describe('the app', () => {
 
       await loadFromAddress(user, 'https://example.com/private.json')
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('allow browser access (CORS)')
+      expect(await screen.findByRole('alert')).toHaveTextContent('allows browser access (CORS)')
       expect(screen.getByLabelText('Web address of a JSON list of records')).toHaveValue('https://example.com/private.json')
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       expect(screen.getByRole('checkbox', { name: 'hours' })).toBeInTheDocument()

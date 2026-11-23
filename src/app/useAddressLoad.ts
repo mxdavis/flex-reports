@@ -7,11 +7,19 @@ type AddressLoadCallbacks = {
   onFailed: (error: unknown) => void
 }
 
-// "example.com/orders.json": short enough for the data bar.
+// People type "example.com/orders.json". Without a scheme it would load a page
+// of this app, so add https://. Checking for "://" also catches
+// "localhost:5173/data.json", which `new URL` reads as the scheme "localhost:".
+export function withHttps(address: string): string {
+  return address.includes('://') ? address : `https://${address}`
+}
+
+// "example.com/orders.json?year=2025": short enough for the data bar, and the
+// query keeps addresses that differ only by it apart.
 export function describeAddress(address: string): string {
   try {
     const url = new URL(address, document.baseURI)
-    return `${url.host}${url.pathname === '/' ? '' : url.pathname}`
+    return `${url.host}${url.pathname === '/' ? '' : url.pathname}${url.search}`
   } catch {
     return address
   }
@@ -30,7 +38,8 @@ export function useAddressLoad({ onLoaded, onFailed }: AddressLoadCallbacks) {
     setIsLoading(false)
   }
 
-  async function load(address: string): Promise<void> {
+  async function load(typedAddress: string): Promise<void> {
+    const address = withHttps(typedAddress)
     stop()
     const controller = new AbortController()
     current.current = controller
@@ -39,7 +48,9 @@ export function useAddressLoad({ onLoaded, onFailed }: AddressLoadCallbacks) {
       const rows = await loadRecordsFromUrl(address, controller.signal)
       if (!controller.signal.aborted) onLoaded({ name: describeAddress(address), rows })
     } catch (error) {
-      if (!controller.signal.aborted) onFailed(error)
+      if (controller.signal.aborted) return
+      console.error(`[flex-reports app] Could not load records from ${address}.`, error)
+      onFailed(error)
     } finally {
       if (current.current === controller) stop()
     }

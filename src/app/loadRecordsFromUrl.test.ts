@@ -21,7 +21,27 @@ describe('loadRecordsFromUrl', () => {
     await expect(loadRecordsFromUrl('sample-data.json')).resolves.toEqual([{ item: 'Cable' }])
     const [url, init] = fetchSpy.mock.calls[0]
     expect(String(url)).toBe(new URL('sample-data.json', document.baseURI).href)
-    expect(init).toMatchObject({ credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', redirect: 'error' })
+    expect(init).toMatchObject({ credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer' })
+    expect(init).not.toHaveProperty('redirect')
+  })
+
+  function redirectedTo(url: string): Response {
+    const response = new Response('[{"item":"Cable"}]')
+    Object.defineProperties(response, { redirected: { value: true }, url: { value: url } })
+    return response
+  }
+
+  it('follows a redirect that ends on https', async () => {
+    mockFetch(redirectedTo('https://cdn.example.com/data.json'))
+
+    await expect(loadRecordsFromUrl('https://example.com/data.json')).resolves.toEqual([{ item: 'Cable' }])
+  })
+
+  it('refuses a redirect that ends on http', async () => {
+    mockFetch(redirectedTo('http://cdn.example.com/data.json'))
+
+    await expect(loadRecordsFromUrl('https://example.com/data.json'))
+      .rejects.toThrow('This address redirected to one that isn\'t https.')
   })
 
   it.each([
@@ -41,7 +61,7 @@ describe('loadRecordsFromUrl', () => {
     [new Response('{"rows":[]}'), 'Provide just the list of records'],
     [new Response('[]', { headers: { 'content-length': String(MAX_RECORDS_BYTES + 1) } }), 'larger than 5 MB'],
     [new Response(`["${'x'.repeat(MAX_RECORDS_BYTES)}"]`), 'larger than 5 MB'],
-    [new TypeError('Failed to fetch'), 'allow browser access (CORS)'],
+    [new TypeError('Failed to fetch'), 'allows browser access (CORS)'],
   ])('explains a failed load in plain words (%#)', async (response, message) => {
     mockFetch(response)
 

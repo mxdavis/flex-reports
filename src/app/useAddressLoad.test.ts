@@ -38,14 +38,30 @@ describe('useAddressLoad', () => {
     expect(result.current.isLoading).toBe(false)
   })
 
-  it('reports a failed load', async () => {
+  it.each([
+    ['example.com/orders.json', 'https://example.com/orders.json'],
+    ['localhost:5173/data.json', 'https://localhost:5173/data.json'],
+    ['http://localhost:5173/data.json', 'http://localhost:5173/data.json'],
+  ])('requests %s as %s', async (typed, requested) => {
+    vi.mocked(loadRecordsFromUrl).mockResolvedValueOnce(ROWS)
+    const { result } = renderAddressLoad()
+
+    await act(() => result.current.load(typed))
+
+    expect(loadRecordsFromUrl).toHaveBeenCalledWith(requested, expect.any(AbortSignal))
+  })
+
+  it('reports and logs a failed load', async () => {
     const error = new Error('offline')
     vi.mocked(loadRecordsFromUrl).mockRejectedValueOnce(error)
+    const logSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const { result, onFailed } = renderAddressLoad()
 
     await act(() => result.current.load('https://example.com/orders.json'))
 
     expect(onFailed).toHaveBeenCalledWith(error)
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('https://example.com/orders.json'), error)
+    logSpy.mockRestore()
   })
 
   it('never calls back for a load that was stopped, even if it finishes', async () => {
@@ -98,8 +114,12 @@ describe('useAddressLoad', () => {
 })
 
 describe('describeAddress', () => {
-  it('drops the scheme, and the slash of a bare site', () => {
+  it('drops the scheme and the slash of a bare site', () => {
     expect(describeAddress('https://example.com/')).toBe('example.com')
-    expect(describeAddress('https://example.com:8443/a/b.json?x=1')).toBe('example.com:8443/a/b.json')
+    expect(describeAddress('https://example.com:8443/a/b.json?x=1')).toBe('example.com:8443/a/b.json?x=1')
+  })
+
+  it('keeps the query, so addresses that differ only by it stay apart', () => {
+    expect(describeAddress('https://api.example.com/report?year=2025')).toBe('api.example.com/report?year=2025')
   })
 })
