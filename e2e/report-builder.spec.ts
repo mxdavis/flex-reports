@@ -258,10 +258,25 @@ test('pasting your own JSON replaces the report after confirming', async ({ page
   await page.goto('/')
   await page.getByRole('button', { name: 'Paste JSON' }).click()
   await page.getByLabel(/Paste a list of records/).fill('[{"product":"Cable","qty":3},{"product":"Plug","qty":5}]')
-  await page.getByRole('button', { name: 'Load' }).click()
+  await page.getByRole('button', { name: 'Load', exact: true }).click()
   await page.getByRole('dialog', { name: 'Replace your report?' }).getByRole('button', { name: 'Replace report' }).click()
 
   await expect(page.getByRole('region', { name: 'Report data' })).toContainText('pasted data · 2 records')
   await page.getByRole('button', { name: 'Edit mode' }).click()
   await expect(page.getByRole('checkbox', { name: 'product' })).toBeVisible()
+})
+
+test('loading your own data from a web address replaces the report after confirming', async ({ page }) => {
+  await page.route('https://example.com/orders.json', (route) => route.fulfill({
+    contentType: 'application/json',
+    headers: { 'access-control-allow-origin': '*' },
+    body: '[{"product":"Cable","qty":3},{"product":"Plug","qty":5}]',
+  }))
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Load from address' }).click()
+  await page.getByLabel('Web address of a JSON list of records').fill('https://example.com/orders.json')
+  await page.getByLabel('Web address of a JSON list of records').press('Enter')
+  await page.getByRole('dialog', { name: 'Replace your report?' }).getByRole('button', { name: 'Replace report' }).click()
+
+  await expect(page.getByRole('region', { name: 'Report data' })).toContainText('example.com/orders.json · 2 records')
 })

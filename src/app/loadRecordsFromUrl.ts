@@ -3,7 +3,18 @@ import { MAX_RECORDS_BYTES, parseRecordsJson, RecordsLoadError } from './records
 
 export const RECORDS_TIMEOUT_MS = 15_000
 
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
+export const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
+
+// Why `url` may not be loaded, or null when it may. Checked on the address
+// asked for and again on where a redirect ends up.
+function addressProblem(url: URL): string | null {
+  const isSameSite = url.origin === window.location.origin
+  if (url.protocol !== 'https:' && !isSameSite && !LOCAL_HOSTS.has(url.hostname)) {
+    return 'Use an address that starts with https://.'
+  }
+  if (url.username || url.password) return 'Remove the sign-in details from the address.'
+  return null
+}
 
 function resolveUrl(address: string): URL {
   let url: URL
@@ -12,14 +23,16 @@ function resolveUrl(address: string): URL {
   } catch {
     throw new RecordsLoadError('This isn\'t a web address.')
   }
-  const isSameSite = url.origin === window.location.origin
-  if (url.protocol !== 'https:' && !isSameSite && !LOCAL_HOSTS.has(url.hostname)) {
-    throw new RecordsLoadError('Use an address that starts with https://.')
-  }
-  if (url.username || url.password) {
-    throw new RecordsLoadError('Remove the sign-in details from the address.')
-  }
+  const problem = addressProblem(url)
+  if (problem) throw new RecordsLoadError(problem)
   return url
+}
+
+// Responses mocked in tests have an empty `url`, so look at `redirected` first.
+function checkRedirect(response: Response): void {
+  if (response.redirected && addressProblem(new URL(response.url))) {
+    throw new RecordsLoadError('This address redirected to one that isn\'t https.')
+  }
 }
 
 async function readText(response: Response): Promise<string> {
@@ -50,8 +63,8 @@ async function readText(response: Response): Promise<string> {
 }
 
 // Loads a JSON list of records with a plain GET: no cookies, no cache, no
-// referrer, no redirects, a time limit and a size limit, then the same JSON
-// check as pasted data. Aborting `signal` rejects with the browser's AbortError.
+// referrer, redirects only if they end on an allowed address, a time limit and
+// a size limit, then the same JSON check as pasted data. Aborting `signal` rejects with the browser's AbortError.
 export async function loadRecordsFromUrl(address: string, signal?: AbortSignal): Promise<ReportRow[]> {
   const url = resolveUrl(address)
   const controller = new AbortController()
@@ -71,14 +84,14 @@ export async function loadRecordsFromUrl(address: string, signal?: AbortSignal):
         credentials: 'omit',
         cache: 'no-store',
         referrerPolicy: 'no-referrer',
-        redirect: 'error',
         signal: controller.signal,
       })
     } catch (error) {
       if (signal?.aborted) throw error
       if (timedOut) throw new RecordsLoadError('The data took too long to arrive. Try again.')
-      throw new RecordsLoadError('Couldn\'t load this address. Check it, and ask its owner to allow browser access (CORS).')
+      throw new RecordsLoadError('Couldn\'t load this address. Check that it\'s right and that its site allows browser access (CORS).')
     }
+    checkRedirect(response)
     if (!response.ok) throw new RecordsLoadError(`The address answered with an error (${response.status}).`)
     return parseRecordsJson(await readText(response))
   } finally {

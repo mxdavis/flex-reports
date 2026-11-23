@@ -6,25 +6,38 @@
   gap: 8px;
 }
 
-.fr-app-paste {
+.fr-app-own-data-box {
   flex-basis: 100%;
   display: grid;
   gap: 6px;
 }
 
-.fr-app-paste textarea {
+.fr-app-own-data-box textarea,
+.fr-app-own-data-box input {
   width: 100%;
   box-sizing: border-box;
   padding: 8px;
   border: 1px solid #d0d5dd;
   border-radius: 8px;
   font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.fr-app-own-data-box textarea {
   resize: vertical;
 }
 
-.fr-app-paste-actions {
+.fr-app-own-data-box small {
+  color: #667085;
+}
+
+.fr-app-own-data-actions {
   display: flex;
   gap: 8px;
+}
+
+.fr-app-own-data-actions button[aria-disabled='true'] {
+  cursor: progress;
+  opacity: 0.7;
 }
 
 .fr-app-own-data-error {
