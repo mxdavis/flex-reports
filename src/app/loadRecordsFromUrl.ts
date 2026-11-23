@@ -3,7 +3,7 @@ import { MAX_RECORDS_BYTES, parseRecordsJson, RecordsLoadError } from './records
 
 export const RECORDS_TIMEOUT_MS = 15_000
 
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
+export const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
 
 // Why `url` may not be loaded, or null when it may. Checked on the address
 // asked for and again on where a redirect ends up.

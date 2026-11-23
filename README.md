@@ -204,7 +204,7 @@ browser storage.
   goes back to the sample). It replaces the saved report only after you confirm.
 - **Load from address** uses the same plain GET as the sample (https only, except for this
   site and localhost; no cookies; 15-second and 5 MB limits). An address typed without
-  `https://` gets it added. Redirects are followed and must end on https. The site must
+  `https://` gets it added (`http://` for localhost). Redirects are followed and must end on https. The site must
   allow browser access (CORS); there's no proxy.
 - Try the viewer role by changing `<App />` in `src/main.tsx` to `<App role="viewer" />`.
 

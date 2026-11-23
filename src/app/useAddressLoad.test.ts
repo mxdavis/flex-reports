@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { loadRecordsFromUrl } from './loadRecordsFromUrl'
 import { describeAddress, useAddressLoad } from './useAddressLoad'
 
-vi.mock('./loadRecordsFromUrl', () => ({ loadRecordsFromUrl: vi.fn() }))
+vi.mock('./loadRecordsFromUrl', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./loadRecordsFromUrl')>(),
+  loadRecordsFromUrl: vi.fn(),
+}))
 
 const ROWS = [{ product: 'Cable' }]
 
@@ -40,7 +43,8 @@ describe('useAddressLoad', () => {
 
   it.each([
     ['example.com/orders.json', 'https://example.com/orders.json'],
-    ['localhost:5173/data.json', 'https://localhost:5173/data.json'],
+    ['localhost:5173/data.json', 'http://localhost:5173/data.json'],
+    ['127.0.0.1:8080/x.json', 'http://127.0.0.1:8080/x.json'],
     ['example.com/go.json?src=https://other.com/x', 'https://example.com/go.json?src=https://other.com/x'],
     ['http://localhost:5173/data.json', 'http://localhost:5173/data.json'],
   ])('requests %s as %s', async (typed, requested) => {

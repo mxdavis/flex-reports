@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { loadRecordsFromUrl } from './loadRecordsFromUrl'
+import { LOCAL_HOSTS, loadRecordsFromUrl } from './loadRecordsFromUrl'
 import type { OwnData } from './OwnDataPanel'
 
 type AddressLoadCallbacks = {
@@ -8,13 +8,17 @@ type AddressLoadCallbacks = {
 }
 
 // People type "example.com/orders.json". Without a scheme it would load a page
-// of this app, so add https://. Looking for "scheme://" at the start also
-// catches "localhost:5173/data.json", which `new URL` reads as the scheme
-// "localhost:", and ignores a "://" inside the query.
+// of this app, so add one: http:// for local dev servers, which rarely answer
+// on https, and https:// for everything else. Only a "scheme://" at the start
+// counts: `new URL` reads "localhost:5173/data.json" as the scheme "localhost:",
+// and a query may hold another address.
 const STARTS_WITH_SCHEME = /^[a-z][a-z\d+.-]*:\/\//i
 
-export function withHttps(address: string): string {
-  return STARTS_WITH_SCHEME.test(address) ? address : `https://${address}`
+export function withScheme(address: string): string {
+  if (STARTS_WITH_SCHEME.test(address)) return address
+  const withHttps = `https://${address}`
+  const isLocal = URL.canParse(withHttps) && LOCAL_HOSTS.has(new URL(withHttps).hostname)
+  return isLocal ? `http://${address}` : withHttps
 }
 
 // "example.com/orders.json?year=2025": short enough for the data bar, and the
@@ -42,7 +46,7 @@ export function useAddressLoad({ onLoaded, onFailed }: AddressLoadCallbacks) {
   }
 
   async function load(typedAddress: string): Promise<void> {
-    const address = withHttps(typedAddress)
+    const address = withScheme(typedAddress)
     stop()
     const controller = new AbortController()
     current.current = controller
