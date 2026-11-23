@@ -63,8 +63,8 @@ async function readText(response: Response): Promise<string> {
 }
 
 // Loads a JSON list of records with a plain GET: no cookies, no cache, no
-// referrer, redirects only if they end on an allowed address, a time limit and a size limit, then the same JSON
-// check as pasted data. Aborting `signal` rejects with the browser's AbortError.
+// referrer, redirects only if they end on an allowed address, a time limit and
+// a size limit, then the same JSON check as pasted data. Aborting `signal` rejects with the browser's AbortError.
 export async function loadRecordsFromUrl(address: string, signal?: AbortSignal): Promise<ReportRow[]> {
   const url = resolveUrl(address)
   const controller = new AbortController()

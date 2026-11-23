@@ -8,10 +8,13 @@ type AddressLoadCallbacks = {
 }
 
 // People type "example.com/orders.json". Without a scheme it would load a page
-// of this app, so add https://. Checking for "://" also catches
-// "localhost:5173/data.json", which `new URL` reads as the scheme "localhost:".
+// of this app, so add https://. Looking for "scheme://" at the start also
+// catches "localhost:5173/data.json", which `new URL` reads as the scheme
+// "localhost:", and ignores a "://" inside the query.
+const STARTS_WITH_SCHEME = /^[a-z][a-z\d+.-]*:\/\//i
+
 export function withHttps(address: string): string {
-  return address.includes('://') ? address : `https://${address}`
+  return STARTS_WITH_SCHEME.test(address) ? address : `https://${address}`
 }
 
 // "example.com/orders.json?year=2025": short enough for the data bar, and the

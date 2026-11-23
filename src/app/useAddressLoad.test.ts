@@ -41,6 +41,7 @@ describe('useAddressLoad', () => {
   it.each([
     ['example.com/orders.json', 'https://example.com/orders.json'],
     ['localhost:5173/data.json', 'https://localhost:5173/data.json'],
+    ['example.com/go.json?src=https://other.com/x', 'https://example.com/go.json?src=https://other.com/x'],
     ['http://localhost:5173/data.json', 'http://localhost:5173/data.json'],
   ])('requests %s as %s', async (typed, requested) => {
     vi.mocked(loadRecordsFromUrl).mockResolvedValueOnce(ROWS)
